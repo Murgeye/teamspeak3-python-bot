@@ -1,0 +1,12 @@
+notifytextmessage: private message, channel message, server message
+notifyclientmoved: leave channel, join channel, move user, kick from channel
+notifyclientleftview: leave server, kick from server
+notifycliententerview: join server
+notifychanneledited: Channel edited (except channel description)
+notifychanneldescriptionchanged: channel description edited
+notifyserveredited: Server edited
+
+targetmodes:
+    1: private message
+    2: channel message
+    3: server message
