@@ -1,7 +1,7 @@
 __author__ = 'Daniel'
 import Bot
 import random
-
+import codecs
 
 def random_line(afile):
     line = next(afile)
@@ -13,7 +13,7 @@ def random_line(afile):
 
 
 def add(q):
-    with open("quotes", mode="a+") as f:
+    with codecs.open("quotes", "a+", "ISO-8859-1") as f:
         f.write(q+"\n")
 
 
@@ -29,7 +29,7 @@ class Quoter(object):
         for g in evt.client_servergroups.split(','):
             if len(g) == 0 or int(g) in self.dont_send:
                 return
-        with open("quotes") as f:
+        with codecs.open("quotes", "r", "ISO-8859-1") as f:
             quote = ""
             while len(quote) == 0:
                 quote = random_line(f)
