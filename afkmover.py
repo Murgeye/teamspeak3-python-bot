@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 __author__ = 'Fabian'
 from threading import Thread
 import logging
