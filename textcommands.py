@@ -140,7 +140,7 @@ class CommandHandler:
                 if event.invoker_id != int(self.ts3conn.whoami()["client_id"]):  # Don't talk to yourself ...
                     ci = ClientInfo.ClientInfo(event.invoker_id, self.ts3conn)
                     self.logger.info("Message: " + event.message + " from: " + ci.name)
-                    if ci.is_in_servergroups("Server Admin"):
+                    if ci.is_in_servergroups("Server Admin") or ci.is_in_servergroups("Moderator"):
                         self.handle_command(event.message, sender=event.invoker_id)
                     else:
                         Bot.send_msg_to_client(self.ts3conn, event.invoker_id, "Sorry, but I will only talk to admins!")
