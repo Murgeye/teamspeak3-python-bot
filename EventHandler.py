@@ -18,7 +18,7 @@ class EventHandler(object):
         self.ts3conn = ts3conn
         self.command_handler = command_handler
         self.observers = {}
-        self.add_observer(self.command_handler, Events.TextMessageEvent)
+        self.add_observer(self.command_handler.inform, Events.TextMessageEvent)
 
     def on_event(self, sender, **kw):
         # parsed_event = Events.EventParser.parse_event(event=event)
@@ -32,9 +32,6 @@ class EventHandler(object):
         elif type(parsed_event) is Events.ClientEnteredEvent:
             logging.debug(type(parsed_event))
         elif type(parsed_event) is Events.ClientLeftEvent:
-            # Forgets clients that were set to afk and then left
-            if str(parsed_event.client_id) in self.command_handler.afkMover.client_channels:
-                del self.command_handler.afkMover.client_channels[str(parsed_event.client_id)]
             logging.debug(type(parsed_event))
         elif type(parsed_event) is Events.ClientMovedEvent:
             logging.debug(type(parsed_event))
@@ -65,7 +62,7 @@ class EventHandler(object):
     def inform_all(self, evt):
         for o in self.get_obs_for_event(evt):
             try:
-                threading.Thread(target=o.inform(evt)).start()
+                threading.Thread(target=o(evt)).start()
             except Exception:
                 EventHandler.logger.exception("Exception while informing " + str(o) + " of Event of type " +
                                               str(type(evt)) + "\nOriginal data:" + str(evt.data))

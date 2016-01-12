@@ -3,7 +3,7 @@ import EventHandler
 import ts3.Events as Events
 import logging
 import textcommands
-import Quotes
+import Moduleloader
 from __conn_settings__ import *
 
 
@@ -25,8 +25,6 @@ class Ts3Bot:
         return int(ret[0]["cid"])
 
     def __del__(self):
-        if self.event_handler is not None:
-            self.event_handler.command_handler.afkStopper.set()
         self.ts3conn.quit()
 
     def __init__(self):
@@ -54,25 +52,11 @@ class Ts3Bot:
             return
         self.command_handler = textcommands.CommandHandler(self.ts3conn)
         self.event_handler = EventHandler.EventHandler(ts3conn=self.ts3conn, command_handler=self.command_handler)
-        # self.ts3conn.on_event.connect(self.event_handler.on_event)
         try:
             self.ts3conn.register_for_server_events(self.event_handler.on_event)
-            # self.channellist = self.ts3conn.channellist()
-            # self.ts3conn.servernotifyregister(event="channel", id_=0)
-            # self.ts3conn.servernotifyregister(event="textserver")
-            # self.ts3conn.servernotifyregister(event="textchannel")
             self.ts3conn.register_for_private_messages(self.event_handler.on_event)
         except ts3.TS3Connection.TS3QueryException:
             self.logger.exception("Error on registering for events.")
             exit()
-        self.command_handler.start_afkmover()
-        self.quoter = Quotes.Quoter(self.ts3conn)
-        self.event_handler.add_observer(self.quoter, Events.ClientEnteredEvent)
+        Moduleloader.loadmodules(self)
         self.ts3conn.start_keepalive_loop()
-        '''
-        try:
-            # self.ts3conn.recv_loop()
-            # self.ts3conn.recv(recv_forever=True)
-        except EOFError:
-            self.logger.warning("Bot has ended!")
-        '''
