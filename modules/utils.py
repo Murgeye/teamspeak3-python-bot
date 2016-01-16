@@ -1,6 +1,7 @@
 from Moduleloader import *
 import Bot
 import logging
+__version__="0.1"
 bot = None
 logger = logging.getLogger("bot")
 
@@ -70,3 +71,7 @@ def multi_move(sender, msg):
     except TS3QueryException as e:
         Bot.send_msg_to_client(ts3conn, sender, "Error moving clients: id = " +
                 str(e.id) + e.message)
+
+@command('version',)
+def send_version(sender, msg):
+    Bot.send_msg_to_client(bot.ts3conn, sender, __version__)
