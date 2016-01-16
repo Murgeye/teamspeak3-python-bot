@@ -25,5 +25,6 @@ quotes
 main.sh
 .viminfo
 .selected_editor
+.gitconfig
 .ssh/
 .vim/
