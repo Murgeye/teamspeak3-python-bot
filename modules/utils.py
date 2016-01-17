@@ -61,12 +61,12 @@ def multi_move(sender, msg):
         Bot.send_msg_to_client(ts3conn, sender, "Destination channel not found")
     try:
         clientlist = ts3conn.clientlist()
-        #self.logger.info(str(clientlist))
-        #self.logger.info("Moving all from " + source + " to " + dest)
+        #logger.info(str(clientlist))
+        #logger.info("Moving all from " + source + " to " + dest)
         clientlist = [client for client in clientlist if client.get("cid", '-1') == source]
         for client in clientlist:
             clid = client.get("clid", '-1')
-            self.logger.info("Found client in channel: " + client.get("client_nickname", "") + " id = " + clid)
+            logger.info("Found client in channel: " + client.get("client_nickname", "") + " id = " + clid)
             ts3conn.clientmove(int(dest), int(clid))
     except TS3QueryException as e:
         Bot.send_msg_to_client(ts3conn, sender, "Error moving clients: id = " +

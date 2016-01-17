@@ -23,6 +23,7 @@ class CommandHandler:
         self.logger.addHandler(file_handler)
         self.logger.propagate = 0
         self.handlers = {}
+        self.accept_from_groups=['Moderator']
 
     def add_handler(self, handler, command):
         if self.handlers.get(command) is None:
@@ -47,7 +48,7 @@ class CommandHandler:
             import main
             main.restart_program()
         else:
-            command = msg.split(maxsplit=1)[0]
+            command = msg.split(None,1)[0]
             if len(command)>1:
                 command = command[1:]
                 handlers = self.handlers.get(command)
@@ -64,7 +65,8 @@ class CommandHandler:
                 if event.invoker_id != int(self.ts3conn.whoami()["client_id"]):  # Don't talk to yourself ...
                     ci = ClientInfo.ClientInfo(event.invoker_id, self.ts3conn)
                     self.logger.info("Message: " + event.message + " from: " + ci.name)
-                    if ci.is_in_servergroups("Server Admin") or ci.is_in_servergroups("Moderator"):
-                        self.handle_command(event.message, sender=event.invoker_id)
-                    else:
+                    for group in self.accept_from_groups:
+                        if ci.is_in_servergroups(group):
+                            self.handle_command(event.message, sender=event.invoker_id)
+                            return
                         Bot.send_msg_to_client(self.ts3conn, event.invoker_id, "Sorry, but I will only talk to admins!")

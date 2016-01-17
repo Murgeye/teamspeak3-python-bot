@@ -72,5 +72,4 @@ class ClientInfo:
         for g in self._servergroups:
             if re.search(pattern=pattern, string=g) is not None:
                 return True
-            else:
-                return False
+        return False
