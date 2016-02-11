@@ -1,7 +1,7 @@
 from Moduleloader import *
 import Bot
 import logging
-__version__="0.1"
+__version__="0.2"
 bot = None
 logger = logging.getLogger("bot")
 
@@ -75,3 +75,7 @@ def multi_move(sender, msg):
 @command('version',)
 def send_version(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, __version__)
+
+@command('whoami',)
+def whoami(sender, msg):
+    Bot.send_msg_to_client(bot.ts3conn, sender, "None of your business!")

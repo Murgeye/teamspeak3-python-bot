@@ -23,7 +23,7 @@ class CommandHandler:
         self.logger.addHandler(file_handler)
         self.logger.propagate = 0
         self.handlers = {}
-        self.accept_from_groups=['Moderator']
+        self.accept_from_groups=['Server Admin', 'Moderator']
 
     def add_handler(self, handler, command):
         if self.handlers.get(command) is None:
@@ -69,4 +69,4 @@ class CommandHandler:
                         if ci.is_in_servergroups(group):
                             self.handle_command(event.message, sender=event.invoker_id)
                             return
-                        Bot.send_msg_to_client(self.ts3conn, event.invoker_id, "Sorry, but I will only talk to admins!")
+                    Bot.send_msg_to_client(self.ts3conn, event.invoker_id, "Sorry, but I will only talk to admins!")
