@@ -14,6 +14,11 @@ def setup(ts3Bot):
 def hello(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, "Hello World")
 
+@command('kickme','fuckme')
+def kickme(sender, msg):
+    ts3conn = bot.ts3conn
+    ts3conn.clientkick(sender,5,"Wie du willst.")
+
 @command('multimove',)
 def multi_move(sender, msg):
     channels = msg[len("!multimove "):].split()
