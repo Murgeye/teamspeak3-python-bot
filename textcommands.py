@@ -31,33 +31,36 @@ class CommandHandler:
         else:
             self.handlers[command].append(handler)
 
+    def check_permission(self, handler, clientinfo):
+        if hasattr(handler, "allowed_groups"):
+            for group in handler.allowed_groups:
+                if clientinfo.is_in_servergroups(group):
+                    return True
+        else:
+            for group in self.accept_from_groups:
+                if clientinfo.is_in_servergroups(group):
+                    return True
+        return False
+            
+
     def handle_command(self, msg, sender=0):
         logger.debug("Handling message " + msg)
-        if "!reload" in msg:
-            Moduleloader.reload(afkmover)
-            reload(ClientInfo)
-            reload(Events)
-        elif '!stop' == msg:
-            Moduleloader.exit_all()
-            self.ts3conn.quit()
-            logger.warning("Bot was quit!")
-        elif '!restart' == msg:
-            Moduleloader.exit_all()
-            self.ts3conn.quit()
-            logger.warning("Bot was quit!")
-            import main
-            main.restart_program()
-        else:
-            command = msg.split(None,1)[0]
-            if len(command)>1:
-                command = command[1:]
-                handlers = self.handlers.get(command)
-                if handlers is not None:
-                    for handler in handlers:
+        command = msg.split(None,1)[0]
+        if len(command)>1:
+            command = command[1:]
+            handlers = self.handlers.get(command)
+            ci = ClientInfo.ClientInfo(sender, self.ts3conn)
+            handled = False 
+            if handlers is not None:
+                for handler in handlers:
+                    if self.check_permission(handler, ci):
+                        handled = True
                         handler(sender, msg)
-                else:
-                    Bot.send_msg_to_client(self.ts3conn, sender, "I cannot interpret your command. I am very sorry. :(")
-                    logger.info("Unknown command " + msg + " received!")
+                if not handled:
+                    Bot.send_msg_to_client(self.ts3conn, sender, "You are not allowed to use this command!")
+            else:
+                Bot.send_msg_to_client(self.ts3conn, sender, "I cannot interpret your command. I am very sorry. :(")
+                logger.info("Unknown command " + msg + " received!")
 
     def inform(self, event):
         if type(event) is Events.TextMessageEvent:
@@ -65,8 +68,4 @@ class CommandHandler:
                 if event.invoker_id != int(self.ts3conn.whoami()["client_id"]):  # Don't talk to yourself ...
                     ci = ClientInfo.ClientInfo(event.invoker_id, self.ts3conn)
                     self.logger.info("Message: " + event.message + " from: " + ci.name)
-                    for group in self.accept_from_groups:
-                        if ci.is_in_servergroups(group):
-                            self.handle_command(event.message, sender=event.invoker_id)
-                            return
-                    Bot.send_msg_to_client(self.ts3conn, event.invoker_id, "Sorry, but I will only talk to admins!")
+                    self.handle_command(event.message, sender=event.invoker_id)

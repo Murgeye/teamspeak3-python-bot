@@ -1,7 +1,8 @@
 from Moduleloader import *
+import Moduleloader
 import Bot
 import logging
-__version__="0.2"
+__version__="0.3"
 bot = None
 logger = logging.getLogger("bot")
 
@@ -11,15 +12,28 @@ def setup(ts3Bot):
     bot = ts3Bot
 
 @command('hello',)
+@group('Server Admin',)
 def hello(sender, msg):
-    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello World")
+    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Admin!")
+
+@command('hello',)
+@group('Moderator',)
+def hello(sender, msg):
+    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Moderator!")
+
+@command('hello',)
+@group('Normal',)
+def hello(sender, msg):
+    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Casual!")
 
 @command('kickme','fuckme')
+@group('.*',)
 def kickme(sender, msg):
     ts3conn = bot.ts3conn
     ts3conn.clientkick(sender,5,"Wie du willst.")
 
 @command('multimove',)
+@group('Server Admin', 'Moderator')
 def multi_move(sender, msg):
     channels = msg[len("!multimove "):].split()
     source_name = ""
@@ -78,9 +92,27 @@ def multi_move(sender, msg):
                 str(e.id) + e.message)
 
 @command('version',)
+@group('.*')
 def send_version(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, __version__)
 
 @command('whoami',)
+@group('.*')
 def whoami(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, "None of your business!")
+
+@command('stop',)
+@group('Server Admin',)
+def stop_bot(sender, msg):
+    Moduleloader.exit_all()
+    bot.ts3conn.quit()
+    logger.warning("Bot was quit!")
+
+@command('restart',)
+@group('Server Admin', 'Moderator',)
+def restart_bot(sender, msg):
+    Moduleloader.exit_all()
+    bot.ts3conn.quit()
+    logger.warning("Bot was quit!")
+    import main
+    main.restart_program()
