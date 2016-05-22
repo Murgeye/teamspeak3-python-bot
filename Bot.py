@@ -51,7 +51,8 @@ class Ts3Bot:
         :rtype: Ts3Bot
         """
         logger = logging.getLogger("bot")
-        return Ts3Bot(**Ts3Bot.parse_config(logger), logger=logger)
+        config = Ts3Bot.parse_config(logger)
+        return Ts3Bot(logger=logger, **config)
 
     @staticmethod
     def parse_config(logger):
