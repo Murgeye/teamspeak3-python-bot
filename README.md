@@ -3,26 +3,23 @@ Simple Teamspeak 3 bot based on the ts3API located at
 https://github.com/Murgeye/ts3API.
 
 # Table of Contents
-- [Getting the bot](# Getting the bot)
-- [Configuration](# Configuration)
-- [Running the bot](# Running the Bot)
-- [Standard Plugins](# Standard Plugins)
-	- [Utils](# Utils)
-	- [AfkMover](# AfkMover)
-	- [Quotes](# Quotes)
-- [Standard commands](# Standard command)
-	- [Utils](#)
-	- [AfkMover](#)
-	- [Quotes](#)
-- [Writing plugins](#)
-	- [Adding setup and exit methods](#)
-	- [Adding a text command](#)
-		- [@group](#)
-	- [Listening for events](#)
-- [Troubleshooting](#)
-	- [The bot just crashes without any message](#)
-	- [The Bot get's banned from our server!](#)
-	- [Something doesn't work](#)
+- [Getting the bot](#getting-the-bot)
+- [Configuration](#configuration)
+- [Running the bot](#running-the-bot)
+- [Standard Plugins](#standard-plugins)
+	- [Utils](#utils)
+	- [AfkMover](#afkmover)
+	- [Quotes](#quotes)
+- [Standard commands](#standard-commands)
+	- [Utils](#utils-1)
+	- [AfkMover](#afkmover-1)
+	- [Quotes](#quotes-1)
+- [Writing plugins](#writing-plugins)
+	- [Adding setup and exit methods](#adding-setup-and-exit-methods)
+	- [Adding a text command](#adding-a-text-command)
+		- [@group](#group)
+	- [Listening for events](#listening-for-events)
+- [Troubleshooting](#troubleshooting)
 
 # Getting the bot
 1. Clone this repository
@@ -170,7 +167,7 @@ about the events look at the ts3.Events module.
 Any error messages should be in the file bot.log in the root directory of the bot.
 If this file doesn't exist the file permissions of the root directory are probably wrong.
 
-## The Bot get's banned from our server!
+## The Bot gets banned from our server!
 You need to whitelist the ip the bot is connecting from in the Teamspeak configuration file. To do this
 change the file `query-ip-whitelist.txt` in the server directory and add a new line with your ip.
 
