@@ -2,6 +2,10 @@
 Simple Teamspeak 3 bot based on the ts3API located at
 https://github.com/Murgeye/ts3API.
 
+#Getting the bot
+1. Clone this repository
+2. Update the ts3API submodule by running `git submodule update --init --recursive` in the directory created in 1.
+
 # Configuration
 You need a configuration file called config.ini in the bots root directory.
 config.example.ini should help to get you started with that. The format of the
