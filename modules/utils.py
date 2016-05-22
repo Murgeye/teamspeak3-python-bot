@@ -2,39 +2,51 @@ from Moduleloader import *
 import Moduleloader
 import Bot
 import logging
-__version__="0.3"
+from ts3.TS3Connection import TS3QueryException
+__version__ = "0.3"
 bot = None
 logger = logging.getLogger("bot")
 
-@setup
-def setup(ts3Bot):
+
+@Moduleloader.setup
+def setup(ts3bot):
     global bot
-    bot = ts3Bot
+    bot = ts3bot
+
 
 @command('hello',)
 @group('Server Admin',)
 def hello(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Admin!")
 
+
 @command('hello',)
 @group('Moderator',)
 def hello(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Moderator!")
+
 
 @command('hello',)
 @group('Normal',)
 def hello(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Casual!")
 
-@command('kickme','fuckme')
+
+@command('kickme', 'fuckme')
 @group('.*',)
 def kickme(sender, msg):
     ts3conn = bot.ts3conn
-    ts3conn.clientkick(sender,5,"Wie du willst.")
+    ts3conn.clientkick(sender, 5, "Whatever.")
+
 
 @command('multimove',)
 @group('Server Admin', 'Moderator')
 def multi_move(sender, msg):
+    """
+    Move all clients from one channel to another.
+    :param sender: Client id of sender that sent the command.
+    :param msg: Sent command.
+    """
     channels = msg[len("!multimove "):].split()
     source_name = ""
     dest_name = ""
@@ -79,11 +91,9 @@ def multi_move(sender, msg):
     except TS3QueryException:
         Bot.send_msg_to_client(ts3conn, sender, "Destination channel not found")
     try:
-        clientlist = ts3conn.clientlist()
-        #logger.info(str(clientlist))
-        #logger.info("Moving all from " + source + " to " + dest)
-        clientlist = [client for client in clientlist if client.get("cid", '-1') == source]
-        for client in clientlist:
+        client_list = ts3conn.clientlist()
+        client_list = [client for client in client_list if client.get("cid", '-1') == source]
+        for client in client_list:
             clid = client.get("clid", '-1')
             logger.info("Found client in channel: " + client.get("client_nickname", "") + " id = " + clid)
             ts3conn.clientmove(int(dest), int(clid))
@@ -91,15 +101,18 @@ def multi_move(sender, msg):
         Bot.send_msg_to_client(ts3conn, sender, "Error moving clients: id = " +
                 str(e.id) + e.message)
 
+
 @command('version',)
 @group('.*')
 def send_version(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, __version__)
 
+
 @command('whoami',)
 @group('.*')
 def whoami(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, "None of your business!")
+
 
 @command('stop',)
 @group('Server Admin',)
@@ -107,6 +120,7 @@ def stop_bot(sender, msg):
     Moduleloader.exit_all()
     bot.ts3conn.quit()
     logger.warning("Bot was quit!")
+
 
 @command('restart',)
 @group('Server Admin', 'Moderator',)

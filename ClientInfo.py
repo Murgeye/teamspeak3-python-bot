@@ -1,16 +1,15 @@
-__author__ = 'Daniel'
-
 import re
 import logging
 
 logger = logging.getLogger("bot")
 
+
 class ClientInfo:
-    '''
+    """
     ClientInfo contains various attributes of the client with the given client id
     The attributes in this object have been filtered, if you want to know about all
     possible attributes, use print(client_data[0].keys())
-    '''
+    """
     def __init__(self, client_id, ts3conn):
         if client_id == "-1":
             logger.error("Trying to get ClientInfo of clid=-1")

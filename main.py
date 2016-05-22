@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 import Bot
-from importlib import reload
 import sys
 import logging
 import threading
-import traceback
 import os
 
 logger = None
@@ -12,16 +10,14 @@ bot = None
 
 
 def exception_handler(exctype, value, tb):
-    logger.exception("Uncaught exception:" + str(exctype))
-    logger.error(str(value))
-    logger.error(traceback.format_exc())
-
-
-def reload_bot(botarg):
-    global bot
-    botarg.close()
-    reload(Bot)
-    bot = Bot.Ts3Bot()
+    """
+    Exception handler to prevent any exceptions from printing to stdout. Logs all exceptions to the logger.
+    :param exctype: Exception type
+    :param value: Exception value
+    :param tb: Exception traceback
+    :return:
+    """
+    logger.error("Uncaught exception.", exc_info=(exctype, value, tb))
 
 
 def restart_program():
@@ -31,11 +27,14 @@ def restart_program():
     saving data) must be done before calling this function.
     """
     python = sys.executable
-    #print(python, sys.argv)
     os.execl(python, python, * sys.argv)
 
 
 def main():
+    """
+    Start the bot, set up logger and set exception hook.
+    :return:
+    """
     run_old = threading.Thread.run
 
     def run(*args, **kwargs):
@@ -57,7 +56,7 @@ def main():
         logger.addHandler(file_handler)
         logger.info('Started')
     sys.excepthook = exception_handler
-    bot = Bot.Ts3Bot()
+    bot = Bot.Ts3Bot.bot_from_config()
 
 if __name__ == "__main__":
     main()

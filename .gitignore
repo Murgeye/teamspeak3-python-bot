@@ -13,3 +13,5 @@ main.sh
 .selected_editor
 .ssh/
 .vim/
+config.ini
+.idea/

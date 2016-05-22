@@ -1,6 +1,5 @@
-__author__ = 'Fabian'
+"""AfkMover Module for the Teamspeak3 Bot."""
 from threading import Thread
-import logging
 import sys
 import traceback
 from Moduleloader import *
@@ -12,43 +11,60 @@ afkStopper = threading.Event()
 bot = None
 autoStart = True
 
-@command('startafk','afkmove',)
+
+@command('startafk', 'afkstart', 'afkmove',)
 def start_afkmover(sender=None, msg=None):
+    """
+    Start the AfkMover by clearing the afkStopper signal and starting the mover.
+    """
     global afkMover
     if afkMover is None:
         afkMover = AfkMover(afkStopper, bot.ts3conn)
         afkStopper.clear()
         afkMover.start()
 
-@command('stopafk','afkstop')
-def stop_afkmover(sender, msg):
+
+@command('stopafk', 'afkstop')
+def stop_afkmover(sender=None, msg=None):
+    """
+    Stop the AfkMover by setting the afkStopper signal and undefining the mover.
+    """
     global afkMover
     afkStopper.set()
     afkMover = None
 
+
 @event(Events.ClientLeftEvent,)
 def client_left(event):
+    """
+    Clean up leaving clients.
+    """
     # Forgets clients that were set to afk and then left
     if afkMover is not None:
         if str(event.client_id) in afkMover.client_channels:
             del afkMover.client_channels[str(event.client_id)]
 
+
 @setup
-def setup(ts3Bot):
+def setup(ts3bot):
     global bot
-    bot = ts3Bot
+    bot = ts3bot
     if autoStart:
         start_afkmover()
 
 
 @exit
-def exit():
+def afkmover_exit():
     global afkMover
     afkStopper.set()
     afkMover.join()
     afkMover = None
 
+
 class AfkMover(Thread):
+    """
+    AfkMover class. Moves clients set to afk another channel.
+    """
     logger = logging.getLogger("afk")
     logger.setLevel(logging.WARNING)
     file_handler = logging.FileHandler("afk.log", mode='a+')
@@ -59,6 +75,13 @@ class AfkMover(Thread):
     logger.propagate = 0
 
     def __init__(self, event, ts3conn):
+        """
+        Create a new AfkMover object.
+        :param event: Event to signalize the AfkMover to stop moving.
+        :type event: threading.Event
+        :param ts3conn: Connection to use
+        :type: TS3Connection
+        """
         Thread.__init__(self)
         self.stopped = event
         self.ts3conn = ts3conn
@@ -69,10 +92,16 @@ class AfkMover(Thread):
             AfkMover.logger.error("Could not get afk channel")
 
     def run(self):
+        """
+        Thread run method. Starts the mover.
+        """
         AfkMover.logger.info("AFKMove Thread started")
         self.auto_move_all()
 
     def update_afk_list(self):
+        """
+        Update the list of clients.
+        """
         try:
             self.afk_list = self.ts3conn.clientlist(["away"])
             AfkMover.logger.debug("Awaylist: " + str(self.afk_list))
@@ -81,6 +110,10 @@ class AfkMover(Thread):
             self.afk_list = list()
 
     def get_away_list(self):
+        """
+        Get list of clients with afk status.
+        :return: List of clients that are set to afk.
+        """
         if self.afk_list is not None:
             AfkMover.logger.debug(str(self.afk_list))
             awaylist = list()
@@ -98,12 +131,21 @@ class AfkMover(Thread):
             return list()
 
     def get_back_list(self):
+        """
+        Get list of clients in the afk channel, but not away.
+        :return: List of clients who are back from afk.
+        """
         clientlist = [client for client in self.afk_list if client.get("client_away", '1') == '0' and int(client.get("cid",
                                                                                                                   '-1'))
                       == int(self.afk_channel)]
         return clientlist
 
     def get_afk_channel(self, name="AFK"):
+        """
+        Get the channel id of the channel specified by name.
+        :param name: Channel name
+        :return: Channel id
+        """
         try:
             channel = self.ts3conn.channelfind(name)[0].get("cid", '-1')
         except ts3.TS3Exception:
@@ -112,6 +154,10 @@ class AfkMover(Thread):
         return channel
 
     def move_to_afk(self, clients):
+        """
+        Move clients to the afk_channel.
+        :param clients: List of clients to move.
+        """
         AfkMover.logger.info("Moving clients to afk!")
         for client in clients:
             AfkMover.logger.info("Moving somebody to afk!")
@@ -124,6 +170,9 @@ class AfkMover(Thread):
             AfkMover.logger.debug("Moved List after move: " + str(self.client_channels))
 
     def move_all_afk(self):
+        """
+        Move all afk clients.
+        """
         try:
             afk_list = self.get_away_list()
             self.move_to_afk(afk_list)
@@ -131,6 +180,9 @@ class AfkMover(Thread):
             AfkMover.logger.exception("Connection error!")
 
     def move_all_back(self):
+        """
+        Move all clients who are back from afk.
+        """
         back_list = self.get_back_list()
         AfkMover.logger.debug("Moving clients back")
         AfkMover.logger.debug("Backlist is: " + str(back_list))
@@ -144,6 +196,9 @@ class AfkMover(Thread):
                 del self.client_channels[client.get("clid", '-1')]
 
     def auto_move_all(self):
+        """
+        Loop move functions until the stop signal is sent.
+        """
         while not self.stopped.wait(2.0):
             AfkMover.logger.debug("Afkmover running!")
             self.update_afk_list()

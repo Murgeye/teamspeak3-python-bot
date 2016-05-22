@@ -1,10 +1,13 @@
-__author__ = 'Daniel'
+"""EventHandler for the Teamspeak3 Bot."""
 import ts3.Events as Events
 import logging
 import threading
 
 
 class EventHandler(object):
+    """
+    EventHandler class responsible for delegating events to registered listeners.
+    """
     logger = logging.getLogger("eventhandler")
     logger.setLevel(logging.INFO)
     file_handler = logging.FileHandler("eventhandler.log", mode='a+')
@@ -21,6 +24,9 @@ class EventHandler(object):
         self.add_observer(self.command_handler.inform, Events.TextMessageEvent)
 
     def on_event(self, sender, **kw):
+        """
+        Called upon a new event. Logs the event and informs all listeners.
+        """
         # parsed_event = Events.EventParser.parse_event(event=event)
         parsed_event = kw["event"]
         if type(parsed_event) is Events.TextMessageEvent:
@@ -44,22 +50,47 @@ class EventHandler(object):
         self.inform_all(parsed_event)
 
     def get_obs_for_event(self, evt):
+        """
+        Get all observers for an event.
+        :param evt: Event to get observers for.
+        :return: List of observers.
+        :rtype: list[function]
+        """
         obs = self.observers.get(type(evt), list())
         return obs
 
     def add_observer(self, obs, evt_type):
+        """
+        Add an observer for an event type.
+        :param obs: Function to call upon a new event of type evt_type.
+        :param evt_type: Event type to observe.
+        :type evt_type: TS3Event
+        """
         obs_list = self.observers.get(evt_type, list())
         obs_list.append(obs)
         self.observers[evt_type] = obs_list
 
     def remove_observer(self, obs, evt_type):
+        """
+        Remove an observer for an event type.
+        :param obs: Observer to remove.
+        :param evt_type: Event type to remove the observer from.
+        """
         self.observers.get(evt_type, list()).remove(obs)
 
     def remove_observer_from_all(self, obs):
+        """
+        Removes an observer from all event_types.
+        :param obs: Observer to remove.
+        """
         for evt_type in self.observers.keys():
             self.remove_observer(obs, evt_type)
 
     def inform_all(self, evt):
+        """
+        Inform all observers registered to the event type of an event.
+        :param evt: Event to inform observers of.
+        """
         for o in self.get_obs_for_event(evt):
             try:
                 threading.Thread(target=o(evt)).start()
