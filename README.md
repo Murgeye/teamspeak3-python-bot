@@ -3,14 +3,14 @@ Simple Teamspeak 3 bot based on the ts3API located at
 https://github.com/Murgeye/ts3API.
 
 # Table of Contents
-- [Getting the bot](#)
-- [Configuration](#)
-- [Running the bot](#)
-- [Standard Plugins](#)
-	- [Utils](#)
-	- [AfkMover](#)
-	- [Quotes](#)
-- [Standard commands](#)
+- [Getting the bot](# Getting the bot)
+- [Configuration](# Configuration)
+- [Running the bot](# Running the Bot)
+- [Standard Plugins](# Standard Plugins)
+	- [Utils](# Utils)
+	- [AfkMover](# AfkMover)
+	- [Quotes](# Quotes)
+- [Standard commands](# Standard command)
 	- [Utils](#)
 	- [AfkMover](#)
 	- [Quotes](#)
