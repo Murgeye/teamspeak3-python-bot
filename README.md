@@ -2,7 +2,7 @@
 Simple Teamspeak 3 bot based on the ts3API located at
 https://github.com/Murgeye/ts3API.
 
-#Getting the bot
+# Getting the bot
 1. Clone this repository
 2. Update the ts3API submodule by running `git submodule update --init --recursive` in the directory created in 1.
 
@@ -39,7 +39,7 @@ AfkMover: afkmover
 UtilCommand: utils
 ```
 
-#Running the bot
+# Running the bot
 You can run the bot by executing main.py. If you intend to run the bot on boot
 you should probably create a bash script that sleeps before starting the bot to 
 allow the Teamspeak server to startup first:
@@ -49,3 +49,12 @@ cd /path/to/bot
 sleep 60
 ./main.py &> output.log
 ```
+
+# Troubleshooting
+## The bot just crashes without any message
+Any error messages should be in the file bot.log in the root directory of the bot.
+If this file doesn't exist the file permissions of the root directory are probably wrong.
+
+## Something doesn't work
+The bot writes quite some logs in the root directory. Check those for errors and open
+an issue if the issue remains.
