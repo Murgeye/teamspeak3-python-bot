@@ -50,6 +50,37 @@ sleep 60
 ./main.py &> output.log
 ```
 
+# Standard Plugins
+All existing functionality is based on plugins.
+## Utils
+A small plugin with some convenience commands for administration and fun.
+## AfkMover
+Moves people from and to a specific channel upon marking themselves as AFK/back. To change the
+channel to move people to change `channel_name`at the top of the `modules/afkmover.py` file.
+## Quotes
+A module to save quotes and send them to people joining the server. You can add famous quotes
+or (for lots of fun) quotes from people on your server. See standard commands for info on how to
+do that.
+
+# Standard commands
+All of the textcommands are added via plugins (see the next section). Current plugins include:
+## Utils
+A small plugin with some convenience commands for administration and fun.
+* !hello - Answers with a message depending on the server group(Server Admin, Moderator, Normal)
+* !stop - Stop the bot
+* !restart - Restart the bot
+* !multimove channel1 channel2 - Move all users from channel 1 to channel 2 (should work for channels containing spaces, most of the time)
+* !kickme - Kick yourself from the server.
+* !whoami - Fun command.
+* !version - Answer with the current module version
+
+## AfkMover
+* !startafk/!afkstart/!afkmove - Start the Afk Mover
+* !stopafk/!afkstop  Stop the AFK Mover
+
+## Quotes
+* !addquote quote - Add a new quote
+
 # Writing plugins
 A feature of this bot that it is easily extendable. You can see some example plugins
 in the directory modules. To write your own plugin you need to do the following things:
@@ -108,7 +139,7 @@ import ts3.Events as Events
 def inform_enter(event):
   print("Client with id " + event.client_id + " left.")
 ```
-This code snippet registers the `inform_enter` function as listener for the `Events.ClientEnteredEvent`. You
+This code snippet registers the `inform_enter` function as a listener for the `Events.ClientEnteredEvent`. You
 can register a function for multiple events by passing a list of event types to the decorator. To learn more
 about the events look at the ts3.Events module.
 
@@ -116,6 +147,10 @@ about the events look at the ts3.Events module.
 ## The bot just crashes without any message
 Any error messages should be in the file bot.log in the root directory of the bot.
 If this file doesn't exist the file permissions of the root directory are probably wrong.
+
+## The Bot get's banned from our server!
+You need to whitelist the ip the bot is connecting from in the Teamspeak configuration file. To do this
+change the file `query-ip-whitelist.txt` in the server directory and add a new line with your ip.
 
 ## Something doesn't work
 The bot writes quite some logs in the root directory. Check those for errors and open
