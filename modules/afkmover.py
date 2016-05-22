@@ -10,6 +10,7 @@ afkMover = None
 afkStopper = threading.Event()
 bot = None
 autoStart = True
+channel_name = "AFK"
 
 
 @command('startafk', 'afkstart', 'afkmove',)
@@ -85,7 +86,7 @@ class AfkMover(Thread):
         Thread.__init__(self)
         self.stopped = event
         self.ts3conn = ts3conn
-        self.afk_channel = self.get_afk_channel()
+        self.afk_channel = self.get_afk_channel(channel_name)
         self.client_channels = {}
         self.afk_list = None
         if self.afk_channel is None:
