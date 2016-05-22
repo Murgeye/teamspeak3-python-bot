@@ -50,6 +50,68 @@ sleep 60
 ./main.py &> output.log
 ```
 
+# Writing plugins
+A feature of this bot that it is easily extendable. You can see some example plugins
+in the directory modules. To write your own plugin you need to do the following things:
+
+1. Create a python module in the modules folder (or a subfolder)
+2. Add the plugin to the config.ini
+
+That's it. The plugin doesn't do anything yet, but we can build up on that.
+
+## Adding setup and exit methods
+Upon loading a plugin the ModuleLoader calls any method marked as `@setup` in the plugin.
+```
+from Moduleloader import *
+
+@setup
+def setup_module(ts3bot):
+  #Do something, save the bot reference, etc
+  pass
+```
+
+Upon unloading a module (usually if the bot is closed etc) the ModuleLoader calls any method
+marked as `@exit` in the plugin.
+```
+@exit
+def exit_module():
+  #Do something, save your state, etc
+  pass
+```
+
+## Adding a text command
+You can register your plugin to specific commands (starting with !) send via private message
+by using the `@command` decorator.
+```
+@command('test1','test2',)
+@group('Server Admin',)
+def test_command(sender, msg):
+  print("test")
+```
+This registers the test_command function for the command !test1 and !test2. You can register a
+function for as many commands as you want and you can register as many functions for a command as you want.
+
+The `sender` argument is the client id of the user who sent the command, `msg` contains the whole text
+of the private message.
+### `@group`
+The `@group` decorator specifies which Server Groups are allowed to use this function via textcommands. You can
+use regex here so you can do things like `@group('.*Admin.*','Moderator',)` to allow all groups containing the
+word Admin and the Moderator group to send this command. `@group('.*')` allows everybody to use a command. If
+you don't use `@group` the default will be to allow access to 'Server Admin' and 'Moderator'.
+
+## Listening for events
+You can register a function in your plugin to listen for specific server events by using the `@event` decorator.
+```
+import ts3.Events as Events
+# ...
+@event(Events.ClientEnteredEvent,)
+def inform_enter(event):
+  print("Client with id " + event.client_id + " left.")
+```
+This code snippet registers the `inform_enter` function as listener for the `Events.ClientEnteredEvent`. You
+can register a function for multiple events by passing a list of event types to the decorator. To learn more
+about the events look at the ts3.Events module.
+
 # Troubleshooting
 ## The bot just crashes without any message
 Any error messages should be in the file bot.log in the root directory of the bot.
