@@ -2,6 +2,28 @@
 Simple Teamspeak 3 bot based on the ts3API located at
 https://github.com/Murgeye/ts3API.
 
+# Table of Contents
+- [Getting the bot](#)
+- [Configuration](#)
+- [Running the bot](#)
+- [Standard Plugins](#)
+	- [Utils](#)
+	- [AfkMover](#)
+	- [Quotes](#)
+- [Standard commands](#)
+	- [Utils](#)
+	- [AfkMover](#)
+	- [Quotes](#)
+- [Writing plugins](#)
+	- [Adding setup and exit methods](#)
+	- [Adding a text command](#)
+		- [@group](#)
+	- [Listening for events](#)
+- [Troubleshooting](#)
+	- [The bot just crashes without any message](#)
+	- [The Bot get's banned from our server!](#)
+	- [Something doesn't work](#)
+
 # Getting the bot
 1. Clone this repository
 2. Update the ts3API submodule by running `git submodule update --init --recursive` in the directory created in 1.
