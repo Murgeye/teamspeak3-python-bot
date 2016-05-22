@@ -1,5 +1,6 @@
 # TS3 Bot
-Simple Teamspeak 3 bot based on the ts3API located at [link].
+Simple Teamspeak 3 bot based on the ts3API located at
+https://github.com/Murgeye/ts3API.
 
 # Configuration
 You need a configuration file called config.ini in the bots root directory.
