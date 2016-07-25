@@ -1,8 +1,10 @@
 import configparser
+import importlib
 import logging
+import sys
 setups = []
 exits = []
-plugin_modules = []
+plugin_modules = {}
 event_handler = None
 command_handler = None
 logger = logging.getLogger("moduleloader")
@@ -15,27 +17,37 @@ logger.info("Configured Moduleloader logger")
 logger.propagate = 0
 
 
-def load_modules(bot):
+def load_modules(bot, config):
     """
     Load modules specified in the Plugins section of config.ini.
     :param bot: Bot to pass to the setup function of the modules
     """
     global event_handler, command_handler
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    plugins = config.items("Plugins")
+    plugins = config.pop('Plugins')
     event_handler = bot.event_handler
     command_handler = bot.command_handler
-    for plugin in plugins:
+    """try:
+        modules = map(__import__, plugins.values())
+        print(modules)
+    except:
+        logger.exception("error on importing plugins")"""
+
+    for plugin in plugins.items():
         try:
-            plugin_modules.append(__import__("modules."+plugin[1]))
+            plugin_modules[plugin[0]] = importlib.import_module("modules."+plugin[1], package="modules")
+            plugin_modules[plugin[0]].pluginname = plugin[0]
             logger.info("Loaded module " + plugin[0])
         except:
             logger.exception("While loading plugin " + str(plugin[0]) + " from modules."+plugin[1])
     # Call all registered setup functions
     for setup_func in setups:
         try:
-            setup_func(bot)
+            name = sys.modules.get(setup_func.__module__).pluginname
+            if name in config:
+                plugin_config = config.pop(name)
+                setup_func(ts3bot=bot, **plugin_config)
+            else:
+                setup_func(bot)
         except:
             logger.exception("While setting up a module.")
 
@@ -105,5 +117,5 @@ def exit_all():
         exit_func()
 
 
-def reload():
-    exit_all()
+"""def reload():
+    exit_all()"""

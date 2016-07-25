@@ -1,7 +1,7 @@
 import ts3.TS3Connection
 import EventHandler
 import logging
-import textcommands
+import CommandHandler
 import Moduleloader
 import configparser
 
@@ -44,15 +44,18 @@ class Ts3Bot:
         return int(ret[0]["cid"])
 
     @staticmethod
-    def bot_from_config():
+    def bot_from_config(config):
         """
         Create a bot from the values parsed from config.ini
+        :param config: a configuration for the bot
+        :type config: dict
         :return: Created Bot
         :rtype: Ts3Bot
         """
         logger = logging.getLogger("bot")
-        config = Ts3Bot.parse_config(logger)
-        return Ts3Bot(logger=logger, **config)
+        plugins = config
+        config = config.pop('General')
+        return Ts3Bot(logger=logger, plugins=plugins, **config)
 
     @staticmethod
     def parse_config(logger):
@@ -60,7 +63,7 @@ class Ts3Bot:
         Parse the config file config.ini
         :param logger: Logger to log errors to.
         :return: Dictionary containing options necessary to create a new bot
-        :rtype: dict[str, str]
+        :rtype: dict[str, dict[str, str]]
         """
         config = configparser.ConfigParser()
         if len(config.read('config.ini')) == 0:
@@ -69,20 +72,10 @@ class Ts3Bot:
         if not config.has_section('General'):
             logger.error("Config file is missing general section!")
             exit()
-        config_dict = dict()
-        try:
-            config_dict['host'] = config.get('General', 'Host')
-            config_dict['port'] = config.get('General', 'Port')
-            config_dict['sid'] = config.get('General', 'ServerId')
-            config_dict['user'] = config.get('General', 'User')
-            config_dict['password'] = config.get('General', 'Password')
-            config_dict['default_channel'] = config.get('General', 'DefaultChannel')
-            config_dict['bot_name'] = config.get('General', 'BotName')
-        except configparser.NoOptionError as e:
-            logger.error("Config is missing an option.")
-            logger.error(e.message)
+        if not config.has_section('Plugins'):
+            logger.error("Config file is missing plugins section")
             exit()
-        return config_dict
+        return config._sections
 
     def connect(self):
         """
@@ -118,7 +111,7 @@ class Ts3Bot:
             self.logger.exception("Error on setting up client")
             self.ts3conn.quit()
             return
-        self.command_handler = textcommands.CommandHandler(self.ts3conn)
+        self.command_handler = CommandHandler.CommandHandler(self.ts3conn)
         self.event_handler = EventHandler.EventHandler(ts3conn=self.ts3conn, command_handler=self.command_handler)
         try:
             self.ts3conn.register_for_server_events(self.event_handler.on_event)
@@ -131,7 +124,7 @@ class Ts3Bot:
         if self.ts3conn is not None:
             self.ts3conn.quit()
 
-    def __init__(self, host, port, sid, user, password, default_channel, bot_name, logger):
+    def __init__(self, host, port, serverid, user, password, defaultchannel, botname, logger, plugins):
         """
         Create a new Ts3Bot.
         :param host: Host to connect to, can be a IP or a dns name
@@ -147,9 +140,9 @@ class Ts3Bot:
         self.port = port
         self.user = user
         self.password = password
-        self.sid = sid
-        self.default_channel = default_channel
-        self.bot_name = bot_name
+        self.sid = serverid
+        self.default_channel = defaultchannel
+        self.bot_name = botname
         self.event_handler = None
         self.command_handler = None
         self.channel = None
@@ -158,5 +151,5 @@ class Ts3Bot:
         self.connect()
         self.setup_bot()
         # Load modules
-        Moduleloader.load_modules(self)
+        Moduleloader.load_modules(self, plugins)
         self.ts3conn.start_keepalive_loop()
