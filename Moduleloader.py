@@ -2,6 +2,7 @@ import configparser
 import importlib
 import logging
 import sys
+import modules
 setups = []
 exits = []
 plugin_modules = {}
@@ -114,7 +115,10 @@ def exit_all():
     Exit all modules by calling their exit function.
     """
     for exit_func in exits:
-        exit_func()
+        try:
+            exit_func()
+        except:
+            logger.exception("While exiting a module.")
 
 
 """def reload():
