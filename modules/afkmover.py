@@ -47,9 +47,10 @@ def client_left(event):
 
 
 @setup
-def setup(ts3bot):
-    global bot
+def setup(ts3bot,channel="AFK"):
+    global bot,channel_name
     bot = ts3bot
+    channel_name = channel
     if autoStart:
         start_afkmover()
 
