@@ -36,7 +36,7 @@ def setup_quoter(ts3bot, db):
 
 @Moduleloader.command('quote',)
 def add_quote(sender, msg):
-    if len(msg) <= len('!quote'):
+    if len(msg) <= len('!quote '):
         Bot.send_msg_to_client(bot.ts3conn, sender, 'Please include a quote to save.')
     else:
         conn = sqlite3.connect(path)
@@ -61,4 +61,7 @@ def send_quote(evt):
     c.execute('SELECT * FROM Quotes ORDER BY RANDOM() LIMIT 1')
     quote = c.fetchone()
     Bot.send_msg_to_client(bot.ts3conn, evt.client_id, quote[1])
+    c.execute('UPDATE Quotes SET shown=? WHERE id=?', (quote[4] + 1, quote[0]))
+    conn.commit()
+    conn.close()
 

@@ -3,7 +3,7 @@ import Moduleloader
 import Bot
 import logging
 from ts3.TS3Connection import TS3QueryException
-__version__ = "0.3"
+__version__ = "0.4"
 bot = None
 logger = logging.getLogger("bot")
 
