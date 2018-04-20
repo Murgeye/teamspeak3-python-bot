@@ -3,7 +3,7 @@ import Moduleloader
 import Bot
 import logging
 from ts3.TS3Connection import TS3QueryException
-__version__ = "0.3"
+__version__ = "0.4"
 bot = None
 logger = logging.getLogger("bot")
 
@@ -39,7 +39,17 @@ def kickme(sender, msg):
     ts3conn.clientkick(sender, 5, "Whatever.")
 
 
-@command('multimove',)
+@command('mtest',)
+def mtest(sender, msg):
+    print("MTES")
+    channels = msg[len("!mtest "):].split()
+    print(channels)
+    ts3conn = bot.ts3conn
+    print(ts3conn.channelfind(channels[0]))
+ 
+
+
+@command('multimove', 'mm')
 @group('Server Admin', 'Moderator')
 def multi_move(sender, msg):
     """
@@ -47,7 +57,7 @@ def multi_move(sender, msg):
     :param sender: Client id of sender that sent the command.
     :param msg: Sent command.
     """
-    channels = msg[len("!multimove "):].split()
+    channels = msg.split()[1:]
     source_name = ""
     dest_name = ""
     source = None
@@ -73,33 +83,41 @@ def multi_move(sender, msg):
         Bot.send_msg_to_client(ts3conn, sender, "Destination channel not found")
         return
     try:
-        channel_candidates = ts3conn.channelfind_by_name(source_name)
-        if len(channel_candidates) > 0:
+        channel_matches = ts3conn.channelfind(source_name)
+        channel_candidates = [chan for chan in channel_matches if chan.get("channel_name", '-1').startswith(source_name)]
+        if len(channel_candidates) == 1:
             source = channel_candidates[0].get("cid", '-1')
-        if source is None or source == "-1":
-            Bot.send_msg_to_client(ts3conn, sender, "Source channel not found")
-            return
+        elif len(channel_candidates) == 0:
+            Bot.send_msg_to_client(ts3conn, sender, "Source channel could not be found.")
+        else:
+            channels = [chan.get('channel_name') for chan in channel_candidates]
+            Bot.send_msg_to_client(ts3conn, sender, "Multiple source channels found: " + ", ".join(channels))
     except TS3QueryException:
         Bot.send_msg_to_client(ts3conn, sender, "Source channel not found")
     try:
-        channel_candidates = ts3conn.channelfind_by_name(dest_name)
-        if len(channel_candidates) > 0:
+        channel_matches = ts3conn.channelfind(dest_name)
+        channel_candidates = [chan for chan in channel_matches if chan.get("channel_name",
+            '-1').startswith(dest_name)]
+        if len(channel_candidates) == 1:
             dest = channel_candidates[0].get("cid", '-1')
-        if dest is None or dest == "-1":
-            Bot.send_msg_to_client(ts3conn, sender, "Destination channel not found")
-            return
+        elif len(channel_candidates) == 0:
+            Bot.send_msg_to_client(ts3conn, sender, "Destination channel could not be found.")
+        else:
+            channels = [chan.get('channel_name') for chan in channel_candidates]
+            Bot.send_msg_to_client(ts3conn, sender, "Multiple destination channels found: " + ", ".join(channels))
     except TS3QueryException:
         Bot.send_msg_to_client(ts3conn, sender, "Destination channel not found")
-    try:
-        client_list = ts3conn.clientlist()
-        client_list = [client for client in client_list if client.get("cid", '-1') == source]
-        for client in client_list:
-            clid = client.get("clid", '-1')
-            logger.info("Found client in channel: " + client.get("client_nickname", "") + " id = " + clid)
-            ts3conn.clientmove(int(dest), int(clid))
-    except TS3QueryException as e:
-        Bot.send_msg_to_client(ts3conn, sender, "Error moving clients: id = " +
-                str(e.id) + e.message)
+    if source != None and dest != None:
+        try:
+            client_list = ts3conn.clientlist()
+            client_list = [client for client in client_list if client.get("cid", '-1') == source]
+            for client in client_list:
+                clid = client.get("clid", '-1')
+                logger.info("Found client in channel: " + client.get("client_nickname", "") + " id = " + clid)
+                ts3conn.clientmove(int(dest), int(clid))
+        except TS3QueryException as e:
+            Bot.send_msg_to_client(ts3conn, sender, "Error moving clients: id = " +
+                    str(e.id) + e.message)
 
 
 @command('version',)
