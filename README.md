@@ -24,6 +24,7 @@ https://github.com/Murgeye/ts3API.
 # Getting the bot
 1. Clone this repository
 2. Update the ts3API submodule by running `git submodule update --init --recursive` in the directory created in 1.
+3. Install dependencies for the api by running `pip3 install -r ts3/requirements.txt`.
 
 # Configuration
 You need a configuration file called config.ini in the bots root directory.
