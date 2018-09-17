@@ -168,6 +168,11 @@ about the events look at the ts3.Events module.
 Any error messages should be in the file bot.log in the root directory of the bot.
 If this file doesn't exist the file permissions of the root directory are probably wrong.
 
+## The bot always loses connection after some time.
+Your `query_timeout`parameter in the `ts3server.ini` file is probably very low (<10 seconds).
+Please set it to a higher value or 0 (this disables the query timeout). If this does not fix
+it, feel free to open an issue, there might still be some unresolved problems here.
+
 ## The Bot gets banned from our server!
 You need to whitelist the ip the bot is connecting from in the Teamspeak configuration file. To do this
 change the file `query-ip-whitelist.txt` in the server directory and add a new line with your ip.
@@ -175,3 +180,7 @@ change the file `query-ip-whitelist.txt` in the server directory and add a new l
 ## Something doesn't work
 The bot writes quite some logs in the root directory. Check those for errors and open
 an issue if the issue remains.
+
+## The bot stopped working after I updated my server!
+Update the bot! Server version 3.4.0 changed the way the query timeout was handled.
+Versions of the bot older then 17. September 2018 will not work correctly.
