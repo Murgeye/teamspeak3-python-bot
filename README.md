@@ -6,6 +6,7 @@ https://github.com/Murgeye/ts3API.
 - [Getting the bot](#getting-the-bot)
 - [Configuration](#configuration)
 - [Running the bot](#running-the-bot)
+	- [Permissions](#permissions)
 - [Standard Plugins](#standard-plugins)
 	- [Utils](#utils)
 	- [AfkMover](#afkmover)
@@ -69,6 +70,15 @@ cd /path/to/bot
 sleep 60
 ./main.py &> output.log
 ```
+
+## Permissions
+If you want your users to be able to see and message the bot, you will have to change
+some server permission -- either for specific clients or for server groups. These are
+the `i_client_serverquery_view_power` (set it to 100 if you want a client/group to be 
+able to see the bot) and the `i_client_private_textmessage_power` (set it to 100 if you
+want a client/group to be able to write textmessages (and therefore commands) to the bot).
+
+Alternatively, you could modify the needed power for both permissions for the serverquery.
 
 # Standard Plugins
 All existing functionality is based on plugins.
