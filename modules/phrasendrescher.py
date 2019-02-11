@@ -4,6 +4,7 @@ import Moduleloader
 import ts3.Events as Events
 import sqlite3
 import sys
+import os
 
 bot = None
 path = None
@@ -23,8 +24,12 @@ def setup_quoter(ts3bot, db):
     for g in ts3conn.servergrouplist():
         if g.get('name', '') in ["Guest", "Admin Server Query"]:
             dont_send.append(int(g.get('sgid', 0)))
-    path = __file__
-    path = path[0:path.rfind('/')+1] + db
+    if not os.path.isabs(db):
+        path = os.path.dirname(__file__)
+        path = os.path.join(path, db)
+    else:
+        path = db
+    path = os.path.abspath(path)
     # setup and connect to database
     conn = sqlite3.connect(path)
     curs = conn.cursor()
