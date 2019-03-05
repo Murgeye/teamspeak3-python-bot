@@ -4,6 +4,7 @@ import logging
 import CommandHandler
 import Moduleloader
 import configparser
+from distutils.util import strtobool
 
 
 def stop_conn(ts3conn):
@@ -83,8 +84,12 @@ class Ts3Bot:
         :return:
         """
         try:
-            self.ts3conn = ts3.TS3Connection.TS3Connection(self.host, self.port)
-            self.ts3conn.login(self.user, self.password)
+            self.ts3conn = ts3.TS3Connection.TS3Connection(self.host, self.port,
+                                                           use_ssh=self.is_ssh, username=self.user,
+                                                           password=self.password, accept_all_keys=self.accept_all_keys,
+                                                           host_key_file=self.host_key_file,
+                                                           use_system_hosts=self.use_system_hosts)
+            # self.ts3conn.login(self.user, self.password)
         except ts3.TS3Connection.TS3QueryException:
             self.logger.error("Error while connecting, IP propably not whitelisted or Login data wrong!")
             exit()
@@ -124,10 +129,11 @@ class Ts3Bot:
         if self.ts3conn is not None:
             self.ts3conn.quit()
 
-    def __init__(self, host, port, serverid, user, password, defaultchannel, botname, logger, plugins):
+    def __init__(self, host, port, serverid, user, password, defaultchannel, botname, logger, plugins, ssh="False",
+                 acceptallsshkeys="False", sshhostkeyfile=None, sshloadsystemhostkeys="False", *_, **__):
         """
         Create a new Ts3Bot.
-        :param host: Host to connect to, can be a IP or a dns name
+        :param host: Host to connect to, can be a IP or a host name
         :param port: Port to connect to
         :param sid: Virtual Server id to use
         :param user: Server Query Admin Login Name
@@ -148,6 +154,12 @@ class Ts3Bot:
         self.channel = None
         self.logger = logger
         self.ts3conn = None
+        self.is_ssh = bool(strtobool(ssh))
+        # Strtobool returns 1/0 ...
+        self.accept_all_keys = bool(strtobool(acceptallsshkeys))
+        self.host_key_file = sshhostkeyfile
+        self.use_system_hosts = bool(strtobool(sshloadsystemhostkeys))
+
         self.connect()
         self.setup_bot()
         # Load modules

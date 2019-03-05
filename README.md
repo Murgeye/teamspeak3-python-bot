@@ -7,6 +7,7 @@ https://github.com/Murgeye/ts3API.
 - [Configuration](#configuration)
 - [Running the bot](#running-the-bot)
 	- [Permissions](#permissions)
+	- [Use SSH](#use-ssh)
 - [Standard Plugins](#standard-plugins)
 	- [Utils](#utils)
 	- [AfkMover](#afkmover)
@@ -26,6 +27,7 @@ https://github.com/Murgeye/ts3API.
 1. Clone this repository
 2. Update the ts3API submodule by running `git submodule update --init --recursive` in the directory created in 1.
 3. Install dependencies for the api by running `pip3 install -r ts3/requirements.txt`.
+4. (Optional) Install optional dependencies for ssh by running `pip3 install -r ts3/optional_requirements.txt`.
 
 # Configuration
 You need a configuration file called config.ini in the bots root directory.
@@ -48,6 +50,14 @@ DefaultChannel: Botchannel
 User: serveradmin
 #ServerQueryPassword
 Password: password
+# Use SSH connection
+SSH: False
+# Accept all SSH host keys (do not leave this enabled)
+AcceptAllSSHKeys = True
+# File to load and save host keys to
+SSHHostKeyFile = ssh_hostkeys
+# Load system wide host keys
+SSHLoadSystemHostKeys = False
 
 #Configuration for Plugins, each line corresponds to 
 #a plugin in the modules folder
@@ -79,6 +89,22 @@ able to see the bot) and the `i_client_private_textmessage_power` (set it to 100
 want a client/group to be able to write textmessages (and therefore commands) to the bot).
 
 Alternatively, you could modify the needed power for both permissions for the serverquery.
+
+## Using SSH
+Since server version 3.3 TeamSpeak supports encrypted server query clients. To achieve this
+the connection is wrapped inside a SSH connection. As SSH needs a way to check the host RSA
+key, four config options were added:
+* SSH: `[y/n/True/False/0/1]` Enables SSH connections (do not forget to enable it on the server
+and change the port as well)
+* AcceptAllSSHKeys: `[y/n/True/False/0/1]` Accept all RSA host keys
+* SSHHostKeyFile: File to save/load host keys to/from
+* SSHLoadSystemHostKeys: `[y/n/True/False/0/1]` Load system wide host keys
+
+To add your host key the following workflow is easiest:
+1. Activate AcceptAllHostKeys and set a SSHHostKeyFile
+2. Connect to the server
+3. The servers host key is automatically added to the file
+4. Deactivate AcceptAllHostKeys
 
 # Standard Plugins
 All existing functionality is based on plugins.
