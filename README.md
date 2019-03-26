@@ -7,7 +7,7 @@ https://github.com/Murgeye/ts3API.
 - [Configuration](#configuration)
 - [Running the bot](#running-the-bot)
 	- [Permissions](#permissions)
-	- [Use SSH](#use-ssh)
+	- [Use SSH](#using-ssh)
 - [Standard Plugins](#standard-plugins)
 	- [Utils](#utils)
 	- [AfkMover](#afkmover)
