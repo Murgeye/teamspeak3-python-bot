@@ -1,10 +1,13 @@
-import ts3.TS3Connection
-import EventHandler
 import logging
+from distutils.util import strtobool
+import configparser
+
+import ts3.TS3Connection
+from ts3.TS3Connection import TS3QueryException
+from ts3.TS3QueryExceptionType import TS3QueryExceptionType
+import EventHandler
 import CommandHandler
 import Moduleloader
-import configparser
-from distutils.util import strtobool
 
 
 def stop_conn(ts3conn):
@@ -91,7 +94,7 @@ class Ts3Bot:
                                                            use_system_hosts=self.use_system_hosts)
             # self.ts3conn.login(self.user, self.password)
         except ts3.TS3Connection.TS3QueryException:
-            self.logger.error("Error while connecting, IP propably not whitelisted or Login data wrong!")
+            self.logger.exception("Error while connecting, IP propably not whitelisted or Login data wrong!")
             exit()
 
     def setup_bot(self):
@@ -109,10 +112,22 @@ class Ts3Bot:
             self.logger.exception("Error on use SID")
             exit()
         try:
-            self.channel = self.get_channel_id(self.default_channel)
-            self.ts3conn.clientupdate(["client_nickname=" + self.bot_name])
-            self.ts3conn.clientmove(self.channel, int(self.ts3conn.whoami()["client_id"]))
-        except ts3.TS3Connection.TS3QueryException:
+            try:
+                self.ts3conn.clientupdate(["client_nickname=" + self.bot_name])
+            except TS3QueryException as e:
+                if e.type == TS3QueryExceptionType.CLIENT_NICKNAME_INUSE:
+                    self.logger.info("The choosen bot nickname is already in use, keeping the default nickname")
+                else:
+                    raise e
+            try:
+                self.channel = self.get_channel_id(self.default_channel)
+                self.ts3conn.clientmove(self.channel, int(self.ts3conn.whoami()["client_id"]))
+            except TS3QueryException as e:
+                if e.type == TS3QueryExceptionType.CHANNEL_ALREADY_IN:
+                    self.logger.info("The bot is already in the configured default channel")
+                else:
+                    raise e
+        except TS3QueryException:
             self.logger.exception("Error on setting up client")
             self.ts3conn.quit()
             return
