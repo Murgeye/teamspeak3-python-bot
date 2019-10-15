@@ -72,3 +72,6 @@ class ClientInfo:
             if re.search(pattern=pattern, string=g) is not None:
                 return True
         return False
+
+    def __getattr__(self, item):
+        return self.__getattribute__("_"+item)
