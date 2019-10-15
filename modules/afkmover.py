@@ -6,6 +6,7 @@ from Moduleloader import *
 import ts3.Events as Events
 import threading
 import ts3
+from ts3.utilities import TS3Exception
 afkMover = None
 afkStopper = threading.Event()
 bot = None
@@ -107,7 +108,7 @@ class AfkMover(Thread):
         try:
             self.afk_list = self.ts3conn.clientlist(["away"])
             AfkMover.logger.debug("Awaylist: " + str(self.afk_list))
-        except ts3.TS3Exception:
+        except TS3Exception:
             AfkMover.logger.exception("Error getting away list!")
             self.afk_list = list()
 
@@ -150,7 +151,7 @@ class AfkMover(Thread):
         """
         try:
             channel = self.ts3conn.channelfind(name)[0].get("cid", '-1')
-        except ts3.TS3Exception:
+        except TS3Exception:
             AfkMover.logger.exception("Error getting afk channel")
             raise
         return channel
@@ -166,7 +167,7 @@ class AfkMover(Thread):
             AfkMover.logger.debug("Client: " + str(client))
             try:
                 self.ts3conn.clientmove(self.afk_channel, int(client.get("clid", '-1')))
-            except ts3.TS3Exception:
+            except TS3Exception:
                 AfkMover.logger.exception("Error moving client! Clid=" + str(client.get("clid", '-1')))
             self.client_channels[client.get("clid", '-1')] = client.get("cid", '0')
             AfkMover.logger.debug("Moved List after move: " + str(self.client_channels))
