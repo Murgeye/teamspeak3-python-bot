@@ -17,3 +17,4 @@ config.ini
 .idea/
 modules/quotes.db
 tags
+test.py
