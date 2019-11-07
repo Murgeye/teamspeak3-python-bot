@@ -37,7 +37,7 @@ class EventHandler(object):
             logging.debug(type(parsed_event))
         elif type(parsed_event) is Events.ClientEnteredEvent:
             logging.debug(type(parsed_event))
-        elif type(parsed_event) is Events.ClientLeftEvent:
+        elif isinstance(parsed_event, Events.ClientLeftEvent):
             logging.debug(type(parsed_event))
         elif type(parsed_event) is Events.ClientMovedEvent:
             logging.debug(type(parsed_event))
@@ -56,7 +56,9 @@ class EventHandler(object):
         :return: List of observers.
         :rtype: list[function]
         """
-        obs = self.observers.get(type(evt), list())
+        obs = set()
+        for t in type(evt).mro():
+            obs.update(self.observers.get(t, set()))
         return obs
 
     def add_observer(self, obs, evt_type):
@@ -66,9 +68,9 @@ class EventHandler(object):
         :param evt_type: Event type to observe.
         :type evt_type: TS3Event
         """
-        obs_list = self.observers.get(evt_type, list())
-        obs_list.append(obs)
-        self.observers[evt_type] = obs_list
+        obs_set = self.observers.get(evt_type, set())
+        obs_set.add(obs)
+        self.observers[evt_type] = obs_set
 
     def remove_observer(self, obs, evt_type):
         """
@@ -76,7 +78,7 @@ class EventHandler(object):
         :param obs: Observer to remove.
         :param evt_type: Event type to remove the observer from.
         """
-        self.observers.get(evt_type, list()).remove(obs)
+        self.observers.get(evt_type, set()).discard(obs)
 
     def remove_observer_from_all(self, obs):
         """
