@@ -148,3 +148,8 @@ def restart_bot(sender, msg):
     logger.warning("Bot was quit!")
     import main
     main.restart_program()
+
+@command('commandlist',)
+@group('Server Admin', 'Moderator',)
+def get_command_list(sender, msg):
+    Bot.send_msg_to_client(bot.ts3conn, sender, list(bot.command_handler.handlers.keys()))

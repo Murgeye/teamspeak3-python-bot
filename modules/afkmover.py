@@ -6,6 +6,7 @@ from Moduleloader import *
 import ts3.Events as Events
 import threading
 import ts3
+import Bot
 from ts3.utilities import TS3Exception
 afkMover = None
 afkStopper = threading.Event()
@@ -34,6 +35,14 @@ def stop_afkmover(sender=None, msg=None):
     global afkMover
     afkStopper.set()
     afkMover = None
+
+@command('afkgetclientchannellist')
+def get_afk_list(sender=None, msg=None):
+    """
+    Get afkmover saved client channels. Mainly for debugging.
+    """
+    if afkMover is not None:
+        Bot.send_msg_to_client(bot.ts3conn, sender, str(afkMover.client_channels))
 
 
 @event(Events.ClientLeftEvent,)
