@@ -18,3 +18,4 @@ config.ini
 modules/quotes.db
 tags
 test.py
+tests.py
