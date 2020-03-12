@@ -78,6 +78,7 @@ class AfkMover(Thread):
     AfkMover class. Moves clients set to afk another channel.
     """
     logger = logging.getLogger("afk")
+    logger.propagate = 0
     logger.setLevel(logging.WARNING)
     file_handler = logging.FileHandler("afk.log", mode='a+')
     formatter = logging.Formatter('AFK Logger %(asctime)s %(message)s')
@@ -108,7 +109,10 @@ class AfkMover(Thread):
         Thread run method. Starts the mover.
         """
         AfkMover.logger.info("AFKMove Thread started")
-        self.auto_move_all()
+        try:
+            self.auto_move_all()
+        except:
+            self.logger.exception("Exception occured in run:")
 
     def update_afk_list(self):
         """

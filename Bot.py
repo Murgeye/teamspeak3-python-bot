@@ -91,7 +91,7 @@ class Ts3Bot:
                                                            use_ssh=self.is_ssh, username=self.user,
                                                            password=self.password, accept_all_keys=self.accept_all_keys,
                                                            host_key_file=self.host_key_file,
-                                                           use_system_hosts=self.use_system_hosts)
+                                                           use_system_hosts=self.use_system_hosts, sshtimeout=self.sshtimeout, sshtimeoutlimit=self.sshtimeoutlimit)
             # self.ts3conn.login(self.user, self.password)
         except ts3.TS3Connection.TS3QueryException:
             self.logger.exception("Error while connecting, IP propably not whitelisted or Login data wrong!")
@@ -145,7 +145,7 @@ class Ts3Bot:
             self.ts3conn.quit()
 
     def __init__(self, host, port, serverid, user, password, defaultchannel, botname, logger, plugins, ssh="False",
-                 acceptallsshkeys="False", sshhostkeyfile=None, sshloadsystemhostkeys="False", *_, **__):
+                 acceptallsshkeys="False", sshhostkeyfile=None, sshloadsystemhostkeys="False", sshtimeout=None, sshtimeoutlimit=3, *_, **__):
         """
         Create a new Ts3Bot.
         :param host: Host to connect to, can be a IP or a host name
@@ -174,6 +174,8 @@ class Ts3Bot:
         self.accept_all_keys = bool(strtobool(acceptallsshkeys))
         self.host_key_file = sshhostkeyfile
         self.use_system_hosts = bool(strtobool(sshloadsystemhostkeys))
+        self.sshtimeout = sshtimeout
+        self.sshtimeoutlimit = sshtimeoutlimit
 
         self.connect()
         self.setup_bot()

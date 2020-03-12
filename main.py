@@ -4,6 +4,7 @@ import sys
 import logging
 import threading
 import os
+from ts3.utilities import TS3ConnectionClosedException
 
 logger = None
 bot = None
@@ -40,7 +41,9 @@ def main():
     def run(*args, **kwargs):
         try:
             run_old(*args, **kwargs)
-        except (KeyboardInterrupt, SystemExit):
+        except (KeyboardInterrupt, SystemExit, TS3ConnectionClosedException):
+            # This is a very ungraceful exit!
+            os._exit(-1)
             raise
         except:
             sys.excepthook(*sys.exc_info())
