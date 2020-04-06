@@ -204,6 +204,22 @@ about the events look at the ts3.Events module.
 Any error messages should be in the file bot.log in the root directory of the bot.
 If this file doesn't exist the file permissions of the root directory are probably wrong.
 
+## The bot connects but I cannot see it.
+First, make sure that you have set up the server permissions correctly as mentioned in the
+[Permissions](#permissions) section. In addition to this, you might have to enable the
+"Show ServerQuery Clients" setting in your TeamSpeak client under Bookmarks->Manage Bookmarks
+and reconnect to the server. You might have to enable advanced settings for this.
+
+![Show Serverquery Setting](show_serverquery.png)
+
+If you still cannot see the bot after reconnecting, check if the bot is really still connected
+by checking the logs of both the bot and the server. If you cannot find the problem, feel free
+to open a new issue.
+
+## The bot does not react to commands.
+The bot can only handle commands via direct message. If you are sending a direct message and the bot still
+does not react, try setting the permissions as mentioned in the [Permissions](#permissions) section.
+
 ## The bot always loses connection after some time.
 Your `query_timeout`parameter in the `ts3server.ini` file is probably very low (<10 seconds).
 Please set it to a higher value or 0 (this disables the query timeout). If this does not fix
