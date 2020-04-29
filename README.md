@@ -90,6 +90,11 @@ want a client/group to be able to write textmessages (and therefore commands) to
 
 Alternatively, you could modify the needed power for both permissions for the serverquery.
 
+To see these permission settings you have to enable advanced permissions under
+`Tools->Options` in your client.
+
+![Show Advanced Permissions](advanced_permissions.png)
+
 ## Using SSH
 Since server version 3.3 TeamSpeak supports encrypted server query clients. To achieve this
 the connection is wrapped inside a SSH connection. As SSH needs a way to check the host RSA
