@@ -1,3 +1,4 @@
+import os
 import logging
 from distutils.util import strtobool
 import configparser
@@ -95,7 +96,9 @@ class Ts3Bot:
             # self.ts3conn.login(self.user, self.password)
         except ts3.TS3Connection.TS3QueryException:
             self.logger.exception("Error while connecting, IP propably not whitelisted or Login data wrong!")
-            exit()
+            # This is a very ungraceful exit!
+            os._exit(-1)
+            raise
 
     def setup_bot(self):
         """
