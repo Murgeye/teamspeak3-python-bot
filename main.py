@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-import Bot
-import sys
 import logging
-import threading
 import os
-from ts3.utilities import TS3ConnectionClosedException
+import sys
+import threading
+
+from ts3API.utilities import TS3ConnectionClosedException
+
+import Bot
 
 logger = None
 bot = None

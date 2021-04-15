@@ -1,13 +1,14 @@
 """Quote module for the Teamspeak 3 Bot. Sends quotes to people joining the server."""
+import os
+import sqlite3
+
+import ts3API.Events as Events
+
 import Bot
 import Moduleloader
-import ts3.Events as Events
-import sqlite3
-import sys
-import os
 
-bot = None
-path = None
+bot = None  # type: Bot.Ts3Bot
+path = None  # type: str
 # Server groups who should not receiver quotes upon joining the server
 dont_send = []
 

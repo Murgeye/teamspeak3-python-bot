@@ -1,13 +1,14 @@
-import os
-import logging
-from distutils.util import strtobool
 import configparser
+import logging
+import os
+from distutils.util import strtobool
 
-import ts3.TS3Connection
-from ts3.TS3Connection import TS3QueryException
-from ts3.TS3QueryExceptionType import TS3QueryExceptionType
-import EventHandler
+import ts3API.TS3Connection
+from ts3API.TS3Connection import TS3QueryException
+from ts3API.TS3QueryExceptionType import TS3QueryExceptionType
+
 import CommandHandler
+import EventHandler
 import Moduleloader
 
 
@@ -19,7 +20,7 @@ def send_msg_to_client(ts3conn, clid, msg):
     """
     Convenience method for sending a message to a client without having a bot object.
     :param ts3conn: TS3Connection to send message on.
-    :type ts3conn: ts3.TS3Connection
+    :type ts3conn: ts3API.TS3Connection
     :param clid: Client id of the client to send too.
     :type clid: int
     :param msg: Message to send
@@ -28,7 +29,7 @@ def send_msg_to_client(ts3conn, clid, msg):
     """
     try:
         ts3conn.sendtextmessage(targetmode=1, target=clid, msg=msg)
-    except ts3.TS3Connection.TS3QueryException:
+    except ts3API.TS3Connection.TS3QueryException:
         logger = logging.getLogger("bot")
         logger.exception("Error sending a message to clid " + str(clid))
 
@@ -88,13 +89,13 @@ class Ts3Bot:
         :return:
         """
         try:
-            self.ts3conn = ts3.TS3Connection.TS3Connection(self.host, self.port,
-                                                           use_ssh=self.is_ssh, username=self.user,
-                                                           password=self.password, accept_all_keys=self.accept_all_keys,
-                                                           host_key_file=self.host_key_file,
-                                                           use_system_hosts=self.use_system_hosts, sshtimeout=self.sshtimeout, sshtimeoutlimit=self.sshtimeoutlimit)
+            self.ts3conn = ts3API.TS3Connection.TS3Connection(self.host, self.port,
+                                                              use_ssh=self.is_ssh, username=self.user,
+                                                              password=self.password, accept_all_keys=self.accept_all_keys,
+                                                              host_key_file=self.host_key_file,
+                                                              use_system_hosts=self.use_system_hosts, sshtimeout=self.sshtimeout, sshtimeoutlimit=self.sshtimeoutlimit)
             # self.ts3conn.login(self.user, self.password)
-        except ts3.TS3Connection.TS3QueryException:
+        except ts3API.TS3Connection.TS3QueryException:
             self.logger.exception("Error while connecting, IP propably not whitelisted or Login data wrong!")
             # This is a very ungraceful exit!
             os._exit(-1)
@@ -111,7 +112,7 @@ class Ts3Bot:
         """
         try:
             self.ts3conn.use(sid=self.sid)
-        except ts3.TS3Connection.TS3QueryException:
+        except ts3API.TS3Connection.TS3QueryException:
             self.logger.exception("Error on use SID")
             exit()
         try:
@@ -139,7 +140,7 @@ class Ts3Bot:
         try:
             self.ts3conn.register_for_server_events(self.event_handler.on_event)
             self.ts3conn.register_for_private_messages(self.event_handler.on_event)
-        except ts3.TS3Connection.TS3QueryException:
+        except ts3API.TS3Connection.TS3QueryException:
             self.logger.exception("Error on registering for events.")
             exit()
 

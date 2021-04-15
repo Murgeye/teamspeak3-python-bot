@@ -1,8 +1,11 @@
-from Moduleloader import *
-import Moduleloader
-import Bot
 import logging
-from ts3.TS3Connection import TS3QueryException
+
+from ts3API.TS3Connection import TS3QueryException
+
+import Bot
+import Moduleloader
+from Moduleloader import *
+
 __version__ = "0.4"
 bot = None
 logger = logging.getLogger("bot")

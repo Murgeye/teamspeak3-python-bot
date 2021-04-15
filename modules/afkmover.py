@@ -1,13 +1,14 @@
 """AfkMover Module for the Teamspeak3 Bot."""
-from threading import Thread
-import sys
-import traceback
-from Moduleloader import *
-import ts3.Events as Events
 import threading
-import ts3
+import traceback
+from threading import Thread
+
+import ts3API.Events as Events
+from ts3API.utilities import TS3Exception
+
 import Bot
-from ts3.utilities import TS3Exception
+from Moduleloader import *
+
 afkMover = None
 afkStopper = threading.Event()
 bot = None

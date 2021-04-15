@@ -1,7 +1,8 @@
 """EventHandler for the Teamspeak3 Bot."""
-import ts3.Events as Events
 import logging
 import threading
+
+import ts3API.Events as Events
 
 
 class EventHandler(object):

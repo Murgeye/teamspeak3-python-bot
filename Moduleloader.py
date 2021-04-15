@@ -1,13 +1,11 @@
-import configparser
 import importlib
 import logging
 import sys
-import modules
 setups = []
 exits = []
 plugin_modules = {}
-event_handler = None
-command_handler = None
+event_handler = None  # type: EventHandler
+command_handler = None  # type: CommandHandler
 logger = logging.getLogger("moduleloader")
 logger.setLevel(logging.INFO)
 file_handler = logging.FileHandler("moduleloader.log", mode='a+')
