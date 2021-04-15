@@ -1,1 +1,1 @@
-ts3API
+ts3API[ssh]
