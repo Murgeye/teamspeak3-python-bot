@@ -24,7 +24,7 @@ class EventHandler(object):
         self.observers = {}
         self.add_observer(self.command_handler.inform, Events.TextMessageEvent)
 
-    def on_event(self, sender, **kw):
+    def on_event(self, _sender, **kw):
         """
         Called upon a new event. Logs the event and informs all listeners.
         """
@@ -89,6 +89,8 @@ class EventHandler(object):
         for evt_type in self.observers.keys():
             self.remove_observer(obs, evt_type)
 
+    # We really want to catch all exception here, to prevent one observer from crashing the bot
+    # noinspection PyBroadException
     def inform_all(self, evt):
         """
         Inform all observers registered to the event type of an event.
@@ -97,6 +99,7 @@ class EventHandler(object):
         for o in self.get_obs_for_event(evt):
             try:
                 threading.Thread(target=o(evt)).start()
-            except Exception:
-                EventHandler.logger.exception("Exception while informing " + str(o) + " of Event of type " +
-                                              str(type(evt)) + "\nOriginal data:" + str(evt.data))
+            except BaseException:
+                EventHandler.logger.exception("Exception while informing %s of Event of type "
+                                              "%s\nOriginal data: %s", str(o), str(type(evt)),
+                                              str(evt.data))

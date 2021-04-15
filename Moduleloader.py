@@ -1,11 +1,15 @@
 import importlib
 import logging
 import sys
+
+from CommandHandler import CommandHandler
+from EventHandler import EventHandler
+
 setups = []
 exits = []
 plugin_modules = {}
-event_handler = None  # type: EventHandler
-command_handler = None  # type: CommandHandler
+event_handler: 'EventHandler'
+command_handler: 'CommandHandler'
 logger = logging.getLogger("moduleloader")
 logger.setLevel(logging.INFO)
 file_handler = logging.FileHandler("moduleloader.log", mode='a+')
@@ -16,10 +20,14 @@ logger.info("Configured Moduleloader logger")
 logger.propagate = 0
 
 
+# We really really want to catch all Exception here to prevent a bad module crashing the
+# whole Bot
+# noinspection PyBroadException,PyPep8
 def load_modules(bot, config):
     """
     Load modules specified in the Plugins section of config.ini.
     :param bot: Bot to pass to the setup function of the modules
+    :param config: Main bot config with plugins section
     """
     global event_handler, command_handler
     plugins = config.pop('Plugins')
@@ -33,10 +41,11 @@ def load_modules(bot, config):
 
     for plugin in plugins.items():
         try:
-            plugin_modules[plugin[0]] = importlib.import_module("modules."+plugin[1], package="modules")
+            plugin_modules[plugin[0]] = importlib.import_module("modules."+plugin[1],
+                                                                package="modules")
             plugin_modules[plugin[0]].pluginname = plugin[0]
             logger.info("Loaded module " + plugin[0])
-        except:
+        except BaseException:
             logger.exception("While loading plugin " + str(plugin[0]) + " from modules."+plugin[1])
     # Call all registered setup functions
     for setup_func in setups:
@@ -47,7 +56,7 @@ def load_modules(bot, config):
                 setup_func(ts3bot=bot, **plugin_config)
             else:
                 setup_func(bot)
-        except:
+        except BaseException:
             logger.exception("While setting up a module.")
 
 
@@ -63,9 +72,10 @@ def setup(function):
 
 def event(*event_types):
     """
-    Decorator to register a function as an eventlistener for the event types specified in event_types.
+    Decorator to register a function as an eventlistener for the event types specified in
+    event_types.
     :param event_types: Event types to listen to
-    :type event_types: list[TS3Event]
+    :type event_types: TS3Event
     """
     def register_observer(function):
         for event_type in event_types:
@@ -78,7 +88,7 @@ def command(*command_list):
     """
     Decorator to register a function as a handler for text commands.
     :param command_list: Commands to handle.
-    :type command_list: list[str]
+    :type command_list: str
     :return:
     """
     def register_command(function):
@@ -91,8 +101,9 @@ def command(*command_list):
 def group(*groups):
     """
     Decorator to specify which groups are allowed to use the commands specified for this function.
-    :param groups: List of server groups that are allowed to use the commands associated with this function.
-    :type groups: list[str]
+    :param groups: List of server groups that are allowed to use the commands associated with this
+    function.
+    :type groups: str
     """
     def save_allowed_groups(func):
         func.allowed_groups = groups
@@ -108,6 +119,9 @@ def exit(function):
     exits.append(function)
 
 
+# We really really want to catch all Exception here to prevent a bad module preventing everything
+# else from exiting
+# noinspection PyBroadException
 def exit_all():
     """
     Exit all modules by calling their exit function.
@@ -115,7 +129,7 @@ def exit_all():
     for exit_func in exits:
         try:
             exit_func()
-        except:
+        except BaseException:
             logger.exception("While exiting a module.")
 
 
