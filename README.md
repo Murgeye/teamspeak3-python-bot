@@ -194,7 +194,7 @@ you don't use `@group` the default will be to allow access to 'Server Admin' and
 ## Listening for events
 You can register a function in your plugin to listen for specific server events by using the `@event` decorator.
 ```
-import ts3API.Events as Events
+import ts3.Events as Events
 # ...
 @event(Events.ClientEnteredEvent,)
 def inform_enter(event):
@@ -202,7 +202,7 @@ def inform_enter(event):
 ```
 This code snippet registers the `inform_enter` function as a listener for the `Events.ClientEnteredEvent`. You
 can register a function for multiple events by passing a list of event types to the decorator. To learn more
-about the events look at the ts3API.Events module.
+about the events look at the ts3.Events module.
 
 # Troubleshooting
 ## The bot just crashes without any message

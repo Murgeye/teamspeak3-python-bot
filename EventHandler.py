@@ -103,3 +103,25 @@ class EventHandler(object):
                 EventHandler.logger.exception("Exception while informing %s of Event of type "
                                               "%s\nOriginal data: %s", str(o), str(type(evt)),
                                               str(evt.data))
+
+
+
+
+    def add_channel_observer(self, obs, channel, evt_type):
+        """
+        Add an observer for an event type.
+        :param obs: Function to call upon a new event of type evt_type.
+        :param evt_type: Event type to observe.
+        :type evt_type: TS3Event
+        """
+        obs_set = self.observers.get(evt_type, set())
+        obs_set.add(obs)
+        self.observers[evt_type] = obs_set
+
+    def remove_channel_observer(self, obs, channel, evt_type):
+        """
+        Remove an observer for an event type.
+        :param obs: Observer to remove.
+        :param evt_type: Event type to remove the observer from.
+        """
+        self.observers.get(evt_type, set()).discard(obs)

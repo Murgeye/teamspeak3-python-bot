@@ -4,8 +4,10 @@ import Bot
 import Moduleloader
 from Moduleloader import *
 
+from modules.ufrasettings import *
+
 __version__ = "0.4"
-bot: Bot.Ts3Bot
+bot = None
 logger = logging.getLogger("bot")
 
 
@@ -16,7 +18,7 @@ def setup(ts3bot):
 
 
 @command('hello', )
-@group('Server Admin', )
+@group(group_henker, )
 def hello(sender, _msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Admin!")
 
@@ -155,6 +157,6 @@ def restart_bot(_sender, _msg):
 
 
 @command('commandlist', )
-@group('Server Admin', 'Moderator', )
+@group('Server Admin', 'Moderator', group_henker )
 def get_command_list(sender, _msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, str(list(bot.command_handler.handlers.keys())))
