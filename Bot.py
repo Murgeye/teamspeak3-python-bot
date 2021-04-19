@@ -124,7 +124,8 @@ class Ts3Bot:
                 else:
                     raise e
             try:
-                self.channel = self.get_channel_id(self.default_channel)
+                if(self.channel == -1):
+                    self.channel = self.get_channel_id(self.default_channel)
                 self.ts3conn.clientmove(self.channel, int(self.ts3conn.whoami()["client_id"]))
             except TS3QueryException as e:
                 if e.type == TS3QueryExceptionType.CHANNEL_ALREADY_IN:
@@ -149,7 +150,7 @@ class Ts3Bot:
             self.ts3conn.quit()
 
     def __init__(self, host, port, serverid, user, password, defaultchannel, botname, logger, plugins, ssh="False",
-                 acceptallsshkeys="False", sshhostkeyfile=None, sshloadsystemhostkeys="False", sshtimeout=None, sshtimeoutlimit=3, *_, **__):
+                 acceptallsshkeys="False", sshhostkeyfile=None, sshloadsystemhostkeys="False", sshtimeout=None, sshtimeoutlimit=3, defaultchannelid = -1, *_, **__):
         """
         Create a new Ts3Bot.
         :param host: Host to connect to, can be a IP or a host name
@@ -170,7 +171,7 @@ class Ts3Bot:
         self.bot_name = botname
         self.event_handler = None
         self.command_handler = None
-        self.channel = None
+        self.channel = defaultchannelid
         self.logger = logger
         self.ts3conn = None
         self.is_ssh = bool(strtobool(ssh))
@@ -186,3 +187,5 @@ class Ts3Bot:
         # Load modules
         Moduleloader.load_modules(self, plugins)
         self.ts3conn.start_keepalive_loop()
+
+    
