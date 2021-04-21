@@ -1,14 +1,15 @@
 """Quote module for the Teamspeak 3 Bot. Sends quotes to people joining the server."""
+import os
+import sqlite3
+
+import ts3API.Events as Events
+
 import Bot
 import Moduleloader
-import ts3.Events as Events
-import sqlite3
-import sys
-import os
 
-bot = None
-path = None
-# Server groups who should not receiver quotes upon joining the server
+bot: Bot.Ts3Bot
+path: str
+# Server groups who should not receive quotes upon joining the server
 dont_send = []
 
 
@@ -33,7 +34,8 @@ def setup_quoter(ts3bot, db):
     # setup and connect to database
     conn = sqlite3.connect(path)
     curs = conn.cursor()
-    curs.execute('CREATE TABLE IF NOT EXISTS Quotes (id integer primary key, quote text, submitter text, time text, shown integer)')
+    curs.execute('CREATE TABLE IF NOT EXISTS Quotes (id integer primary key, quote text,'
+                 'submitter text, time text, shown integer)')
     curs.execute('CREATE UNIQUE INDEX IF NOT EXISTS Quotesididx ON Quotes (id)')
     conn.commit()
     conn.close()
@@ -50,7 +52,8 @@ def add_quote(sender, msg):
         quote = quote.replace('" ', '"\n')
         submitter = bot.ts3conn.clientinfo(sender)
         submitter = submitter['client_nickname']
-        c.execute('INSERT INTO Quotes (quote, submitter, time, shown) VALUES (?, ?, strftime("%s", "now"), ?)', (quote, submitter, 0))
+        c.execute('INSERT INTO Quotes (quote, submitter, time, shown) VALUES (?, ?,'
+                  'strftime("%s", "now"), ?)', (quote, submitter, 0))
         conn.commit()
         conn.close()
         Bot.send_msg_to_client(bot.ts3conn, sender, 'Your quote has been saved!')

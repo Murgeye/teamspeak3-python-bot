@@ -1,8 +1,11 @@
 """Commandhandler for the Teamspeak3 Bot."""
-import ClientInfo
-import ts3.Events as Events
 import logging
+
+import ts3API.Events as Events
+
 import Bot
+import ClientInfo
+
 logger = logging.getLogger("bot")
 
 
