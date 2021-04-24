@@ -84,6 +84,20 @@ def event(*event_types):
     return register_observer
 
 
+def channel_event(event_type, *channel_ids):
+    """
+    Decorator to register a function as an eventlistener for the event types specified in
+    event_types.
+    :param event_types: Event types to listen to
+    :type event_types: TS3Event
+    """
+    def register_observer(function):
+        for channel_id in channel_ids:
+            event_handler.add_channel_observer(function, channel_id, event_type)
+        return function
+    return register_observer
+
+
 def command(*command_list):
     """
     Decorator to register a function as a handler for text commands.
