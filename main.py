@@ -61,7 +61,8 @@ def main():
         logger.addHandler(file_handler)
         logger.info('Started')
     sys.excepthook = exception_handler
-    config = Bot.Ts3Bot.parse_config(logger)
+    config = Bot.Ts3Bot.parse_json_config(logger)
+    #config = Bot.Ts3Bot.parse_config(logger)
     bot = Bot.Ts3Bot.bot_from_config(config)
 
 if __name__ == "__main__":

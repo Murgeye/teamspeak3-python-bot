@@ -1,4 +1,4 @@
-import configparser
+import json
 import logging
 import os
 from distutils.util import strtobool
@@ -62,26 +62,28 @@ class Ts3Bot:
         plugins = config
         config = config.pop('General')
         return Ts3Bot(logger=logger, plugins=plugins, **config)
-
+    
     @staticmethod
-    def parse_config(logger):
+    def parse_json_config(logger):
         """
-        Parse the config file config.ini
+        Parse the config file config.json
         :param logger: Logger to log errors to.
         :return: Dictionary containing options necessary to create a new bot
         :rtype: dict[str, dict[str, str]]
         """
-        config = configparser.ConfigParser()
-        if len(config.read('config.ini')) == 0:
+        f = open('config.json')
+        config = json.load(f)
+
+        if len(config) == 0:
             logger.error("Config file missing!")
             exit()
-        if not config.has_section('General'):
+        if 'General' not in config:
             logger.error("Config file is missing general section!")
             exit()
-        if not config.has_section('Plugins'):
+        if 'Plugins' not in config:
             logger.error("Config file is missing plugins section")
             exit()
-        return config._sections
+        return config
 
     def connect(self):
         """
@@ -149,8 +151,8 @@ class Ts3Bot:
         if self.ts3conn is not None:
             self.ts3conn.quit()
 
-    def __init__(self, host, port, serverid, user, password, defaultchannel, botname, logger, plugins, ssh="False",
-                 acceptallsshkeys="False", sshhostkeyfile=None, sshloadsystemhostkeys="False", sshtimeout=None, sshtimeoutlimit=3, defaultchannelid = -1, *_, **__):
+    def __init__(self, host, port, serverid, user, password, defaultchannel, botname, logger, plugins, ssh=False,
+                 acceptallsshkeys=False, sshhostkeyfile=None, sshloadsystemhostkeys=False, sshtimeout=None, sshtimeoutlimit=3, defaultchannelid = -1, *_, **__):
         """
         Create a new Ts3Bot.
         :param host: Host to connect to, can be a IP or a host name
@@ -174,11 +176,10 @@ class Ts3Bot:
         self.channel = defaultchannelid
         self.logger = logger
         self.ts3conn = None
-        self.is_ssh = bool(strtobool(ssh))
-        # Strtobool returns 1/0 ...
-        self.accept_all_keys = bool(strtobool(acceptallsshkeys))
+        self.is_ssh = ssh
+        self.accept_all_keys = acceptallsshkeys
         self.host_key_file = sshhostkeyfile
-        self.use_system_hosts = bool(strtobool(sshloadsystemhostkeys))
+        self.use_system_hosts = sshloadsystemhostkeys
         self.sshtimeout = sshtimeout
         self.sshtimeoutlimit = sshtimeoutlimit
 

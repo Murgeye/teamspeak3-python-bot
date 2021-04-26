@@ -13,12 +13,14 @@ main.sh
 .selected_editor
 .ssh/
 .vim/
-config.ini
 .idea/
 modules/quotes.db
 tags
 test.py
 tests.py
 
+
+config.ini
+config.json
 
 .venv

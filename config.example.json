@@ -1,0 +1,23 @@
+{
+    "General":
+    {
+        "botname": "ExampleBot",
+        "host": "127.0.0.1",
+        "port": 10011,
+        "serverid": 1,
+        "defaultchannel": "Botchannel",
+        "user": "serveradmin",
+        "password": "query-password",
+        "ssh": false,
+        "acceptallsshkeys": true,
+        "sshhostkeyfile": "ssh_hostkeys",
+        "sshloadsystemhostkeys": false
+    },
+
+    "Plugins":
+    {
+        "Quotes": "Quotes",
+        "AfkMover": "afkmover",
+        "UtilCommand": "utils"
+    }
+}
