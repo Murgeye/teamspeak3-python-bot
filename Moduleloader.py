@@ -41,12 +41,13 @@ def load_modules(bot, config):
 
     for plugin in plugins.items():
         try:
-            plugin_modules[plugin[0]] = importlib.import_module("modules."+plugin[1],
+            plugin_modules[plugin[1]["name"]] = importlib.import_module("modules."+plugin[0],
                                                                 package="modules")
-            plugin_modules[plugin[0]].pluginname = plugin[0]
-            logger.info("Loaded module " + plugin[0])
+            plugin_modules[plugin[1]["name"]].pluginname = plugin[1]["name"]
+            logger.info("Loaded module " + plugin[1]["name"])
         except BaseException:
-            logger.exception("While loading plugin " + str(plugin[0]) + " from modules."+plugin[1])
+            logger.exception("While loading plugin " + str(plugin[1]["name"]) + " from modules." + plugin[0])
+            
     # Call all registered setup functions
     for setup_func in setups:
         try:

@@ -31,21 +31,22 @@ def setup_ufrabot(ts3bot):
     bot = ts3bot
     ts3conn = bot.ts3conn
 
+# @Moduleloader.channel_event(Events.ClientMovedSelfEvent, 1047, 1045,)
+# def on_channel_join_event(evt):
+#     """
+#     Create a temporary channel 
+#     """
+#     response = bot.ts3conn._send("channelcreate", ["channel_name=My\sChannel","channel_topic=My\sTopic"])    
+#     cid = response.decode(encoding='UTF-8').split("=", 1)[1]
+#     response = bot.ts3conn._send("channelmove", ["cid="+ cid, "cpid="+str(evt.target_channel_id)])
+#     bot.ts3conn.clientmove(int(cid), evt.client_id)
+#     _bot_go_home()
 
-    #ufrabot_channel_event_handler = CommandHandler.CommandHandler(self.ts3conn)
-    #self.event_handler = EventHandler.EventHandler(ts3conn=self.ts3conn, command_handler=self.command_handler)
+# def on_channel_message_event(_sender, **kw):
+#     pass
 
-    #def register_for_channel_events(self, channel_id, event_listener=None, weak_ref=True):    
-    try:
-        ts3conn.register_for_channel_events(1045, on_channel_event)
-    except ts3API.TS3Connection.TS3QueryException:
-        self.logger.exception("Error on registering for channel event.")
-        exit()
-
-
-    # for g in ts3conn.servergrouplist():
-    #     if g.get('name', '') in ["Guest", "Admin Server Query"]:
-    #         dont_send.append(int(g.get('sgid', 0)))
+# def _bot_go_home():
+#     bot.ts3conn.clientmove(bot.default_channel, int(bot.ts3conn.whoami()["client_id"]))
 
 
 @Moduleloader.event(Events.ClientEnteredEvent,)
@@ -78,53 +79,43 @@ def foobar(sender, msg):
     Bot.send_msg_to_client(bot.ts3conn, sender, "foobar")
 
 
-@Moduleloader.event(Events.ClientEnteredEvent,)
-def applicant_join(event):
-    """
-    If a client joined the Bewerbungschannel
-    """
-
-
-    # for g in ts3conn.servergrouplist():
-    #         if g.get('name', '') in ["Guest", "Admin Server Query"]:
-    #             dont_send.append(int(g.get('sgid', 0)))
-
-    clinfo = Bot.ts3conn.clientinfo()
-
-    target_chan = event._target_channel_id
-    client_id = event.client_id
-
-    #clientinfo
-
-    # if (event.target_channel_id == channel_applicants_id) and 
-    #     (event.client_id  )
-
-def _get_online_recruiter():
-    """
-    Returns a list of user id wich are reqcruiter    
-    """
-    recruiter = []
-
-    # for role in group_recruitofficer:
-    #     s
-
-    # clinfo = Bot.ts3conn.
-
-    target_chan = event._target_channel_id
-    client_id = event.client_id
-
-def _get_online_perso():
-    """
-    Returns a list of user id wich are personal officers
-    """
-    pass
-
-# @event(Events.ClientLeftEvent,)
-# def client_left(event):
+# @Moduleloader.event(Events.ClientEnteredEvent,)
+# def applicant_join(event):
 #     """
-#     Clean up leaving clients.
+#     If a client joined the Bewerbungschannel
 #     """
-#     # Forgets clients that were set to afk and then left
-#     if afkMover is not None:
-#         if str(event.client_id) in afkMover.client_channels:
-#             del afkMover.client_channels[str(event.client_id)]
+
+
+#     # for g in ts3conn.servergrouplist():
+#     #         if g.get('name', '') in ["Guest", "Admin Server Query"]:
+#     #             dont_send.append(int(g.get('sgid', 0)))
+
+#     clinfo = Bot.ts3conn.clientinfo()
+
+#     target_chan = event._target_channel_id
+#     client_id = event.client_id
+
+#     #clientinfo
+
+#     # if (event.target_channel_id == channel_applicants_id) and 
+#     #     (event.client_id  )
+
+# def _get_online_recruiter():
+#     """
+#     Returns a list of user id wich are reqcruiter    
+#     """
+#     recruiter = []
+
+#     # for role in group_recruitofficer:
+#     #     s
+
+#     # clinfo = Bot.ts3conn.
+
+#     target_chan = event._target_channel_id
+#     client_id = event.client_id
+
+# def _get_online_perso():
+#     """
+#     Returns a list of user id wich are personal officers
+#     """
+#     pass
