@@ -5,8 +5,6 @@ import Bot
 import Moduleloader
 from Moduleloader import *
 
-from modules.ufrasettings import *
-
 bot: None
 # Server groups who should not receiver quotes upon joining the server
 dont_send = []
@@ -22,9 +20,6 @@ def setup_communityservice(ts3bot):
     Setup the quoter. Define groups not to send quotes to.
     :return:
     """  
-    #global bot, dont_send
-    groups = [group_henker, group_officier]
-
     global bot
     bot = ts3bot
     ts3conn = bot.ts3conn
