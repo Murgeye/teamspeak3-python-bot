@@ -1,1 +1,3 @@
+wheel
 ts3API[ssh]
+pickledb

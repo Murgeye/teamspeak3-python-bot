@@ -11,21 +11,10 @@ bot: None
 # Server groups who should not receiver quotes upon joining the server
 dont_send = []
 
+channel_config = {}
+channels_configured = []
 
-channel_config = {
-                    1047:{
-                        "cname":"Zug Channel {0}",                        
-                        "currnum": 0,
-                        "ctopic": "Temporary channel for playing in platoon",
-                        "cuser": 5
-                        },
-                    1178:{
-                        "cname":"Stream Channel {0}",                        
-                        "currnum": 0,
-                        "ctopic": "Temporary channel for playing in platoon",
-                        "cuser": 5
-                        },
-                }
+
 
 @Moduleloader.setup
 def setup_communityservice(ts3bot):
@@ -40,27 +29,46 @@ def setup_communityservice(ts3bot):
     bot = ts3bot
     ts3conn = bot.ts3conn
 
-@Moduleloader.channel_event(Events.ClientMovedSelfEvent, 1047, 1045,)
+    global channel_config
+    global channels_configured
+    channel_config = {int(k):v for k,v in config["channel_config"].items()}
+    channels_configured = list(channel_config.keys())
+    name = config["name"]
+
+@Moduleloader.channel_event(Events.ClientMovedSelfEvent, 0)
 def on_channel_join_event(evt):
     """
     Create a temporary channel 
     """
 
-    # Gather all information first:
-    curr_ch_cfg = channel_config[evt.target_channel_id]
-    channel_name = curr_ch_cfg["cname"].format(curr_ch_cfg["currnum"])
-    channel_topic = curr_ch_cfg["ctopic"]
-    channel_maxc = curr_ch_cfg["cuser"]
-    curr_ch_cfg["currnum"] += 1
+    if evt.target_channel_id in channels_configured:
+        # Gather all information first:
+        curr_ch_cfg = channel_config[evt.target_channel_id]
+        channel_name = curr_ch_cfg["cname"].format(curr_ch_cfg["currnum"])
+        channel_topic = curr_ch_cfg["ctopic"]
+        channel_maxc = curr_ch_cfg["cuser"]
+        curr_ch_cfg["currnum"] += 1
 
-    # Create Channel, move user to it, leave and join homechannel
-    response = _get_channel_info(evt.target_channel_id)
-    cpid = response["pid"]
-    response = _channel_create(["channel_name=" + channel_name,"channel_topic=" + channel_topic, "channel_maxclients=" + str(channel_maxc) ])
-    cid = response["cid"]
-    response = _channel_move(["cid=" + cid, "cpid=" + str(cpid), "order=" + str(evt.target_channel_id)])
-    bot.ts3conn.clientmove(int(cid), evt.client_id)
-    _bot_go_home()
+        # Create Channel, move user to it, leave and join homechannel
+        createAsSub = True
+        if "createassub" in curr_ch_cfg:
+            createAsSub = curr_ch_cfg["createassub"]
+                
+        if createAsSub == True:
+            response = _get_channel_info(evt.target_channel_id)            
+            cpid = evt.target_channel_id
+            response = _channel_create(["channel_name=" + channel_name,"channel_topic=" + channel_topic, "channel_maxclients=" + str(channel_maxc)])
+            cid = response["cid"]
+            response = _channel_move(["cid=" + cid, "cpid=" + str(cpid)])
+
+        else:
+            response = _get_channel_info(evt.target_channel_id)
+            cpid = response["pid"]    
+            response = _channel_create(["channel_name=" + channel_name,"channel_topic=" + channel_topic, "channel_maxclients=" + str(channel_maxc) ])
+            cid = response["cid"]
+            response = _channel_move(["cid=" + cid, "cpid=" + str(cpid), "order=" + str(evt.target_channel_id)])
+        bot.ts3conn.clientmove(int(cid), evt.client_id)
+        _bot_go_home()
 
 def on_channel_message_event(_sender, **kw):
     pass

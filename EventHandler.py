@@ -25,10 +25,8 @@ class EventHandler(object):
         self.observers = {}
         self.add_observer(self.command_handler.inform, Events.TextMessageEvent)
 
-        self.channels_events = []
-        self.channels_messages = []
         self.channelobservers = {}
-        #self.add_channel_observer(self.channel_inform, 0, Events.ClientEnteredEvent)
+        self.channelobsregistered = False
 
     def on_event(self, _sender, **kw):
         """
@@ -111,11 +109,8 @@ class EventHandler(object):
                                               str(evt.data))
 
 
-
-
-
     # THIS IS CHANNEL STUFF
-    def get_channel_obs_for_event(self, channel_id, evt):
+    def get_channel_obs_for_event(self, evt):
         """
         Get all observers for an channel event.
         :param channel_id: The channel to get the observers for.
@@ -125,12 +120,11 @@ class EventHandler(object):
         """
         obs = set()
         tmp = type(evt).mro()
-        for t in type(evt).mro():
-            if channel_id in self.channels_events:            
-                obs.update(self.channelobservers.get(t, set()))
+        for t in type(evt).mro():                    
+            obs.update(self.channelobservers.get(t, set()))
         return obs
 
-    def add_channel_observer(self, obs, channel_id, evt_type):
+    def add_channel_observer(self, obs, evt_type):
         """
         Add an observer for an event type.
         :param obs: Function to call upon a new event of type evt_type.
@@ -138,23 +132,21 @@ class EventHandler(object):
         :param evt_type: Event type to observe.
         :type evt_type: TS3Event
         """
-        known_evt = False
 
-        if evt_type == Events.ClientMovedSelfEvent and channel_id not in self.channels_events:
-            self.channels_events.append(channel_id)
-            self.ts3conn.register_for_channel_events(channel_id, self.on_channel_event)
-            known_evt = True
-        elif evt_type == Events.TextMessageEvent and channel_id not in self.channels_messages:
-            self.channels_messages.append(channel_id)
-            self.ts3conn.register_for_channel_messages(channel_id, self.on_channel_event)
-            known_evt = True
+        if evt_type == Events.ClientMovedSelfEvent and self.channelobsregistered == False:            
+            self.ts3conn.register_for_channel_events(0, self.on_channel_event)
+            self.channelobsregistered = True
 
-        if known_evt == True:
+        elif evt_type == Events.TextMessageEvent and self.channelobsregistered == False:            
+            self.ts3conn.register_for_channel_messages(0, self.on_channel_event)
+            self.channelobsregistered = True
+
+        if self.channelobsregistered == True:
             obs_set = self.channelobservers.get(evt_type, set())
             obs_set.add(obs)
             self.channelobservers[evt_type] = obs_set
 
-    def remove_channel_observer(self, obs, channel_id, evt_type):
+    def remove_channel_observer(self, obs, evt_type):
         """
         Remove an observer for an event type.
         :param obs: Observer to remove.
@@ -174,13 +166,13 @@ class EventHandler(object):
 
     # We really want to catch all exception here, to prevent one observer from crashing the bot
     # noinspection PyBroadException    
-    def inform_all_channel(self, channel_id, evt):
+    def inform_all_channel(self, evt):
         """
         Inform all observers registered to the event type of an event.
         :param channel_id: Channel which needs to be informed.
         :param evt: Event to inform observers of.
         """
-        for o in self.get_channel_obs_for_event(channel_id, evt):
+        for o in self.get_channel_obs_for_event(evt):
             try:
                 threading.Thread(target=o(evt)).start()
             except BaseException:
@@ -192,13 +184,11 @@ class EventHandler(object):
         """
         Called upon a new channel event. Logs the event and informs all listeners.
         """      
-
-        # parsed_event = Events.EventParser.parse_event(event=event)
         parsed_event = kw["event"]
 
         if type(parsed_event) is Events.ClientMovedSelfEvent:            
             logging.debug(type(parsed_event))
-            self.inform_all_channel(parsed_event.target_channel_id, parsed_event)
+            self.inform_all_channel(parsed_event)
 
         else:
             logging.debug("Could't recognize the Event.")
