@@ -16,8 +16,22 @@
 
     "Plugins":
     {
-        "Quotes": "Quotes",
-        "AfkMover": "afkmover",
-        "UtilCommand": "utils"
+        "utils" :
+        {
+            "name": "UtilCommand"
+        },
+        "communityservice":
+        {
+            "name": "Commservice",
+            "channel_config" : {
+                "1066": {
+                    "cname":"⮚ Channel {0}",
+                    "createassub": true,
+                    "currnum": 0,
+                    "ctopic": "Temporary channel for playing in platoon",
+                    "cuser": 5
+                    }
+                }   
+        }         
     }
 }
