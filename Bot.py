@@ -139,6 +139,7 @@ class Ts3Bot:
         self.event_handler = EventHandler.EventHandler(ts3conn=self.ts3conn, command_handler=self.command_handler)
         try:
             self.ts3conn.register_for_server_events(self.event_handler.on_event)
+            self.ts3conn.register_for_channel_events(0, self.event_handler.on_event)
             self.ts3conn.register_for_private_messages(self.event_handler.on_event)
         except ts3API.TS3Connection.TS3QueryException:
             self.logger.exception("Error on registering for events.")
