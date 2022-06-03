@@ -1,3 +1,7 @@
+# Warning
+
+This branch is stale. Use the the "main" branch instead, which uses the PIP version of the API and has some improvements.
+
 # TS3 Bot
 Simple Teamspeak 3 bot based on the ts3API located at
 https://github.com/Murgeye/ts3API.
