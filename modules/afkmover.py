@@ -219,7 +219,7 @@ def client_left(event_data):
 
 
 @setup
-def setup(ts3bot, channel="AFK"):
+def setup(ts3bot, channel=channel_name):
     global bot, channel_name
     bot = ts3bot
     channel_name = channel
