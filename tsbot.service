@@ -1,0 +1,12 @@
+[Unit]
+Description=TS Bot
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/usr/local/bin/teamspeak3-python-bot
+ExecStart=/usr/bin/python3 main.yml
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
