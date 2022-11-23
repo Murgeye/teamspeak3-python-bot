@@ -113,6 +113,7 @@ All existing functionality is based on plugins.
 | ---:   | :--- |
 | Utils | Provides convenience commands for administration and fun. |
 | AfkMover | Moves clients from and to a specific channel upon marking themselves as AFK/back. |
+| IdleMover | Moves clients from and to a specific channel upon being idle for a specific amount of time. |
 | Quotes | Save quotes and send them to people joining the server. |
 
 # Text Commands
@@ -139,6 +140,13 @@ Following an overview of the available commands for each plugin.
 | ---:   | :--- |
 | `!startafk`/`!afkstart`/`!afkmove` | Start the AFK mover |
 | `!stopafk`/`!afkstop` | Stop the AFK mover |
+
+## IdleMover
+
+| Command | Description |
+| ---:   | :--- |
+| `!startidle`/`!idlestart`/`!idlemove` | Start the idle mover |
+| `!stopidle`/`!idlestop` | Stop the idle mover |
 
 ## Quotes
 
