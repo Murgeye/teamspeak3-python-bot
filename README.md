@@ -226,7 +226,7 @@ You can register a function for multiple events by passing a list of event types
 
 ## The bot just crashes without any message
 
-Any error messages should be in the `bot.log` file in the root directory of the bot.
+Any error messages should be in the log files under `logs/` within the root directory of the bot.
 
 If this file doesn't exist the permissions of the root directory are probably wrong.
 

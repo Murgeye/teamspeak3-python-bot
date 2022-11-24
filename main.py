@@ -55,7 +55,7 @@ def main():
     if not logger.hasHandlers():
         logger.propagate = 0
         logger.setLevel(logging.INFO)
-        file_handler = logging.FileHandler("bot.log", mode='a+')
+        file_handler = logging.FileHandler("logs/bot.log", mode='a+')
         formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
