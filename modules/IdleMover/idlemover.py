@@ -83,7 +83,7 @@ class IdleMover(Thread):
                 if "cid" not in client.keys():
                     IdleMover.logger.error("Client without cid!")
                     IdleMover.logger.error(str(client))
-                elif "client_away" in client.keys() and client.get("client_away", '0') == '1' \
+                elif "client_idle_time" in client.keys() and client.get("client_idle_time", '0') >= min_idle_time_seconds \
                         and int(client.get("cid", '-1')) != int(self.idle_channel):
                     idle_list.append(client)
             return idle_list
@@ -96,7 +96,7 @@ class IdleMover(Thread):
         Get list of clients in the idle channel, but not idle anymore.
         :return: List of clients who are not idle anymore.
         """
-        client_list = [client for client in self.idle_list if client.get("client_away", '1') == '0'
+        client_list = [client for client in self.idle_list if client.get("client_idle_time", '1') <= min_idle_time_seconds
                       and int(client.get("cid", '-1')) == int(self.idle_channel)]
         return client_list
 

@@ -109,12 +109,12 @@ To add your host key the following workflow is easiest:
 
 All existing functionality is based on plugins.
 
-| Plugin | Description |
+| Plugin | Readme |
 | ---:   | :--- |
 | Utils | Provides convenience commands for administration and fun. |
-| AfkMover | Moves clients from and to a specific channel upon marking themselves as AFK/back. |
-| IdleMover | Moves clients from and to a specific channel upon being idle for a specific amount of time. |
 | Quotes | Save quotes and send them to people joining the server. |
+| AfkMover | [Open documentation](/modules/AfkMover/README.md) |
+| IdleMover | [Open documentation](/modules/IdleMover/README.md) |
 
 # Text Commands
 
@@ -134,20 +134,6 @@ Following an overview of the available commands for each plugin.
 | `!whoami` | Fun command. |
 | `!version` | Answer with the current module version |
 
-## AfkMover
-
-| Command | Description |
-| ---:   | :--- |
-| `!startafk`/`!afkstart`/`!afkmove` | Start the AFK mover |
-| `!stopafk`/`!afkstop` | Stop the AFK mover |
-
-## IdleMover
-
-| Command | Description |
-| ---:   | :--- |
-| `!startidle`/`!idlestart`/`!idlemove` | Start the idle mover |
-| `!stopidle`/`!idlestop` | Stop the idle mover |
-
 ## Quotes
 
 | Command | Description |
@@ -158,12 +144,17 @@ Following an overview of the available commands for each plugin.
 
 A feature of this bot is that it is easily extendable.
 
-You can see some example plugins in the directory modules. To write your own plugin you need to do the following things:
+To write your own plugin you need to do the following things:
 
-1. Create a Python module in the modules folder (or a subfolder)
-2. Add the plugin to the `config.ini`
+1. Copy the `_plugin_template` plugin and name the folder as descriptive as possible for your plugin
+2. Update the template Python script to your needs
+3. Update and fill the `README.md` within your plugin folder
+4. Optionally link your plugin in the main `README.md` of this project under `Available Plugins`, if you are planning to publish it
+2. Add your new plugin to the `config.ini`
 
-That's it. The plugin doesn't do anything yet, but we can build up on that.
+That's it. The plugin doesn't do anything yet, but you can build up on that.
+
+You can see some example plugins in the directory modules.
 
 ## Adding setup and exit methods
 
