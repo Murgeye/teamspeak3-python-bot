@@ -40,6 +40,7 @@ class ClientInfo:
         self._version = client_data.get('client_version', '')
         self._ip = client_data.get('connection_client_ip', '')
         self._away = client_data.get('client_away', '')
+        self._idle_time = client_data.get('client_idle_time', '')
         self._input_muted = client_data.get('client_input_muted', '')
         self._output_muted = client_data.get('client_output_muted', '')
         self._outputonly_muted = client_data.get('client_outputonly_muted', '')
