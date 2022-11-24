@@ -19,3 +19,4 @@ modules/quotes.db
 tags
 test.py
 tests.py
+.ssh/*
