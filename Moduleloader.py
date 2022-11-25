@@ -12,11 +12,11 @@ event_handler: 'EventHandler'
 command_handler: 'CommandHandler'
 logger = logging.getLogger("moduleloader")
 logger.setLevel(logging.INFO)
-file_handler = logging.FileHandler("moduleloader.log", mode='a+')
-formatter = logging.Formatter('Moduleloader Logger %(asctime)s %(message)s')
+file_handler = logging.FileHandler("logs/moduleloader.log", mode='a+')
+formatter = logging.Formatter('%(asctime)s %(message)s')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
-logger.info("Configured Moduleloader logger")
+logger.info("Configured moduleloader logger")
 logger.propagate = 0
 
 
@@ -33,31 +33,28 @@ def load_modules(bot, config):
     plugins = config.pop('Plugins')
     event_handler = bot.event_handler
     command_handler = bot.command_handler
-    """try:
-        modules = map(__import__, plugins.values())
-        print(modules)
-    except:
-        logger.exception("error on importing plugins")"""
 
     for plugin in plugins.items():
         try:
-            plugin_modules[plugin[0]] = importlib.import_module("modules."+plugin[1],
-                                                                package="modules")
+            plugin_modules[plugin[0]] = importlib.import_module(f"modules.{plugin[1]}", package="modules")
             plugin_modules[plugin[0]].pluginname = plugin[0]
-            logger.info("Loaded module " + plugin[0])
+            logger.info(f"Loaded module {plugin[1]}")
         except BaseException:
-            logger.exception("While loading plugin " + str(plugin[0]) + " from modules."+plugin[1])
+            logger.exception(f"Error while loading plugin {str(plugin[0])} from modules.{plugin[1]}")
+
     # Call all registered setup functions
     for setup_func in setups:
         try:
             name = sys.modules.get(setup_func.__module__).pluginname
             if name in config:
                 plugin_config = config.pop(name)
+                logger.info(f"{name} plugin config: {plugin_config}")
                 setup_func(ts3bot=bot, **plugin_config)
             else:
+                logger.info(f"{name} has no plugin config. Using defaults.")
                 setup_func(bot)
         except BaseException:
-            logger.exception("While setting up a module.")
+            logger.exception(f"Error while setting up the module {name}.")
 
 
 def setup(function):
@@ -130,8 +127,4 @@ def exit_all():
         try:
             exit_func()
         except BaseException:
-            logger.exception("While exiting a module.")
-
-
-"""def reload():
-    exit_all()"""
+            logger.exception(f"Error while exiting the module {exit_func}.")
