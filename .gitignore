@@ -11,7 +11,7 @@ quotes
 main.sh
 .viminfo
 .selected_editor
-.ssh/
+.ssh/*
 .vim/
 config.ini
 .idea/
@@ -19,4 +19,3 @@ modules/quotes.db
 tags
 test.py
 tests.py
-.ssh/*
