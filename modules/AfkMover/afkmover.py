@@ -13,22 +13,26 @@ from typing import Union
 afkMover: Union[None, 'AfkMover'] = None
 afkStopper = threading.Event()
 bot: Bot.Ts3Bot
-autoStart = True
-channel_name = "AFK"
 
+# defaults for configureable options
+autoStart = True
+check_frequency = 30.0
+enable_auto_move_back = True
+channel_name = "AFK"
 
 class AfkMover(Thread):
     """
     AfkMover class. Moves clients set to afk another channel.
     """
-    logger = logging.getLogger("afk")
+    logger_name = __qualname__
+    logger = logging.getLogger(logger_name)
     logger.propagate = 0
-    logger.setLevel(logging.WARNING)
-    file_handler = logging.FileHandler("afk.log", mode='a+')
-    formatter = logging.Formatter('AFK Logger %(asctime)s %(message)s')
+    logger.setLevel(logging.INFO)
+    file_handler = logging.FileHandler(f"logs/{logger_name.lower()}.log", mode='a+')
+    formatter = logging.Formatter('%(asctime)s %(message)s')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-    logger.info("Configured afk logger")
+    logger.info(f"Configured {logger_name} logger")
     logger.propagate = 0
 
     def __init__(self, stop_event, ts3conn):
@@ -160,11 +164,12 @@ class AfkMover(Thread):
         """
         Loop move functions until the stop signal is sent.
         """
-        while not self.stopped.wait(2.0):
+        while not self.stopped.wait(float(check_frequency)):
             AfkMover.logger.debug("Afkmover running!")
             self.update_afk_list()
             try:
-                self.move_all_back()
+                if enable_auto_move_back:
+                    self.move_all_back()
                 self.move_all_afk()
             except BaseException:
                 AfkMover.logger.error("Uncaught exception:" + str(sys.exc_info()[0]))
@@ -219,9 +224,12 @@ def client_left(event_data):
 
 
 @setup
-def setup(ts3bot, channel=channel_name):
-    global bot, channel_name
+def setup(ts3bot, auto_start = autoStart, frequency = check_frequency, auto_move_back = enable_auto_move_back, channel = channel_name):
+    global bot, check_frequency, enable_auto_move_back, channel_name
     bot = ts3bot
+    autoStart = auto_start
+    check_frequency = frequency
+    enable_auto_move_back = auto_move_back
     channel_name = channel
     if autoStart:
         start_afkmover()
@@ -234,5 +242,3 @@ def afkmover_exit():
         afkStopper.set()
         afkMover.join()
         afkMover = None
-
-
