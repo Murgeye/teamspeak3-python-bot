@@ -12,7 +12,11 @@ from typing import Union
 pluginInfo: Union[None, 'PluginTemplate'] = None
 pluginStopper = threading.Event()
 bot: Bot.Ts3Bot
+
+# defaults for configureable options
 autoStart = True
+check_frequency = 30.0
+some_option = "someValue"
 
 class PluginTemplate(Thread):
     """
@@ -24,7 +28,7 @@ class PluginTemplate(Thread):
     logger = logging.getLogger(class_name)
     logger.propagate = 0
     logger.setLevel(logging.DEBUG)
-    file_handler = logging.FileHandler(f"logs/{class_name}.log", mode='a+')
+    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
     formatter = logging.Formatter('%(asctime)s %(message)s')
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
@@ -66,12 +70,13 @@ class PluginTemplate(Thread):
             PluginTemplate.logger.exception("Error while sending a message to clients!")
 
 
-    def run(self):
+    def loop_until_stopped(self):
         """
         Loop over all main functions with a specific delay between each execution until the stop signal is sent.
         """
-        while not self.stopped.wait(10.0):
+        while not self.stopped.wait(float(check_frequency)):
             PluginTemplate.logger.debug(f"{PluginTemplate.class_name} running!")
+            PluginTemplate.logger.debug(f"some_option value: {some_option}")
 
             try:
                 self.send_message_to_all_clients()
@@ -81,6 +86,17 @@ class PluginTemplate(Thread):
                 PluginTemplate.logger.error(traceback.format_exc())
 
         PluginTemplate.logger.warning(f"{PluginTemplate.class_name} stopped!")
+
+
+    def run(self):
+        """
+        Thread run method. Starts the mover.
+        """
+        PluginTemplate.logger.info("Thread started")
+        try:
+            self.loop_until_stopped()
+        except BaseException:
+            self.logger.exception("Exception occured in run:")
 
 
 @command('startplugintemplate')
@@ -115,9 +131,12 @@ def client_left_event(event_data):
 
 
 @setup
-def setup(ts3bot):
-    global bot
+def setup(ts3bot, auto_start = autoStart, frequency = check_frequency, someOption = some_option):
+    global bot, check_frequency, some_option
     bot = ts3bot
+    autoStart = auto_start
+    check_frequency = frequency
+    some_option = someOption
     if autoStart:
         start_plugin()
 
