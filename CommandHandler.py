@@ -18,14 +18,19 @@ class CommandHandler:
         Create new CommandHandler.
         :param ts3conn: TS3Connection to use
         """
-        self.ts3conn = ts3conn
-        self.logger = logging.getLogger("textMsg")
-        self.logger.setLevel(logging.INFO)
-        file_handler = logging.FileHandler("msg.log", mode='a+')
-        formatter = logging.Formatter('MSG Logger %(asctime)s %(message)s')
+
+        # configure logger
+        class_name = __qualname__
+        logger = logging.getLogger(class_name)
+        logger.propagate = 0
+        logger.setLevel(logging.INFO)
+        file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
+        formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
         file_handler.setFormatter(formatter)
-        self.logger.addHandler(file_handler)
-        self.logger.propagate = 0
+        logger.addHandler(file_handler)
+        logger.info(f"Configured {class_name} logger")
+        logger.propagate = 0
+
         self.handlers = {}
         # Default groups if group not specified.
         self.accept_from_groups = ['Server Admin', 'Moderator']

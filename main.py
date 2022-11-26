@@ -53,13 +53,17 @@ def main():
     global bot, logger
     logger = logging.getLogger("bot")
     if not logger.hasHandlers():
+        class_name = "Bot"
+        logger = logging.getLogger(class_name)
         logger.propagate = 0
         logger.setLevel(logging.INFO)
-        file_handler = logging.FileHandler("logs/bot.log", mode='a+')
+        file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
         formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
-        logger.info('Started')
+        logger.info(f"Configured {class_name} logger")
+        logger.propagate = 0
+        logger.info(f"Started {class_name}")
     sys.excepthook = exception_handler
     config = Bot.Ts3Bot.parse_config(logger)
     bot = Bot.Ts3Bot.bot_from_config(config)

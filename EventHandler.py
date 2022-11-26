@@ -9,13 +9,17 @@ class EventHandler(object):
     """
     EventHandler class responsible for delegating events to registered listeners.
     """
-    logger = logging.getLogger("eventhandler")
+    
+    # configure logger
+    class_name = __qualname__
+    logger = logging.getLogger(class_name)
+    logger.propagate = 0
     logger.setLevel(logging.INFO)
-    file_handler = logging.FileHandler("eventhandler.log", mode='a+')
-    formatter = logging.Formatter('Eventhandler Logger %(asctime)s %(message)s')
+    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
+    formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-    logger.info("Configured Eventhandler logger")
+    logger.info(f"Configured {class_name} logger")
     logger.propagate = 0
 
     def __init__(self, ts3conn, command_handler):

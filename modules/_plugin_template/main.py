@@ -27,9 +27,9 @@ class PluginTemplate(Thread):
     class_name = __qualname__
     logger = logging.getLogger(class_name)
     logger.propagate = 0
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
-    formatter = logging.Formatter('%(asctime)s %(message)s')
+    formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
     logger.info(f"Configured {class_name} logger")

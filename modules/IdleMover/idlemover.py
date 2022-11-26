@@ -22,14 +22,17 @@ class IdleMover(Thread):
     """
     IdleMover class. Moves clients with idle state to idle channel.
     """
-    logger = logging.getLogger("IdleMover")
+    
+    # configure logger
+    class_name = __qualname__
+    logger = logging.getLogger(class_name)
     logger.propagate = 0
-    logger.setLevel(logging.WARNING)
-    file_handler = logging.FileHandler("idlemover.log", mode='a+')
-    formatter = logging.Formatter('IdleMover Logger %(asctime)s %(message)s')
+    logger.setLevel(logging.INFO)
+    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
+    formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
-    logger.info("Configured IdleMover logger")
+    logger.info(f"Configured {class_name} logger")
     logger.propagate = 0
 
     def __init__(self, stop_event, ts3conn):

@@ -10,13 +10,17 @@ exits = []
 plugin_modules = {}
 event_handler: 'EventHandler'
 command_handler: 'CommandHandler'
-logger = logging.getLogger("moduleloader")
+
+# configure logger
+class_name = "ModuleLoader"
+logger = logging.getLogger(class_name)
+logger.propagate = 0
 logger.setLevel(logging.INFO)
-file_handler = logging.FileHandler("logs/moduleloader.log", mode='a+')
-formatter = logging.Formatter('%(asctime)s %(message)s')
+file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
+formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
-logger.info("Configured moduleloader logger")
+logger.info(f"Configured {class_name} logger")
 logger.propagate = 0
 
 
