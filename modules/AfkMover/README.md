@@ -19,7 +19,7 @@ Enable this plugin by adding the following line under the `Plugins` section to y
 
 ```
 [Plugins]
-AfkMover: AfkMover
+AfkMover: AfkMover.main
 ```
 
 ## Options

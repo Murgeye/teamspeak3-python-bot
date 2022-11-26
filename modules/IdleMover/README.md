@@ -19,5 +19,5 @@ Enable this plugin by adding the following line under the `Plugins` section to y
 
 ```
 [Plugins]
-IdleMover: IdleMover.idlemover
+IdleMover: IdleMover.main
 ```
