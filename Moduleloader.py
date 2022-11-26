@@ -40,24 +40,32 @@ def load_modules(bot, config):
 
     for plugin in plugins.items():
         try:
-            plugin_name = plugin[1]
-            plugin_modules[plugin[0]] = importlib.import_module(f"modules.{plugin_name}", package="modules")
-            logger.info(f"Loaded module {plugin_name}")
+            plugin_modules[plugin[0]] = importlib.import_module(f"modules.{plugin[1]}", package="modules")
+            plugin_modules[plugin[0]].pluginname = plugin[1]
+            logger.info(f"Loaded module {plugin[1]}")
         except BaseException:
-            logger.exception(f"Error while loading plugin {str(plugin[0])} from modules.{plugin_name}")
+            logger.exception(f"Error while loading plugin {str(plugin[0])} from modules.{plugin[1]}")
 
-        # Call all registered setup functions
-        for setup_func in setups:
-            try:
-                if plugin_name in config:
-                    plugin_config = config.pop(plugin_name)
-                    logger.info(f"Setting up module {plugin_name} with the following config: {plugin_config}")
-                    setup_func(ts3bot=bot, **plugin_config)
-                else:
-                    logger.info(f"Setting up module {plugin_name} with default config as no custom config is defined.")
-                    setup_func(bot)
-            except BaseException:
-                logger.exception(f"Error while setting up the module {plugin_name}.")
+    # Call all registered setup functions
+    for setup_func in setups:
+        try:
+            plugin_name = sys.modules.get(setup_func.__module__).pluginname
+            if plugin_name.count('.') == 1:
+                # `SomeModule.main` => `SomeModule`
+                plugin_name = plugin_name.split('.')[0]
+            else:
+                # `SomeModule` => `SomeModule`
+                plugin_name = plugin_name
+
+            if plugin_name in config:
+                plugin_config = config.pop(plugin_name)
+                logger.info(f"{plugin_name} plugin config: {plugin_config}")
+                setup_func(ts3bot=bot, **plugin_config)
+            else:
+                logger.info(f"{plugin_name} plugin config: Unconfigured, using plugin defaults.")
+                setup_func(bot)
+        except BaseException:
+            logger.exception(f"Error while setting up the module {plugin_name}.")
 
 
 def setup(function):
