@@ -111,8 +111,8 @@ All existing functionality is based on plugins.
 
 | Plugin | Readme |
 | ---:   | :--- |
-| Utils | Provides convenience commands for administration and fun. |
-| Quotes | Save quotes and send them to people joining the server. |
+| Utils | [Open documentation](#utils) |
+| Quotes | [Open documentation](#quotes) |
 | AfkMover | [Open documentation](/modules/AfkMover/README.md) |
 | IdleMover | [Open documentation](/modules/IdleMover/README.md) |
 
@@ -120,9 +120,11 @@ All existing functionality is based on plugins.
 
 All of the text commands are added via plugins (see the next section).
 
-Following an overview of the available commands for each plugin.
-
 ## Utils
+
+This plugin extends your bot with administrative features via your TeamSpeak server client.
+
+The following table shows all available commands for this plugin:
 
 | Command | Description |
 | ---:   | :--- |
@@ -136,6 +138,10 @@ Following an overview of the available commands for each plugin.
 
 ## Quotes
 
+This plugin extends your bot with quotes, which get randomly sent to random clients.
+
+The following table shows all available commands for this plugin:
+
 | Command | Description |
 | ---:   | :--- |
 | `!addquote quote` | Adds the new quote `quote` |
@@ -146,15 +152,17 @@ A feature of this bot is that it is easily extendable.
 
 To write your own plugin you need to do the following things:
 
-1. Copy the `_plugin_template` plugin and name the folder as descriptive as possible for your plugin
+1. Copy the `plugin_template` plugin and name the folder as descriptive as possible for your plugin
 2. Update the template Python script to your needs
 3. Update and fill the `README.md` within your plugin folder
 4. Optionally link your plugin in the main `README.md` of this project under `Available Plugins`, if you are planning to publish it
 2. Add your new plugin to the `config.ini`
 
-That's it. The plugin doesn't do anything yet, but you can build up on that.
+That's it. The plugin sends regulary a "Hello World!" message to all connected clients. You can build up on that.
 
 You can see some example plugins in the directory modules.
+
+Please check the [ts3API](https://github.com/Murgeye/teamspeak3-python-api) documentation for available API functions, properties, error handling etc..
 
 ## Adding setup and exit methods
 
