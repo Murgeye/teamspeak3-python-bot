@@ -18,7 +18,7 @@ bot: Bot.Ts3Bot
 autoStart = True
 check_frequency = 30.0
 enable_auto_move_back = True
-idle_time_seconds = 300.0
+idle_time_seconds = 600.0
 channel_name = "AFK"
 
 class IdleMover(Thread):
