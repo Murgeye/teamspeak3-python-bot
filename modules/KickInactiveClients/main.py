@@ -130,8 +130,8 @@ class KickInactiveClients(Thread):
         """
         Kick all idle clients.
         """
-        virtualserver_clientsonline = int(self.serverinfo.get("virtualserver_clientsonline"))
-        if virtualserver_clientsonline < clientsonline_kick_threshold:
+        virtualserver_clientsonline = self.serverinfo.get("virtualserver_clientsonline")
+        if int(virtualserver_clientsonline) < int(clientsonline_kick_threshold):
             KickInactiveClients.logger.debug(f"Only {virtualserver_clientsonline} of {int(self.serverinfo.get('virtualserver_maxclients'))} slots used. Nothing todo.")
             return
 
