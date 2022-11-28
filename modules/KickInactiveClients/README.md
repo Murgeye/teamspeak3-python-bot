@@ -31,7 +31,7 @@ This plugin supports the following options:
 | `auto_start` | `True` | Either if the plugin should automatically start when the Bot starts and it's configured or not. |
 | `frequency` | `300.0` | The frequency in seconds how often (and fast) the plugin should react (e.g. somebody is idle, every 300 seconds the bot would notice this and do something). |
 | `min_idle_time_seconds` | `7200` | The minimum time in seconds a client must be idle to get kicked from the server. |
-| `clientsonline_kick_threshold` | `108` | Only start kicking idle clients from the server, when more clients than this value are online. Set this to `0` to always kick idle clients. |
+| `min_clientsonline_kick_threshold` | `108` | Only start kicking idle clients from the server, when more clients than this value are online. Set this to `0` to always kick idle clients. |
 | `kick_reason_message` | `Sorry for kicking, but all our slots were nearly used, so we decided to kick some idle clients.` | The name of your AFK channel, where clients should be moved to while they are idle. |
 
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
@@ -40,7 +40,7 @@ If you need to change some of these default options, simply add them to your `co
 [KickInactiveClients]
 frequency: 60.0
 min_idle_time_seconds: 3600
-clientsonline_kick_threshold: 55
+min_clientsonline_kick_threshold: 55
 ```
 
 Please keep in mind, that you need to reload the plugin afterwards. Either by restarting the entire bot or by using a plugin command, if it has one.
