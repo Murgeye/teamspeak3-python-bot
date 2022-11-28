@@ -115,6 +115,7 @@ All existing functionality is based on plugins.
 | Quotes | [Open documentation](#quotes) |
 | AfkMover | [Open documentation](/modules/AfkMover/README.md) |
 | IdleMover | [Open documentation](/modules/IdleMover/README.md) |
+| KickInactiveClients | [Open documentation](/modules/KickInactiveClients/README.md) |
 
 # Text Commands
 
