@@ -16,6 +16,7 @@ bot: Bot.Ts3Bot
 
 # defaults for configureable options
 autoStart = True
+dry_run = False # log instead of performing actual actions
 check_frequency = 30.0
 enable_auto_move_back = True
 idle_time_seconds = 600.0
@@ -253,6 +254,9 @@ def start_afkmover(_sender=None, _msg=None):
     """
     global idleMover
     if idleMover is None:
+        if dry_run:
+            IdleMover.logger.info("Dry run is enabled - logging actions intead of actually performing them.")
+
         idleMover = IdleMover(plugin_stopper, bot.ts3conn)
         plugin_stopper.clear()
         idleMover.start()
@@ -289,11 +293,12 @@ def client_left(event_data):
 
 
 @setup
-def setup(ts3bot, auto_start = autoStart, frequency = check_frequency, auto_move_back = enable_auto_move_back, min_idle_time_seconds = idle_time_seconds, channel = channel_name):
-    global bot, check_frequency, enable_auto_move_back, idle_time_seconds, channel_name
+def setup(ts3bot, auto_start = autoStart, enable_dry_run = dry_run, frequency = check_frequency, auto_move_back = enable_auto_move_back, min_idle_time_seconds = idle_time_seconds, channel = channel_name):
+    global bot, autoStart, dry_run, check_frequency, enable_auto_move_back, idle_time_seconds, channel_name
 
     bot = ts3bot
     autoStart = auto_start
+    dry_run = enable_dry_run
     check_frequency = frequency
     enable_auto_move_back = auto_move_back
     idle_time_seconds = min_idle_time_seconds

@@ -16,6 +16,7 @@ bot: Bot.Ts3Bot
 
 # defaults for configureable options
 autoStart = True
+dry_run = False # log instead of performing actual actions
 check_frequency = 30.0
 enable_auto_move_back = True
 channel_name = "AFK"
@@ -127,7 +128,10 @@ class AfkMover(Thread):
             AfkMover.logger.info("Moving somebody to afk!")
             AfkMover.logger.debug("Client: " + str(client))
             try:
-                self.ts3conn.clientmove(self.afk_channel, int(client.get("clid", '-1')))
+                if dry_run:
+                    AfkMover.logger.debug(f"I would have moved this client: {str(client)}")
+                else:
+                    self.ts3conn.clientmove(self.afk_channel, int(client.get("clid", '-1')))
             except TS3Exception:
                 AfkMover.logger.exception("Error moving client! Clid=" +
                                           str(client.get("clid", '-1')))
@@ -157,9 +161,13 @@ class AfkMover(Thread):
                 AfkMover.logger.info("Moving a client back!")
                 AfkMover.logger.debug("Client: " + str(client))
                 AfkMover.logger.debug("Saved channel list keys:" + str(self.client_channels))
-                self.ts3conn.clientmove(self.client_channels.get(client.get("clid", -1)),
-                                        int(client.get("clid", '-1')))
-                del self.client_channels[client.get("clid", '-1')]
+
+                if dry_run:
+                    AfkMover.logger.debug(f"I would have moved back this client: {str(client)}")
+                else:
+                    self.ts3conn.clientmove(self.client_channels.get(client.get("clid", -1)),
+                                            int(client.get("clid", '-1')))
+                    del self.client_channels[client.get("clid", '-1')]
 
     def auto_move_all(self):
         """
@@ -189,6 +197,9 @@ def start_afkmover(_sender=None, _msg=None):
     """
     global afkMover
     if afkMover is None:
+        if dry_run:
+            AfkMover.logger.info("Dry run is enabled - logging actions intead of actually performing them.")
+
         afkMover = AfkMover(afkStopper, bot.ts3conn)
         afkStopper.clear()
         afkMover.start()
@@ -225,13 +236,16 @@ def client_left(event_data):
 
 
 @setup
-def setup(ts3bot, auto_start = autoStart, frequency = check_frequency, auto_move_back = enable_auto_move_back, channel = channel_name):
-    global bot, check_frequency, enable_auto_move_back, channel_name
+def setup(ts3bot, auto_start = autoStart, enable_dry_run = dry_run, frequency = check_frequency, auto_move_back = enable_auto_move_back, channel = channel_name):
+    global bot, autoStart, dry_run, check_frequency, enable_auto_move_back, channel_name
+
     bot = ts3bot
     autoStart = auto_start
+    dry_run = enable_dry_run
     check_frequency = frequency
     enable_auto_move_back = auto_move_back
     channel_name = channel
+
     if autoStart:
         start_afkmover()
 

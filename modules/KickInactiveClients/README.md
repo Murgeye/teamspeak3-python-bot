@@ -29,6 +29,7 @@ This plugin supports the following options:
 | Option | Default | Description |
 | ---: | :---: | :--- |
 | `auto_start` | `True` | Either if the plugin should automatically start when the Bot starts and it's configured or not. |
+| `enable_dry_run` | `False` | Set to `True`, if you want to test the plugin without executing the actual tasks. Instead it logs what it would have done. |
 | `frequency` | `300.0` | The frequency in seconds how often (and fast) the plugin should react (e.g. somebody is idle, every 300 seconds the bot would notice this and do something). |
 | `min_idle_time_seconds` | `7200` | The minimum time in seconds a client must be idle to get kicked from the server. |
 | `min_clientsonline_kick_threshold` | `108` | Only start kicking idle clients from the server, when more clients than this value are online. Set this to `0` to always kick idle clients. |

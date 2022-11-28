@@ -29,6 +29,7 @@ This plugin supports the following options:
 | Option | Default | Description |
 | ---: | :---: | :--- |
 | `auto_start` | `True` | Either if the plugin should automatically start when the Bot starts and it's configured or not. |
+| `enable_dry_run` | `False` | Set to `True`, if you want to test the plugin without executing the actual tasks. Instead it logs what it would have done. |
 | `frequency` | `30.0` | The frequency in seconds how often (and fast) the plugin should react (e.g. somebody is idle, every 30 seconds the bot would notice this and do something). |
 | `auto_move_back` | `True` | Either if clients, which are no longer idle should be moved back to their original channel or not. |
 | `min_idle_time_seconds` | `600` | The minimum time in seconds a client must be idle to get moved to the channel `channel`. |

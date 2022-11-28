@@ -15,6 +15,7 @@ bot: Bot.Ts3Bot
 
 # defaults for configureable options
 autoStart = True
+dry_run = False # log instead of performing actual actions
 check_frequency = 30.0
 some_option = "someValue"
 
@@ -63,7 +64,8 @@ class PluginTemplate(Thread):
                     continue
 
                 PluginTemplate.logger.debug(f"Sending the following client a message: {client}")
-                Bot.send_msg_to_client(bot.ts3conn, client['clid'], "Hello World!")
+                if not dry_run:
+                    Bot.send_msg_to_client(bot.ts3conn, client['clid'], "Hello World!")
         except AttributeError:
             PluginTemplate.logger.exception(f"AttributeError: {client}")
         except TS3Exception:
@@ -106,6 +108,9 @@ def start_plugin(_sender=None, _msg=None):
     """
     global pluginInfo
     if pluginInfo is None:
+        if dry_run:
+            PluginTemplate.logger.info("Dry run is enabled - logging actions intead of actually performing them.")
+
         pluginInfo = PluginTemplate(pluginStopper, bot.ts3conn)
         pluginStopper.clear()
         pluginInfo.run()
@@ -131,10 +136,11 @@ def client_left_event(event_data):
 
 
 @setup
-def setup(ts3bot, auto_start = autoStart, frequency = check_frequency, someOption = some_option):
-    global bot, check_frequency, some_option
+def setup(ts3bot, auto_start = autoStart, enable_dry_run = dry_run, frequency = check_frequency, someOption = some_option):
+    global bot, autoStart, dry_run, check_frequency, some_option
     bot = ts3bot
     autoStart = auto_start
+    dry_run = enable_dry_run
     check_frequency = frequency
     some_option = someOption
     if autoStart:

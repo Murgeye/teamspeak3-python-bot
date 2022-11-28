@@ -29,6 +29,7 @@ This plugin supports the following options:
 | Option | Default | Description |
 | ---: | :---: | :--- |
 | `auto_start` | `True` | Either if the plugin should automatically start when the Bot starts and it's configured or not. |
+| `enable_dry_run` | `False` | Set to `True`, if you want to test the plugin without executing the actual tasks. Instead it logs what it would have done. |
 | `frequency` | `30.0` | The frequency in seconds how often (and fast) the plugin should react (e.g. somebody sets his own as "AFK", every 30 seconds the bot would notice this and do something). |
 | `auto_move_back` | `True` | Either if clients, which are no longer AFK should be moved back to their original channel or not. |
 | `channel` | `AFK` | The name of your AFK channel, where clients should be moved to while they are afk. |

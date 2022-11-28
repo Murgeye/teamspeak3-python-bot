@@ -15,6 +15,7 @@ bot: Bot.Ts3Bot
 
 # defaults for configureable options
 autoStart = True
+dry_run = False # log instead of performing actual actions
 check_frequency = 60.0 * 5 # 300 seconds => 5 minutes
 idle_time_seconds = 60.0 * 60 * 2 # 7200 seconds => 120 minutes => 2 hours
 clientsonline_kick_threshold = 108 # Earliest start kicking clients when e.g. 108 of 128 slots are in use
@@ -180,6 +181,9 @@ def start_plugin(_sender=None, _msg=None):
             KickInactiveClients.logger.error(f"The `kick_message` has {len(kick_reason_message)} characters, but only 40 are supported! Aborted the plugin start.")
             return
 
+        if dry_run:
+            KickInactiveClients.logger.info("Dry run is enabled - logging actions intead of actually performing them.")
+
         idleMover = KickInactiveClients(plugin_stopper, bot.ts3conn)
         plugin_stopper.clear()
         idleMover.start()
@@ -196,11 +200,12 @@ def stop_plugin(_sender=None, _msg=None):
 
 
 @setup
-def setup(ts3bot, auto_start = autoStart, frequency = check_frequency, min_idle_time_seconds = idle_time_seconds, min_clientsonline_kick_threshold = clientsonline_kick_threshold, kick_message = kick_reason_message):
-    global bot, check_frequency, idle_time_seconds, clientsonline_kick_threshold, kick_reason_message
+def setup(ts3bot, auto_start = autoStart, enable_dry_run = dry_run, frequency = check_frequency, min_idle_time_seconds = idle_time_seconds, min_clientsonline_kick_threshold = clientsonline_kick_threshold, kick_message = kick_reason_message):
+    global bot, autoStart, dry_run, check_frequency, idle_time_seconds, clientsonline_kick_threshold, kick_reason_message
 
     bot = ts3bot
     autoStart = auto_start
+    dry_run = enable_dry_run
     check_frequency = frequency
     idle_time_seconds = min_idle_time_seconds
     clientsonline_kick_threshold = min_clientsonline_kick_threshold

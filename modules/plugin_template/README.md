@@ -29,6 +29,7 @@ This plugin supports the following options:
 | Option | Default | Description |
 | ---: | :---: | :--- |
 | `auto_start` | `True` | Either if the plugin should automatically start when the Bot starts and it's configured or not. |
+| `enable_dry_run` | `False` | Set to `True`, if you want to test the plugin without executing the actual tasks. Instead it logs what it would have done. |
 | `frequency` | `30.0` | The frequency in seconds how often (and fast) the plugin should react (e.g. somebody sets his own as "AFK", every 30 seconds the bot would notice this and do something). |
 | `someOption` | `someDefaultValue` | Some description for this option, what it is responsible for and what could potentially set. |
 
