@@ -18,7 +18,7 @@ autoStart = True
 check_frequency = 60.0 * 5 # 300 seconds => 5 minutes
 idle_time_seconds = 60.0 * 60 * 2 # 7200 seconds => 120 minutes => 2 hours
 clientsonline_kick_threshold = 108 # Earliest start kicking clients when e.g. 108 of 128 slots are in use
-kick_reason_message = "Sorry for kicking, but all our slots were nearly used, so we decided to kick some idle clients."
+kick_reason_message = "Sorry for kicking, but we need slots!"
 
 class KickInactiveClients(Thread):
     """
@@ -176,6 +176,10 @@ def start_plugin(_sender=None, _msg=None):
     """
     global idleMover
     if idleMover is None:
+        if len(kick_reason_message) > 40:
+            KickInactiveClients.logger.error(f"The `kick_message` has {len(kick_reason_message)} characters, but only 40 are supported! Aborted the plugin start.")
+            return
+
         idleMover = KickInactiveClients(plugin_stopper, bot.ts3conn)
         plugin_stopper.clear()
         idleMover.start()

@@ -32,7 +32,7 @@ This plugin supports the following options:
 | `frequency` | `300.0` | The frequency in seconds how often (and fast) the plugin should react (e.g. somebody is idle, every 300 seconds the bot would notice this and do something). |
 | `min_idle_time_seconds` | `7200` | The minimum time in seconds a client must be idle to get kicked from the server. |
 | `min_clientsonline_kick_threshold` | `108` | Only start kicking idle clients from the server, when more clients than this value are online. Set this to `0` to always kick idle clients. |
-| `kick_reason_message` | `Sorry for kicking, but all our slots were nearly used, so we decided to kick some idle clients.` | The name of your AFK channel, where clients should be moved to while they are idle. |
+| `kick_reason_message` | `Sorry for kicking, but we need slots!` | The kick reason message, which will be shown the respective kicked client. (Maximum supported length: 40 characters) |
 
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
 
