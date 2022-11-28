@@ -4,53 +4,40 @@ Simple TeamSpeak 3 bot based on the [ts3API](https://github.com/Murgeye/ts3API).
 
 # Requirements
 
-- Git
-- Python 3
+- [Git](https://git-scm.com/)
+- [Python 3](https://www.python.org/)
+  - [pip](https://pip.pypa.io/en/stable/installation/)
 
 # Installation
 
 1. Clone this repository using Git: `git clone https://github.com/Murgeye/teamspeak3-python-bot.git`
 2. Switch into the project directory: `cd teamspeak3-python-bot/`
-3. Update the ts3API submodule(s): `git submodule update --init --recursive`
-4. Install the Python dependencies: `pip3 install -r requirements.txt`.
-5. Create your own config file: `cp config.example.ini config.ini`
+3. Update the Git submodules: `git submodule update --init --recursive`
+4. Create a Python virtual env: `python3 -m venv venv`
+5. Active the Python virtual env: `source venv/bin/activate`
+6. Install the Python dependencies: `pip3 install -r requirements.txt`.
+7. Create your own config file: `cp config.example.ini config.ini`
+8. Adjust the config file: `vim config.ini` (see [configuration](#configuration) for further information)
 
-# Configuration
-
-Edit the `config.ini` to your requirements. Set the correct TeamSpeak host, port, serverquery credentials etc..
-
-## Section: General
-
-This section contains general settings for the Bot:
-
-| Option | Type    | Description |
-| ---:   | :---: | :--- |
-| Botname | string | The client nickname of your Bot. Will be visible to other clients. |
-| Host | string | The IP address or FQDN of your TeamSpeak server. |
-| Port | integer | The ServerQuery port of your TeamSpeak server. |
-| SSH | boolean | Whether the ServerQuery port is the SSH port or not. |
-| AcceptAllSSHKeys | boolean | Whether to accept any SSH key or not. |
-| SSHHostKeyFile | string | The path to a SSH host key file. |
-| SSHLoadSystemHostKeys | boolean | Whether to load system host keys or not. |
-| ServerId | integer | The virtualserver ID to connect to. |
-| DefaultChannel | string | The name of the channel, where the Bot should be in. Can be a pattern. |
-| User | string | The ServerQuery user to authenticate with. |
-| Password | string | The password for the ServerQuery user. |
-
-## Section: Plugins
-
-This section contains plugin settings for the Bot.
-
-You can enable plugins by adding each respective plugin as an extra line into this section:
-
-- Simple plugins: `ModuleName: PythonModuleName`
-- Complex plugins: `ModuleName: complex_module.example_module => module/complex_module/example_module`
-
-The `ModuleName` is only used for logging and can be anything, but not empty.
-
-If a plugin supports any kind of configuration, you need to edit the respective Python script of the plugin (e.g. `modules/afkmover.py`).
+Instead of setting up the above Python virtual env, you can also skip the steps 4 and 5 and instead install the dependencies globally. However, this is not recommended as you could run other Python projects on the same system, which require then a different version of specific dependencies.
 
 # Running the bot
+
+## Quick Start
+
+The quickest way to start the bot, is to run the following command within the project directory:
+
+```shell
+./main
+```
+
+You will not see any output, but when you check the `logs/` directory, you should see some log files. The bot should be also connected to your TeamSpeak server. Right now, it's just not doing anything as no plugin is configured yet.
+
+You can stop the bot by aborting the above command using the key combination `Ctrl`+`C`.
+
+## Advanced (recommended)
+
+This way you ensure, that the bot automatically starts when your system boots and that it automatically restarts, when it crashed due to whatever reason.
 
 The following instructions were tested on Linux Debian 11 (Bullseye).
 
@@ -76,6 +63,8 @@ Further commands:
 - Stop bot: `systemctl stop tsbot.service`
 - Restart bot: `systemctl restart tsbot.service`
 
+# Logging
+
 The bot has a `logs/` directory inside the project directory. There you will find multiple log files - one per enabled plugin/feature:
 
 ```shell
@@ -89,6 +78,59 @@ total 64K
 -rw-r--r-- 1 tsbot users 16K Nov 28 00:50 kickinactiveclients.log
 -rw-r--r-- 1 tsbot users 837 Nov 28 00:46 moduleloader.log
 ```
+
+Using the environment variable `LOG_LEVEL`, you can change the log level to get either more or less logging output.
+
+# Configuration
+
+Edit the `config.ini` to your requirements. Set the correct TeamSpeak host, port, serverquery credentials etc..
+
+The INI file has different sections. The start of a section is defined by `[SectionName]`. All configuration options below this section belong to this section until the next section is defined.
+
+## Section: General
+
+This section contains general settings for the Bot:
+
+| Option | Default | Type    | Description |
+| ---:   | :---: | :---: | :--- |
+| Botname | `ExampleBot` | string | The client nickname of your Bot. Will be visible to other clients. |
+| Host | `127.0.0.1` | string | The IP address or FQDN of your TeamSpeak server. |
+| Port | `10022` | integer | The ServerQuery port of your TeamSpeak server. |
+| SSH | `True` | boolean | Whether the ServerQuery port is the SSH port or not. |
+| AcceptAllSSHKeys | `True` | boolean | Whether to accept any SSH key or not. |
+| SSHHostKeyFile | `.ssh/ssh_hostkeys` | string | The path to a SSH host key file. |
+| SSHLoadSystemHostKeys | `False` | boolean | Whether to load system host keys or not. |
+| ServerId | `1` | integer | The virtualserver ID to connect to. |
+| DefaultChannel | `Botchannel` | string | The name of the channel, where the Bot should be in. Can be a pattern. |
+| User | `serveradmin` | string | The ServerQuery user to authenticate with. |
+| Password | `query-password` | string | The password for the ServerQuery user. |
+
+## Section: Plugins
+
+This section contains plugin settings for the Bot.
+
+You can enable plugins by adding each respective plugin as an extra line into this section:
+
+- Simple plugins: `ModuleName: PythonModuleName`
+- Complex plugins: `ModuleName: plugin_template.main => module/plugin_template/`
+
+The `ModuleName` is only used for logging and can be anything, but not empty.
+
+`PythonModuleName` or `plugin_template.main` must be the file path to the respective Python script, which should be loaded (without the file extension `.py` and with `.` instead of `/`).
+
+Some plugins support configurations to customize them for your personal needs. There, please check the respective plugin documentation.
+
+### Available Plugins
+
+All existing functionality is based on plugins.
+
+| Plugin | Readme |
+| ---:   | :--- |
+| Utils | [Open documentation](#utils) |
+| Quotes | [Open documentation](#quotes) |
+| AfkMover | [Open documentation](/modules/AfkMover/README.md) |
+| IdleMover | [Open documentation](/modules/IdleMover/README.md) |
+| KickInactiveClients | [Open documentation](/modules/KickInactiveClients/README.md) |
 
 ## Permissions
 
@@ -106,7 +148,7 @@ To see these permission settings you have to enable advanced permissions under `
 
 ## Using SSH (Encrypted ServerQuery connection)
 
-Since server version 3.3 TeamSpeak supports encrypted ServerQuery clients, which should be preferred.
+Since the TeamSpeak server version 3.3 TeamSpeak supports encrypted ServerQuery clients. It's recommend to use SSH.
 
 To archive this the connection is wrapped inside a SSH connection. As SSH needs a way to check the host RSA
 key, four config options were added:
@@ -123,18 +165,6 @@ To add your host key the following workflow is easiest:
 2. Connect to the server
 3. The servers host key is automatically added to the file
 4. Deactivate AcceptAllHostKeys
-
-# Available Plugins
-
-All existing functionality is based on plugins.
-
-| Plugin | Readme |
-| ---:   | :--- |
-| Utils | [Open documentation](#utils) |
-| Quotes | [Open documentation](#quotes) |
-| AfkMover | [Open documentation](/modules/AfkMover/README.md) |
-| IdleMover | [Open documentation](/modules/IdleMover/README.md) |
-| KickInactiveClients | [Open documentation](/modules/KickInactiveClients/README.md) |
 
 # Text Commands
 
