@@ -54,22 +54,41 @@ If a plugin supports any kind of configuration, you need to edit the respective 
 
 The following instructions were tested on Linux Debian 11 (Bullseye).
 
-1. Copy the `tsbot.service` file from this repository to the following path: `/etc/systemd/system/tsbot.service`
-2. Ensure, that the permissions are correct:
+1. Create a Linux user: `useradd tsbot`
+2. Copy the `tsbot.defaults` file from this repository to the following path: `/etc/default/tsbot`
+3. Ensure, that the permissions are correct:
+   - `sudo chown root:root /etc/default/tsbot`
+   - `sudo chmod 0644 /etc/default/tsbot`
+4. Adjust the defaults config file, if necessary: `vim /etc/default/tsbot`
+5. Copy the `tsbot.service` file from this repository to the following path: `/etc/systemd/system/tsbot.service`
+6. Ensure, that the permissions are correct:
    - `sudo chown root:root /etc/systemd/system/tsbot.service`
    - `sudo chmod 0777 /etc/systemd/system/tsbot.service`
-3. Adjust the following systemd unit options, if necessary:
+7. Adjust the following systemd unit options, if necessary:
    - `After`: Add your TeamSpeak server systemd unit, when it is running on the same server as systemd unit.
    - `WorkingDirectory`: Set the correct path to this project directory on your system.
-4. Reload systemd: `sudo systemctl daemon-reload`
-5. Enable the systemd unit: `sudo systemctl enable tsbot.service`
-6. Start the systemd unit: `sudo systemctl start tsbot.service`
+8. Reload systemd: `sudo systemctl daemon-reload`
+9. Enable the systemd unit: `sudo systemctl enable tsbot.service`
+10. Start the systemd unit: `sudo systemctl start tsbot.service`
 
 Further commands:
 
-- View logs: `journalctl -u tsbot.service`
 - Stop bot: `systemctl stop tsbot.service`
 - Restart bot: `systemctl restart tsbot.service`
+
+The bot has a `logs/` directory inside the project directory. There you will find multiple log files - one per enabled plugin/feature:
+
+```shell
+tsbot@linux:/usr/local/bin/teamspeak3-python-bot$ ls -lh logs/
+total 64K
+-rw-r--r-- 1 tsbot users 14K Nov 28 00:50 afkmover.log
+-rw-r--r-- 1 tsbot users  96 Nov 28 00:46 bot.log
+-rw-r--r-- 1 tsbot users  64 Nov 28 00:46 commandhandler.log
+-rw-r--r-- 1 tsbot users  62 Nov 28 00:46 eventhandler.log
+-rw-r--r-- 1 tsbot users 14K Nov 28 00:50 idlemover.log
+-rw-r--r-- 1 tsbot users 16K Nov 28 00:50 kickinactiveclients.log
+-rw-r--r-- 1 tsbot users 837 Nov 28 00:46 moduleloader.log
+```
 
 ## Permissions
 

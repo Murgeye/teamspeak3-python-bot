@@ -4,9 +4,14 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/usr/local/bin/teamspeak3-python-bot
-ExecStart=/usr/bin/python3 main.yml
-Restart=on-failure
+User={{ SYSTEMD_UNIT_USER }}
+Group={{ SYSTEMD_UNIT_GROUP }}
+EnvironmentFile=/etc/default/tsbot
+WorkingDirectory={{ PROJECT_ROOT_DIR }}
+ExecStartPre=/bin/bash prepare_python_venv.sh venv
+ExecStart={{ PROJECT_ROOT_DIR }}/{{ PYTHON_VENV_BIN }} main.py
+Restart=always
+RestartSec=30
 
 [Install]
 WantedBy=multi-user.target
