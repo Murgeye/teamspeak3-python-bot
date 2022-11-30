@@ -47,10 +47,27 @@ class PluginTemplate(Thread):
         Thread.__init__(self)
         self.stopped = stop_event
         self.ts3conn = ts3conn
+        self.client_list = None
+
+
+    def update_client_list(self):
+        """
+        Update the list of currently connected clients.
+        """
+        try:
+            self.client_list = self.ts3conn.clientlist()
+            PluginTemplate.logger.debug("client_list: " + str(self.client_list))
+        except TS3Exception:
+            PluginTemplate.logger.exception("Error while getting client list!")
+            self.client_list = list()
+
 
     def send_message_to_all_clients(self):
-        try:
-            for client in self.ts3conn.clientlist():
+        """
+        Sends a "Hello World!" message to every connected client except ServerQuery clients.
+        """
+        if self.client_list is not None:
+            for client in self.client_list:
                 if 'clid' not in client:
                     PluginTemplate.logger.debug(f"Skipping the following client as it has no clid: {client}")
                     continue
@@ -65,36 +82,38 @@ class PluginTemplate(Thread):
 
                 PluginTemplate.logger.debug(f"Sending the following client a message: {client}")
                 if not dry_run:
-                    Bot.send_msg_to_client(bot.ts3conn, client['clid'], "Hello World!")
-        except AttributeError:
-            PluginTemplate.logger.exception(f"AttributeError: {client}")
-        except TS3Exception:
-            PluginTemplate.logger.exception("Error while sending a message to clients!")
-
+                    try:
+                        Bot.send_msg_to_client(bot.ts3conn, client['clid'], "Hello World!")
+                    except AttributeError:
+                        PluginTemplate.logger.exception(f"AttributeError: {client}")
+                    except TS3Exception:
+                        PluginTemplate.logger.exception("Error while sending a message to clients!")
+        else:
+            PluginTemplate.logger.debug("client_list is None (empty). Looks like no real client is connected.")
 
     def loop_until_stopped(self):
         """
         Loop over all main functions with a specific delay between each execution until the stop signal is sent.
         """
         while not self.stopped.wait(float(check_frequency)):
-            PluginTemplate.logger.debug(f"{PluginTemplate.class_name} running!")
+            PluginTemplate.logger.debug("Thread running!")
             PluginTemplate.logger.debug(f"some_option value: {some_option}")
 
             try:
+                self.update_client_list()
                 self.send_message_to_all_clients()
             except BaseException:
                 PluginTemplate.logger.error("Uncaught exception:" + str(sys.exc_info()[0]))
                 PluginTemplate.logger.error(str(sys.exc_info()[1]))
                 PluginTemplate.logger.error(traceback.format_exc())
 
-        PluginTemplate.logger.warning(f"{PluginTemplate.class_name} stopped!")
-
+        PluginTemplate.logger.warning("Thread stopped!")
 
     def run(self):
         """
-        Thread run method. Starts the mover.
+        Thread run method.
         """
-        PluginTemplate.logger.info("Thread started")
+        PluginTemplate.logger.info("Thread started!")
         try:
             self.loop_until_stopped()
         except BaseException:
