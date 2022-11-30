@@ -4,7 +4,7 @@ import Bot
 import Moduleloader
 from Moduleloader import *
 
-__version__ = "0.4"
+__version__ = "0.5"
 bot: Bot.Ts3Bot
 logger = logging.getLogger("bot")
 
@@ -15,38 +15,35 @@ def setup(ts3bot):
     bot = ts3bot
 
 
-@command('hello', )
-@group('Server Admin', )
-def hello(sender, _msg):
-    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Admin!")
+@command('version', )
+@group('Server Admin', 'Moderator')
+def send_version(sender, _msg):
+    Bot.send_msg_to_client(bot.ts3conn, sender, __version__)
 
 
-@command('hello', )
-@group('Moderator', )
-def hello(sender, _msg):
-    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Moderator!")
+@command('stop', )
+@group('Server Admin')
+def stop_bot(_sender, _msg):
+    Moduleloader.exit_all()
+    bot.ts3conn.quit()
+    logger.warning(f"Bot has been stopped by clid={_sender}!")
 
 
-@command('hello', )
-@group('Normal', )
-def hello(sender, _msg):
-    Bot.send_msg_to_client(bot.ts3conn, sender, "Hello Casual!")
+@command('restart', 'reload' )
+@group('Server Admin', 'Moderator')
+def restart_bot(_sender, _msg):
+    Moduleloader.exit_all()
+    bot.ts3conn.quit()
+    logger.warning(f"Bot has been restarted by clid={_sender}!")
+    import main
+    main.restart_program()
 
 
-@command('kickme', 'fuckme')
-@group('.*', )
-def kickme(sender, _msg):
-    ts3conn = bot.ts3conn
-    ts3conn.clientkick(sender, 5, "Whatever.")
-
-
-@command('mtest', )
-def mtest(_sender, msg):
-    print("MTES")
-    channels = msg[len("!mtest "):].split()
-    print(channels)
-    ts3conn = bot.ts3conn
-    print(ts3conn.channelfind(channels[0]))
+@command('help', 'commands', 'commandlist')
+@group('Server Admin', 'Moderator')
+def get_command_list(sender, _msg):
+    Bot.send_msg_to_client(bot.ts3conn, sender, "The following bot commands are available:")
+    Bot.send_msg_to_client(bot.ts3conn, sender, str(list(bot.command_handler.handlers.keys())))
 
 
 @command('multimove', 'mm')
@@ -122,39 +119,3 @@ def multi_move(sender, msg):
         except TS3QueryException as e:
             Bot.send_msg_to_client(ts3conn, sender,
                                    "Error moving clients: id = " + str(e.id) + e.message)
-
-
-@command('version', )
-@group('.*')
-def send_version(sender, _msg):
-    Bot.send_msg_to_client(bot.ts3conn, sender, __version__)
-
-
-@command('whoami', )
-@group('.*')
-def whoami(sender, _msg):
-    Bot.send_msg_to_client(bot.ts3conn, sender, "None of your business!")
-
-
-@command('stop', )
-@group('Server Admin', )
-def stop_bot(_sender, _msg):
-    Moduleloader.exit_all()
-    bot.ts3conn.quit()
-    logger.warning("Bot was quit!")
-
-
-@command('restart', )
-@group('Server Admin', 'Moderator', )
-def restart_bot(_sender, _msg):
-    Moduleloader.exit_all()
-    bot.ts3conn.quit()
-    logger.warning("Bot was quit!")
-    import main
-    main.restart_program()
-
-
-@command('commandlist', )
-@group('Server Admin', 'Moderator', )
-def get_command_list(sender, _msg):
-    Bot.send_msg_to_client(bot.ts3conn, sender, str(list(bot.command_handler.handlers.keys())))

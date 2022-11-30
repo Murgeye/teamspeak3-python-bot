@@ -178,13 +178,11 @@ The following table shows all available commands for this plugin:
 
 | Command | Description |
 | ---:   | :--- |
-| `!hello` | Answers with a message depending on the server group (Server Admin, Moderator, Normal) |
-| `!stop` | Stop the bot (you need to start it afterwards manually) |
-| `!restart` | Restart the bot |
-| `!multimove fromChannel toChannel` | Moves all users from `fromChannel` to `toChannel` (should work for channels containing spaces, most of the time)
-| `!kickme` | Kick yourself from the server. |
-| `!whoami` | Fun command. |
 | `!version` | Answer with the current module version |
+| `!stop` | Stop the bot (you need to start it afterwards manually) |
+| `!restart`/`!reload` | Restart the bot to e.g. reload the configuration. |
+| `!help`/`!commands`/`!commandlist` | Returns the list of available bot commands. |
+| `!multimove fromChannel toChannel`/`!mm fromChannel toChannel` | Moves all users from `fromChannel` to `toChannel` (should work for channels containing spaces, most of the time) |
 
 ## Quotes
 
