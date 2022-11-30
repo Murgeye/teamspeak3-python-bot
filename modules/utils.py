@@ -1,4 +1,5 @@
 from ts3API.TS3Connection import TS3QueryException
+from ts3API.utilities import TS3Exception
 
 import Bot
 import Moduleloader
@@ -81,72 +82,179 @@ def get_command_list(sender, _msg):
 @group('Server Admin', 'Moderator')
 def multi_move(sender, msg):
     """
-    Move all clients from one channel to another.
+    Move multiple clients from one, multiple or all channels to a specific target channel at once.
     :param sender: Client id of sender that sent the command.
     :param msg: Sent command.
     """
-    channels = msg.split()[1:]
-    source_name = ""
-    dest_name = ""
-    source = None
-    dest = None
     ts3conn = bot.ts3conn
-    if len(channels) < 2:
-        if sender != 0:
-            Bot.send_msg_to_client(ts3conn, sender, "Usage: multimove source destination")
-            return
-    elif len(channels) > 2:
-        channel_name_list = ts3conn.channel_name_list()
-        for channel_name in channel_name_list:
-            if msg[len("!multimove "):].startswith(channel_name):
-                source_name = channel_name
-                dest_name = msg[len("!multimove ") + len(source_name) + 1:]
-    else:
-        source_name = channels[0]
-        dest_name = channels[1]
-    if source_name == "":
-        Bot.send_msg_to_client(ts3conn, sender, "Source channel not found")
-        return
-    if dest_name == "":
-        Bot.send_msg_to_client(ts3conn, sender, "Destination channel not found")
-        return
+
+    # evaluate and check command arguments
+    source_channels = []
+    target_channel = None
+
     try:
-        channel_matches = ts3conn.channelfind(source_name)
-        channel_candidates = [chan for chan in channel_matches if
-                              chan.get("channel_name", '-1').startswith(source_name)]
-        if len(channel_candidates) == 1:
-            source = channel_candidates[0].get("cid", '-1')
-        elif len(channel_candidates) == 0:
-            Bot.send_msg_to_client(ts3conn, sender, "Source channel could not be found.")
-        else:
-            channels = [chan.get('channel_name') for chan in channel_candidates]
-            Bot.send_msg_to_client(ts3conn, sender,
-                                   "Multiple source channels found: " + ", ".join(channels))
-    except TS3QueryException:
-        Bot.send_msg_to_client(ts3conn, sender, "Source channel not found")
-    try:
-        channel_matches = ts3conn.channelfind(dest_name)
-        channel_candidates = [chan for chan in channel_matches if
-                              chan.get("channel_name", '-1').startswith(dest_name)]
-        if len(channel_candidates) == 1:
-            dest = channel_candidates[0].get("cid", '-1')
-        elif len(channel_candidates) == 0:
-            Bot.send_msg_to_client(ts3conn, sender, "Destination channel could not be found.")
-        else:
-            channels = [chan.get('channel_name') for chan in channel_candidates]
-            Bot.send_msg_to_client(ts3conn, sender,
-                                   "Multiple destination channels found: " + ", ".join(channels))
-    except TS3QueryException:
-        Bot.send_msg_to_client(ts3conn, sender, "Destination channel not found")
-    if source is not None and dest is not None:
+        command_args = msg.split('"')
+        command_args = [cmd_arg for cmd_arg in command_args if cmd_arg.replace('"', '').replace("'", '').strip()]
+        if len(command_args) != 3:
+            raise ValueError
+
+        _, source_channels, target_channel = command_args
+    except ValueError:
+        logger.debug(f"Expected three values for this command, got instead: {msg}")
+
         try:
-            client_list = ts3conn.clientlist()
-            client_list = [client for client in client_list if client.get("cid", '-1') == source]
-            for client in client_list:
-                clid = client.get("clid", '-1')
-                logger.info("Found client in channel: " + client.get("client_nickname",
-                                                                     "") + " id = " + clid)
-                ts3conn.clientmove(int(dest), int(clid))
+            Bot.send_msg_to_client(ts3conn, sender, "Your command was incorrect.")
+            Bot.send_msg_to_client(ts3conn, sender, "Usage: !multimove 'all' 'targetChannelNamePattern'")
+            Bot.send_msg_to_client(ts3conn, sender, "Usage: !multimove 'sourceChannelNamePattern' 'targetChannelNamePattern'")
+            Bot.send_msg_to_client(ts3conn, sender, "Usage: !multimove 'sourceChannelNamePattern1;sourceChannelNamePattern2[;...]' 'targetChannelNamePattern'")
+        except TS3QueryException:
+            logger.error(f"Failed to send the error message as textmessage to clid={sender}.")
+
+        return
+
+    # get source channel ID(s)
+    source_channel_ids = []
+
+    for source_channel_name_pattern in source_channels.split(';'):
+        source_channel_name_pattern = source_channel_name_pattern.replace('"', '').replace("'", '').strip()
+
+        logger.debug(f"Searching for a channel with the following name pattern: {str(source_channel_name_pattern)}")
+
+        if source_channel_name_pattern == 'all':
+            try:
+                all_channels = ts3conn.channellist()
+            except TS3Exception:
+                logger.exception(f"Error getting `all` channels.")
+
+                try:
+                    Bot.send_msg_to_client(ts3conn, sender, f"Could not get all channels.")
+                except TS3QueryException:
+                    logger.error(f"Failed to send the info message as textmessage to clid={sender}.")
+
+            for channel in all_channels:
+                source_channel_ids.append(int(channel.get("cid", '-1')))
+        else:
+            try:
+                matching_source_channels = ts3conn.channelfind(source_channel_name_pattern)
+                for matching_source_channel in matching_source_channels:
+                    source_channel_ids.append(int(matching_source_channel.get("cid", "-1")))
+            except TS3Exception:
+                logger.exception(f"Error getting `{source_channel_name_pattern}` channel.")
+
+                try:
+                    Bot.send_msg_to_client(ts3conn, sender, f"Could not find any channel with the name `{source_channel_name_pattern}`.")
+                except TS3QueryException:
+                    logger.error(f"Failed to send the info message as textmessage to clid={sender}.")
+
+    if len(source_channel_ids) == 0:
+        logger.error(f"Could not find any source channel for the given channel name pattern(s): {str(source_channels)}")
+
+        try:
+            Bot.send_msg_to_client(ts3conn, sender, f"Could not find any source channel for the given channel name pattern(s): {str(source_channels)}")
+            Bot.send_msg_to_client(ts3conn, sender, "Please ensure, that the channel name pattern(s) are correct.")
+        except TS3QueryException:
+            logger.error(f"Failed to send the info message as textmessage to clid={sender}.")
+
+        return
+
+    logger.debug(f"Source channel IDs: {str(source_channel_ids)}.")
+
+    # get target channel ID
+    target_channel_id = None
+
+    try:
+        target_channel_id = int(ts3conn.channelfind(target_channel)[0].get("cid", '-1'))
+    except TS3Exception:
+        logger.exception(f"Error getting `{target_channel}` channel.")
+
+        try:
+            Bot.send_msg_to_client(ts3conn, sender, f"Could not find any channel with the name `{target_channel}`.")
+        except TS3QueryException:
+            logger.error(f"Failed to send the info message as textmessage to clid={sender}.")
+
+    if target_channel_id is None or not isinstance(target_channel_id, int):
+        logger.error(f"Could not find any target channel for the given channel name pattern: {str(target_channel)}")
+
+        try:
+            Bot.send_msg_to_client(ts3conn, sender, f"Could not find any target channel for the given channel name pattern: {str(target_channel)}")
+            Bot.send_msg_to_client(ts3conn, sender, "Please ensure, that the channel name pattern is correct and matches only a single channel.")
+        except TS3QueryException:
+            logger.error(f"Failed to send the info message as textmessage to clid={sender}.")
+
+        return
+
+    if isinstance(target_channel_id, list):
+        logger.error(f"Found multiple target channels for the given channel name pattern, but only one is supported: {str(target_channel)}")
+
+        try:
+            Bot.send_msg_to_client(ts3conn, sender, f"Found multiple target channels for the given channel name pattern, but only one is supported: {str(target_channel)}")
+            Bot.send_msg_to_client(ts3conn, sender, "Please ensure, that the channel name pattern is correct and matches only a single channel.")
+        except TS3QueryException:
+            logger.error(f"Failed to send the info message as textmessage to clid={sender}.")
+
+        return
+
+    logger.debug(f"Target channel ID: {int(target_channel_id)}.")
+
+    # get all current connected clients
+    all_clients = None
+
+    try:
+        all_clients = ts3conn.clientlist()
+    except TS3QueryException:
+        logger.error(f"Failed to send the info message as textmessage to clid={sender}.")
+
+    if all_clients is None or len(all_clients) == 0:
+        logger.error("Could not find any client on the TeamSpeak server.")
+
+        try:
+            Bot.send_msg_to_client(ts3conn, sender, "Could not find any client on the TeamSpeak server.")
+        except TS3QueryException:
+            logger.error(f"Failed to send the info message as textmessage to clid={sender}.")
+
+        return
+
+    logger.info(f"Found {len(all_clients)} currently connected clients.")
+
+    # filter client list to get only clients, which should be moved
+    filtered_clients = []
+
+    for client in all_clients:
+        if int(client.get('client_type')) == 1:
+            logger.debug(f"Ignoring ServerQuery client: {client}")
+            continue
+
+        if int(client.get('cid')) not in source_channel_ids:
+            logger.debug(f"Ignoring client as not member of any source channel: {client}")
+            continue
+
+        logger.debug(f"Client is member of a source channel. Adding to the move list: {client}")
+        filtered_clients.append(client)
+
+    if len(filtered_clients) == 0:
+        logger.error("Could not find any client in the source channel(s).")
+
+        try:
+            Bot.send_msg_to_client(ts3conn, sender, "Could not find any client in the source channel(s).")
+            Bot.send_msg_to_client(ts3conn, sender, "Please ensure, that you have provided the correct channel name pattern(s).")
+        except TS3QueryException:
+            logger.error(f"Failed to send the info message as textmessage to clid={sender}.")
+
+        return
+
+    logger.info(f"Found {len(filtered_clients)} clients in all respective source channels.")
+    logger.debug(f"Client list to move: {str(filtered_clients)}.")
+
+    # move all clients to the target channel
+    for client in filtered_clients:
+        try:
+            if dry_run:
+                logger.info(f"Would have moved the following client to the channel ID {int(target_channel_id)}, if the dry-run would be disabled: {str(client)}")
+            else:
+                ts3conn.clientmove(int(target_channel_id), int(client.get("clid", '-1')))
         except TS3QueryException as e:
-            Bot.send_msg_to_client(ts3conn, sender,
-                                   "Error moving clients: id = " + str(e.id) + e.message)
+            # Error: already member of channel
+            if int(e.id) == 770:
+                return
+
+            Bot.send_msg_to_client(ts3conn, sender, f"Failed to move the client `{client.get('client_nickname')}`: id={str(e.id)} error_message={str(e.message)}")
