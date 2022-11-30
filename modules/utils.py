@@ -25,31 +25,43 @@ def setup(ts3bot, enable_dry_run = dry_run):
 @command('version', )
 @group('Server Admin', 'Moderator')
 def send_version(sender, _msg):
+    """
+    Sends a text message with the current version of this module to the `sender`.
+    :param sender: Client id of sender that sent the command.
+    """
     Bot.send_msg_to_client(bot.ts3conn, sender, __version__)
 
 
 @command('stop', )
 @group('Server Admin')
-def stop_bot(_sender, _msg):
+def stop_bot(sender, _msg):
+    """
+    Stops the bot. An administrator needs to manually start it from the CLI again, if necessary.
+    :param sender: Client id of sender that sent the command.
+    """
     if dry_run:
-        logger.warning(f"Bot would have been stopped by clid={_sender}, when dry-run would be disabled!")
+        logger.warning(f"Bot would have been stopped by clid={sender}, when dry-run would be disabled!")
         return
 
     Moduleloader.exit_all()
     bot.ts3conn.quit()
-    logger.warning(f"Bot has been stopped by clid={_sender}!")
+    logger.warning(f"Bot has been stopped by clid={sender}!")
 
 
 @command('restart', 'reload' )
 @group('Server Admin', 'Moderator')
-def restart_bot(_sender, _msg):
+def restart_bot(sender, _msg):
+    """
+    Restarts the bot and thus reloads its configuration.
+    :param sender: Client id of sender that sent the command.
+    """
     if dry_run:
-        logger.warning(f"Bot would have been restarted by clid={_sender}, when dry-run would be disabled!")
+        logger.warning(f"Bot would have been restarted by clid={sender}, when dry-run would be disabled!")
         return
 
     Moduleloader.exit_all()
     bot.ts3conn.quit()
-    logger.warning(f"Bot has been restarted by clid={_sender}!")
+    logger.warning(f"Bot has been restarted by clid={sender}!")
     import main
     main.restart_program()
 
@@ -57,6 +69,10 @@ def restart_bot(_sender, _msg):
 @command('help', 'commands', 'commandlist')
 @group('Server Admin', 'Moderator')
 def get_command_list(sender, _msg):
+    """
+    Sends a text message with the available bot commands to the `sender`.
+    :param sender: Client id of sender that sent the command.
+    """
     Bot.send_msg_to_client(bot.ts3conn, sender, "The following bot commands are available:")
     Bot.send_msg_to_client(bot.ts3conn, sender, str(list(bot.command_handler.handlers.keys())))
 
