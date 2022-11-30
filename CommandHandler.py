@@ -72,8 +72,8 @@ class CommandHandler:
         :param msg: Command message.
         :param sender: Client id of the sender.
         """
-        logger.debug("Handling message " + msg)
-        command = msg.split(None, 1)[0]
+        command = msg
+        logger.debug(f"`clid={str(sender)}` sent a command: {str(command)}")
         if len(command) > 1:
             command = command[1:]
             handlers = self.handlers.get(command)
@@ -88,7 +88,8 @@ class CommandHandler:
                     Bot.send_msg_to_client(self.ts3conn, sender, "You are not allowed to use this command!")
             else:
                 Bot.send_msg_to_client(self.ts3conn, sender, "I cannot interpret your command. I am very sorry. :(")
-                logger.info("Unknown command " + msg + " received!")
+                Bot.send_msg_to_client(self.ts3conn, sender, "Use `!help` to get a list of available commands.")
+                logger.info(f"`clid={sender}` sent an unknown command: {str(command)}")
 
     def inform(self, event):
         """
@@ -99,5 +100,5 @@ class CommandHandler:
             if event.targetmode == "Private":
                 if event.invoker_id != int(self.ts3conn.whoami()["client_id"]):  # Don't talk to yourself ...
                     ci = ClientInfo.ClientInfo(event.invoker_id, self.ts3conn)
-                    self.logger.info("Message: " + event.message + " from: " + ci.name)
+                    self.logger.info(f"`{str(ci.name)}` wrote the following message: {str(event.message)}")
                     self.handle_command(event.message, sender=event.invoker_id)
