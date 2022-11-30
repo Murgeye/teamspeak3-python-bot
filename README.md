@@ -174,6 +174,8 @@ All of the text commands are added via plugins (see the next section).
 
 This plugin extends your bot with administrative features via your TeamSpeak server client.
 
+### Available Commands
+
 The following table shows all available commands for this plugin:
 
 | Command | Description |
@@ -183,6 +185,32 @@ The following table shows all available commands for this plugin:
 | `!restart`/`!reload` | Restart the bot to e.g. reload the configuration. |
 | `!help`/`!commands`/`!commandlist` | Returns the list of available bot commands. |
 | `!multimove fromChannel toChannel`/`!mm fromChannel toChannel` | Moves all users from `fromChannel` to `toChannel` (should work for channels containing spaces, most of the time) |
+
+### Configuration
+
+Enable this plugin by adding the following line under the `Plugins` section to your `config.ini`:
+
+```
+[Plugins]
+Utils: utils
+```
+
+#### Options
+
+This plugin supports the following options:
+
+| Option | Default | Description |
+| ---: | :---: | :--- |
+| `enable_dry_run` | `False` | Set to `True`, if you want to test the plugin without executing the actual tasks. Instead it logs what it would have done. |
+
+If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
+
+```
+[utils]
+enable_dry_run: True
+```
+
+Please keep in mind, that you need to reload the plugin afterwards. Either by restarting the entire bot or by using a plugin command, if it has one.
 
 ## Quotes
 

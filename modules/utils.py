@@ -8,11 +8,18 @@ __version__ = "0.5"
 bot: Bot.Ts3Bot
 logger = logging.getLogger("bot")
 
+# defaults for configureable options
+dry_run = False # log instead of performing actual actions
 
 @Moduleloader.setup
-def setup(ts3bot):
-    global bot
+def setup(ts3bot, enable_dry_run = dry_run):
+    global bot, dry_run
+
     bot = ts3bot
+    dry_run = enable_dry_run
+
+    if dry_run:
+        logger.info("Dry run is enabled - logging actions intead of actually performing them.")
 
 
 @command('version', )
@@ -24,6 +31,10 @@ def send_version(sender, _msg):
 @command('stop', )
 @group('Server Admin')
 def stop_bot(_sender, _msg):
+    if dry_run:
+        logger.warning(f"Bot would have been stopped by clid={_sender}, when dry-run would be disabled!")
+        return
+
     Moduleloader.exit_all()
     bot.ts3conn.quit()
     logger.warning(f"Bot has been stopped by clid={_sender}!")
@@ -32,6 +43,10 @@ def stop_bot(_sender, _msg):
 @command('restart', 'reload' )
 @group('Server Admin', 'Moderator')
 def restart_bot(_sender, _msg):
+    if dry_run:
+        logger.warning(f"Bot would have been restarted by clid={_sender}, when dry-run would be disabled!")
+        return
+
     Moduleloader.exit_all()
     bot.ts3conn.quit()
     logger.warning(f"Bot has been restarted by clid={_sender}!")
