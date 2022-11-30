@@ -32,6 +32,7 @@ class CommandHandler:
         :param ts3conn: TS3Connection to use
         """
         self.handlers = {}
+        self.ts3conn = ts3conn
         # Default groups if group not specified.
         self.accept_from_groups = ['Server Admin', 'Moderator']
 
