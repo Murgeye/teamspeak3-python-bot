@@ -22,6 +22,7 @@ dry_run = False # log instead of performing actual actions
 check_frequency = 30.0
 enable_auto_move_back = True
 resp_channel_settings = True
+fallback_action = None
 channel_name = "AFK"
 
 class AfkMover(Thread):
@@ -51,14 +52,14 @@ class AfkMover(Thread):
         Thread.__init__(self)
         self.stopped = stop_event
         self.ts3conn = ts3conn
-        self.afk_channel = self.get_afk_channel(channel_name)
+        self.afk_channel = self.get_channel_by_name(channel_name)
         self.client_channels = {}
         self.afk_list = None
         if self.afk_channel is None:
             AfkMover.logger.error("Could not get afk channel")
 
 
-    def get_afk_channel(self, name="AFK"):
+    def get_channel_by_name(self, name="AFK"):
         """
         Get the channel id of the channel specified by name.
         :param name: Channel name
@@ -93,6 +94,22 @@ class AfkMover(Thread):
                       and int(client.get("cid", '-1')) == int(self.afk_channel)]
         return clientlist
 
+    def fallback_action(self, client_id):
+        """
+        In case if a client couldn't be moved, this function decides if the user should simply stay in the
+        AFK channel or if he should be moved to an alternative channel.
+        :param client_id: The client ID, which should be moved
+        """
+        if fallback_action is None or fallback_action == "None":
+            return
+        else:
+            channel_name = str(fallback_action)
+
+        try:
+            self.ts3conn.clientmove(self.get_channel_by_name(channel_name), client_id)
+            del self.client_channels[client_id]
+        except TS3Exception:
+            AfkMover.logger.exception(f"Error moving client! clid={client_id}")
 
     def move_all_back(self):
         """
@@ -141,10 +158,12 @@ class AfkMover(Thread):
             if resp_channel_settings and channel_details is not None:
                 if int(channel_info.get("channel_maxclients")) != -1 and int(channel_details.get("total_clients")) >= int(channel_info.get("channel_maxclients")):
                     AfkMover.logger.warning(f"Failed to move back the following client as the channel has already the maximum of clients: {str(client)}")
+                    self.fallback_action(client_id)
                     continue
 
                 if int(channel_info.get("channel_flag_password")):
                     AfkMover.logger.warning(f"Failed to move back the following client as the channel has a password: {str(client)}")
+                    self.fallback_action(client_id)
                     continue
 
             try:
@@ -163,6 +182,8 @@ class AfkMover(Thread):
                     AfkMover.logger.error(f"Failed to move back the following client as the old channel has an unknown password: {str(client)}")
                 else:
                     AfkMover.logger.exception(f"Failed to move back the following client: {str(client)}")
+
+                self.fallback_action(client_id)
 
 
     def get_away_list(self):
@@ -307,9 +328,10 @@ def setup(ts3bot,
             frequency = check_frequency,
             auto_move_back = enable_auto_move_back,
             respect_channel_settings = resp_channel_settings,
+            fallback_channel = fallback_action,
             channel = channel_name
     ):
-    global bot, autoStart, dry_run, check_frequency, enable_auto_move_back, resp_channel_settings, channel_name
+    global bot, autoStart, dry_run, check_frequency, enable_auto_move_back, resp_channel_settings, fallback_action, channel_name
 
     bot = ts3bot
     autoStart = auto_start
@@ -317,6 +339,7 @@ def setup(ts3bot,
     check_frequency = frequency
     enable_auto_move_back = auto_move_back
     resp_channel_settings = respect_channel_settings
+    fallback_action = fallback_channel
     channel_name = channel
 
     if autoStart:

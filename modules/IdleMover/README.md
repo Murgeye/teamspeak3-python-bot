@@ -35,6 +35,7 @@ This plugin supports the following options:
 | `auto_move_back` | `True` | Either if clients, which are no longer idle should be moved back to their original channel or not. |
 | `min_idle_time_seconds` | `600` | The minimum time in seconds a client must be idle to get moved to the channel `channel`. |
 | `resp_channel_settings` | `True` | Either if the channel settings like max. clients and password should be respected or not, even when the ServerQuery user could ignore them. |
+| `fallback_channel` | `None` | Either to move a client, which could not be moved to the old channel due to an error (e.g. channel does not exist anymore or is full) to a different channel (provide the channel name pattern here) or leave him in the `channel` (set to `None`). |
 | `channel` | `AFK` | The name of your AFK channel, where clients should be moved to while they are idle. |
 
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:

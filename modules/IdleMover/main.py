@@ -22,6 +22,7 @@ dry_run = False # log instead of performing actual actions
 check_frequency = 30.0
 enable_auto_move_back = True
 resp_channel_settings = True
+fallback_action = None
 idle_time_seconds = 600.0
 channel_name = "AFK"
 
@@ -52,7 +53,7 @@ class IdleMover(Thread):
         Thread.__init__(self)
         self.stopped = stop_event
         self.ts3conn = ts3conn
-        self.afk_channel = self.get_afk_channel(channel_name)
+        self.afk_channel = self.get_channel_by_name(channel_name)
         self.client_channels = {}
         self.idle_list = None
         if self.afk_channel is None:
@@ -160,7 +161,7 @@ class IdleMover(Thread):
             IdleMover.logger.debug("get_back_list idle_list is None!")
             return list()
 
-    def get_afk_channel(self, name="AFK"):
+    def get_channel_by_name(self, name="AFK"):
         """
         Get the channel id of the channel specified by name.
         :param name: Channel name
@@ -207,6 +208,23 @@ class IdleMover(Thread):
             self.move_to_afk()
         except AttributeError:
             IdleMover.logger.exception("Connection error!")
+
+    def fallback_action(self, client_id):
+        """
+        In case if a client couldn't be moved, this function decides if the user should simply stay in the
+        AFK channel or if he should be moved to an alternative channel.
+        :param client_id: The client ID, which should be moved
+        """
+        if fallback_action is None or fallback_action == "None":
+            return
+        else:
+            channel_name = str(fallback_action)
+
+        try:
+            self.ts3conn.clientmove(self.get_channel_by_name(channel_name), client_id)
+            del self.client_channels[client_id]
+        except TS3Exception:
+            IdleMover.logger.exception(f"Error moving client! clid={client_id}")
 
     def move_all_back(self):
         """
@@ -255,10 +273,12 @@ class IdleMover(Thread):
             if resp_channel_settings and channel_details is not None:
                 if int(channel_info.get("channel_maxclients")) != -1 and int(channel_details.get("total_clients")) >= int(channel_info.get("channel_maxclients")):
                     IdleMover.logger.warning(f"Failed to move back the following client as the channel has already the maximum of clients: {str(client)}")
+                    self.fallback_action(client_id)
                     continue
 
                 if int(channel_info.get("channel_flag_password")):
                     IdleMover.logger.warning(f"Failed to move back the following client as the channel has a password: {str(client)}")
+                    self.fallback_action(client_id)
                     continue
 
             try:
@@ -277,6 +297,8 @@ class IdleMover(Thread):
                     IdleMover.logger.error(f"Failed to move back the following client as the old channel has an unknown password: {str(client)}")
                 else:
                     IdleMover.logger.exception(f"Failed to move back the following client: {str(client)}")
+
+                self.fallback_action(client_id)
 
 
     def auto_move_all(self):
@@ -354,10 +376,11 @@ def setup(ts3bot,
             frequency = check_frequency,
             auto_move_back = enable_auto_move_back,
             respect_channel_settings = resp_channel_settings,
+            fallback_channel = fallback_action,
             min_idle_time_seconds = idle_time_seconds,
             channel = channel_name
     ):
-    global bot, autoStart, dry_run, check_frequency, enable_auto_move_back, resp_channel_settings, idle_time_seconds, channel_name
+    global bot, autoStart, dry_run, check_frequency, enable_auto_move_back, resp_channel_settings, fallback_action, idle_time_seconds, channel_name
 
     bot = ts3bot
     autoStart = auto_start
@@ -365,6 +388,7 @@ def setup(ts3bot,
     check_frequency = frequency
     enable_auto_move_back = auto_move_back
     resp_channel_settings = respect_channel_settings
+    fallback_action = fallback_channel
     idle_time_seconds = min_idle_time_seconds
     channel_name = channel
 
