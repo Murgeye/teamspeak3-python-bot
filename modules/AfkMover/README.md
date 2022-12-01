@@ -33,6 +33,7 @@ This plugin supports the following options:
 | `enable_dry_run` | `False` | Set to `True`, if you want to test the plugin without executing the actual tasks. Instead it logs what it would have done. |
 | `frequency` | `30.0` | The frequency in seconds how often (and fast) the plugin should react (e.g. somebody sets his own as "AFK", every 30 seconds the bot would notice this and do something). |
 | `auto_move_back` | `True` | Either if clients, which are no longer AFK should be moved back to their original channel or not. |
+| `resp_channel_settings` | `True` | Either if the channel settings like max. clients and password should be respected or not, even when the ServerQuery user could ignore them. |
 | `channel` | `AFK` | The name of your AFK channel, where clients should be moved to while they are afk. |
 
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:

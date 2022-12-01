@@ -21,6 +21,7 @@ autoStart = True
 dry_run = False # log instead of performing actual actions
 check_frequency = 30.0
 enable_auto_move_back = True
+resp_channel_settings = True
 channel_name = "AFK"
 
 class AfkMover(Thread):
@@ -106,6 +107,12 @@ class AfkMover(Thread):
         AfkMover.logger.debug("Backlist is: %s", str(back_list))
         AfkMover.logger.debug("Saved channel list keys are: %s\n", str(self.client_channels.keys()))
 
+        try:
+            channel_list = self.ts3conn.channellist()
+        except TS3QueryException as e:
+            AfkMover.logger.error(f"Failed to get the current channellist: {str(e.message)}")
+            return
+
         for client in back_list:
             if client.get("clid", -1) not in self.client_channels.keys():
                 continue
@@ -114,10 +121,36 @@ class AfkMover(Thread):
             AfkMover.logger.debug("Client: " + str(client))
             AfkMover.logger.debug("Saved channel list keys:" + str(self.client_channels))
 
-            try:
-                self.ts3conn.clientmove(self.client_channels.get(client.get("clid", -1)), int(client.get("clid", '-1')))
+            channel_id = int(self.client_channels.get(client.get("clid", -1)))
+            client_id = int(client.get("clid", '-1'))
 
-                del self.client_channels[client.get("clid", '-1')]
+            try:
+                channel_info = self.ts3conn._parse_resp_to_dict(self.ts3conn._send("channelinfo", [f"cid={channel_id}"]))
+            except TS3QueryException as e:
+                # Error: invalid channel ID (channel ID does not exist (anymore))
+                if int(e.id) == 768:
+                    AfkMover.logger.error(f"Failed to get channelinfo as the channel does not exist anymore: {str(client)}")
+                    continue
+
+            channel_details = None
+            for channel in channel_list:
+                if int(channel['cid']) == channel_id:
+                    channel_details = channel
+                    break
+
+            if resp_channel_settings and channel_details is not None:
+                if int(channel_info.get("channel_maxclients")) != -1 and int(channel_details.get("total_clients")) >= int(channel_info.get("channel_maxclients")):
+                    AfkMover.logger.warning(f"Failed to move back the following client as the channel has already the maximum of clients: {str(client)}")
+                    continue
+
+                if int(channel_info.get("channel_flag_password")):
+                    AfkMover.logger.warning(f"Failed to move back the following client as the channel has a password: {str(client)}")
+                    continue
+
+            try:
+                self.ts3conn.clientmove(channel_id, client_id)
+
+                del self.client_channels[client_id]
             except TS3QueryException as e:
                 # Error: invalid channel ID (channel ID does not exist (anymore))
                 if int(e.id) == 768:
@@ -268,14 +301,22 @@ def client_left(event_data):
 
 
 @setup
-def setup(ts3bot, auto_start = autoStart, enable_dry_run = dry_run, frequency = check_frequency, auto_move_back = enable_auto_move_back, channel = channel_name):
-    global bot, autoStart, dry_run, check_frequency, enable_auto_move_back, channel_name
+def setup(ts3bot,
+            auto_start = autoStart,
+            enable_dry_run = dry_run,
+            frequency = check_frequency,
+            auto_move_back = enable_auto_move_back,
+            respect_channel_settings = resp_channel_settings,
+            channel = channel_name
+    ):
+    global bot, autoStart, dry_run, check_frequency, enable_auto_move_back, resp_channel_settings, channel_name
 
     bot = ts3bot
     autoStart = auto_start
     dry_run = enable_dry_run
     check_frequency = frequency
     enable_auto_move_back = auto_move_back
+    resp_channel_settings = respect_channel_settings
     channel_name = channel
 
     if autoStart:

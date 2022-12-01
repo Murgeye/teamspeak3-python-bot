@@ -34,6 +34,7 @@ This plugin supports the following options:
 | `frequency` | `30.0` | The frequency in seconds how often (and fast) the plugin should react (e.g. somebody is idle, every 30 seconds the bot would notice this and do something). |
 | `auto_move_back` | `True` | Either if clients, which are no longer idle should be moved back to their original channel or not. |
 | `min_idle_time_seconds` | `600` | The minimum time in seconds a client must be idle to get moved to the channel `channel`. |
+| `resp_channel_settings` | `True` | Either if the channel settings like max. clients and password should be respected or not, even when the ServerQuery user could ignore them. |
 | `channel` | `AFK` | The name of your AFK channel, where clients should be moved to while they are idle. |
 
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
