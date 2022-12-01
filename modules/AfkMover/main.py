@@ -4,6 +4,7 @@ import traceback
 from threading import Thread
 
 import ts3API.Events as Events
+from ts3API.TS3Connection import TS3QueryException
 from ts3API.utilities import TS3Exception
 
 from Moduleloader import *
@@ -97,21 +98,38 @@ class AfkMover(Thread):
         Move all clients who are back from afk.
         """
         back_list = self.get_back_list()
+        if back_list is None:
+            AfkMover.logger.debug("move_all_back back list is empty. Nothing todo.")
+            return
+
         AfkMover.logger.debug("Moving clients back")
         AfkMover.logger.debug("Backlist is: %s", str(back_list))
         AfkMover.logger.debug("Saved channel list keys are: %s\n", str(self.client_channels.keys()))
-        for client in back_list:
-            if client.get("clid", -1) in self.client_channels.keys():
-                AfkMover.logger.info("Moving a client back!")
-                AfkMover.logger.debug("Client: " + str(client))
-                AfkMover.logger.debug("Saved channel list keys:" + str(self.client_channels))
 
-                if dry_run:
-                    AfkMover.logger.debug(f"I would have moved back this client: {str(client)}")
+        for client in back_list:
+            if client.get("clid", -1) not in self.client_channels.keys():
+                continue
+
+            AfkMover.logger.info("Moving a client back!")
+            AfkMover.logger.debug("Client: " + str(client))
+            AfkMover.logger.debug("Saved channel list keys:" + str(self.client_channels))
+
+            try:
+                self.ts3conn.clientmove(self.client_channels.get(client.get("clid", -1)), int(client.get("clid", '-1')))
+
+                del self.client_channels[client.get("clid", '-1')]
+            except TS3QueryException as e:
+                # Error: invalid channel ID (channel ID does not exist (anymore))
+                if int(e.id) == 768:
+                    AfkMover.logger.error(f"Failed to move back the following client as the old channel does not exist anymore: {str(client)}")
+                # Error: channel maxclient or maxfamily reached
+                if int(e.id) in (777, 778):
+                    AfkMover.logger.error(f"Failed to move back the following client as the old channel has already the maximum of clients: {str(client)}")
+                # Error: invalid channel password
+                if int(e.id) == 781:
+                    AfkMover.logger.error(f"Failed to move back the following client as the old channel has an unknown password: {str(client)}")
                 else:
-                    self.ts3conn.clientmove(self.client_channels.get(client.get("clid", -1)),
-                                            int(client.get("clid", '-1')))
-                    del self.client_channels[client.get("clid", '-1')]
+                    AfkMover.logger.exception(f"Failed to move back the following client: {str(client)}")
 
 
     def get_away_list(self):
@@ -136,24 +154,30 @@ class AfkMover(Thread):
             return list()
 
 
-    def move_to_afk(self, clients):
+    def move_to_afk(self, client_list):
         """
         Move clients to the afk_channel.
-        :param clients: List of clients to move.
+        :param client_list: List of clients to move.
         """
+        if client_list is None:
+            AfkMover.logger.debug("move_to_afk client list is empty. Nothing todo.")
+            return
+
         AfkMover.logger.info("Moving clients to afk!")
-        for client in clients:
-            AfkMover.logger.info("Moving somebody to afk!")
-            AfkMover.logger.debug("Client: " + str(client))
-            try:
-                if dry_run:
-                    AfkMover.logger.debug(f"I would have moved this client: {str(client)}")
-                else:
+
+        for client in client_list:
+            if dry_run:
+                AfkMover.logger.debug(f"I would have moved this client: {str(client)}")
+            else:
+                AfkMover.logger.info("Moving somebody to afk!")
+                AfkMover.logger.debug("Client: " + str(client))
+
+                try:
                     self.ts3conn.clientmove(self.afk_channel, int(client.get("clid", '-1')))
-            except TS3Exception:
-                AfkMover.logger.exception("Error moving client! Clid=" +
-                                          str(client.get("clid", '-1')))
-            self.client_channels[client.get("clid", '-1')] = client.get("cid", '0')
+                    self.client_channels[client.get("clid", '-1')] = client.get("cid", '0')
+                except TS3Exception:
+                    AfkMover.logger.exception(f"Error moving client! clid={str(client.get('clid', '-1'))}")
+
             AfkMover.logger.debug("Moved List after move: " + str(self.client_channels))
 
 

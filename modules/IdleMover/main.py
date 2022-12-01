@@ -4,6 +4,7 @@ import traceback
 from threading import Thread
 
 import ts3API.Events as Events
+from ts3API.TS3Connection import TS3QueryException
 from ts3API.utilities import TS3Exception
 
 from Moduleloader import *
@@ -176,22 +177,26 @@ class IdleMover(Thread):
         Move clients to the `afk_channel`.
         """
         idle_list = self.get_idle_list()
-        if idle_list is not None:
-            IdleMover.logger.info("Moving clients to afk!")
-            for client in idle_list:
+        if idle_list is None:
+            IdleMover.logger.debug("move_to_afk idle list is empty. Nothing todo.")
+            return
+
+        IdleMover.logger.info("Moving clients to afk!")
+
+        for client in idle_list:
+            if dry_run:
+                IdleMover.logger.info(f"I would have moved this client: {str(client)}")
+            else:
                 IdleMover.logger.info("Moving somebody to afk!")
                 IdleMover.logger.debug("Client: " + str(client))
 
                 try:
                     self.ts3conn.clientmove(self.afk_channel, int(client.get("clid", '-1')))
+                    self.client_channels[client.get("clid", '-1')] = client.get("cid", '0')
                 except TS3Exception:
                     IdleMover.logger.exception(f"Error moving client! Clid={str(client.get('clid', '-1'))}")
 
-                self.client_channels[client.get("clid", '-1')] = client.get("cid", '0')
-
-                IdleMover.logger.debug(f"Moved List after move: {str(self.client_channels)}")
-        else:
-            IdleMover.logger.debug("move_to_afk idle list is empty. Nothing todo.")
+            IdleMover.logger.debug(f"Moved List after move: {str(self.client_channels)}")
 
     def move_all_afk(self):
         """
@@ -207,22 +212,39 @@ class IdleMover(Thread):
         Move all clients who are not idle anymore.
         """
         back_list = self.get_back_list()
-        if back_list is not None:
-            IdleMover.logger.debug("Moving clients back")
-            IdleMover.logger.debug("Backlist is: %s", str(back_list))
-            IdleMover.logger.debug("Saved channel list keys are: %s\n", str(self.client_channels.keys()))
-
-            for client in back_list:
-                if client.get("clid", -1) in self.client_channels.keys():
-                    IdleMover.logger.info("Moving a client back!")
-                    IdleMover.logger.debug("Client: " + str(client))
-                    IdleMover.logger.debug("Saved channel list keys:" + str(self.client_channels))
-
-                    self.ts3conn.clientmove(self.client_channels.get(client.get("clid", -1)), int(client.get("clid", '-1')))
-
-                    del self.client_channels[client.get("clid", '-1')]
-        else:
+        if back_list is None:
             IdleMover.logger.debug("move_all_back back list is empty. Nothing todo.")
+            return
+
+        IdleMover.logger.debug("Moving clients back")
+        IdleMover.logger.debug("Backlist is: %s", str(back_list))
+        IdleMover.logger.debug("Saved channel list keys are: %s\n", str(self.client_channels.keys()))
+
+        for client in back_list:
+            if client.get("clid", -1) not in self.client_channels.keys():
+                continue
+
+            IdleMover.logger.info("Moving a client back!")
+            IdleMover.logger.debug("Client: " + str(client))
+            IdleMover.logger.debug("Saved channel list keys:" + str(self.client_channels))
+
+            try:
+                self.ts3conn.clientmove(self.client_channels.get(client.get("clid", -1)), int(client.get("clid", '-1')))
+
+                del self.client_channels[client.get("clid", '-1')]
+            except TS3QueryException as e:
+                # Error: invalid channel ID (channel ID does not exist (anymore))
+                if int(e.id) == 768:
+                    IdleMover.logger.error(f"Failed to move back the following client as the old channel does not exist anymore: {str(client)}")
+                # Error: channel maxclient or maxfamily reached
+                if int(e.id) in (777, 778):
+                    IdleMover.logger.error(f"Failed to move back the following client as the old channel has already the maximum of clients: {str(client)}")
+                # Error: invalid channel password
+                if int(e.id) == 781:
+                    IdleMover.logger.error(f"Failed to move back the following client as the old channel has an unknown password: {str(client)}")
+                else:
+                    IdleMover.logger.exception(f"Failed to move back the following client: {str(client)}")
+
 
     def auto_move_all(self):
         """

@@ -68,30 +68,34 @@ class PluginTemplate(Thread):
         """
         Sends a "Hello World!" message to every connected client except ServerQuery clients.
         """
-        if self.client_list is not None:
-            for client in self.client_list:
-                if 'clid' not in client:
-                    PluginTemplate.logger.debug(f"Skipping the following client as it has no clid: {client}")
-                    continue
-
-                if 'client_type' not in client:
-                    PluginTemplate.logger.debug(f"Skipping the following client as it has no client_type: {client}")
-                    continue
-
-                if client['client_type'] == 1:
-                    PluginTemplate.logger.debug(f"Skipping the following client as it is a ServerQuery client: {client}")
-                    continue
-
-                PluginTemplate.logger.debug(f"Sending the following client a message: {client}")
-                if not dry_run:
-                    try:
-                        Bot.send_msg_to_client(bot.ts3conn, client['clid'], "Hello World!")
-                    except AttributeError:
-                        PluginTemplate.logger.exception(f"AttributeError: {client}")
-                    except TS3Exception:
-                        PluginTemplate.logger.exception("Error while sending a message to clients!")
-        else:
+        if self.client_list is None:
             PluginTemplate.logger.debug("client_list is None (empty). Looks like no real client is connected.")
+            return
+
+        for client in self.client_list:
+            if 'clid' not in client:
+                PluginTemplate.logger.debug(f"Skipping the following client as it has no clid: {client}")
+                continue
+
+            if 'client_type' not in client:
+                PluginTemplate.logger.debug(f"Skipping the following client as it has no client_type: {client}")
+                continue
+
+            if client['client_type'] == 1:
+                PluginTemplate.logger.debug(f"Skipping the following client as it is a ServerQuery client: {client}")
+                continue
+
+            if dry_run:
+                PluginTemplate.logger.info(f"I would have sent a textmessage to this client, when dry-run would be disabled: {client}")
+            else:
+                PluginTemplate.logger.debug(f"Sending the following client a message: {client}")
+
+                try:
+                    Bot.send_msg_to_client(bot.ts3conn, client['clid'], "Hello World!")
+                except AttributeError:
+                    PluginTemplate.logger.exception(f"AttributeError: {client}")
+                except TS3Exception:
+                    PluginTemplate.logger.exception("Error while sending a message to clients!")
 
     def loop_until_stopped(self):
         """

@@ -99,34 +99,34 @@ class KickInactiveClients(Thread):
         Get list of clients which are idle since more than `idle_time_seconds` seconds.
         :return: List of clients which are idle.
         """
-        if self.idle_list is not None:
-            KickInactiveClients.logger.debug(f"get_idle_list current idle_list: {str(self.idle_list)}!")
-
-            client_idle_list = list()
-            for client in self.idle_list:
-                KickInactiveClients.logger.debug(f"get_idle_list checking client: {str(client)}")
-
-                if "cid" not in client.keys():
-                    KickInactiveClients.logger.error(f"get_idle_list client without cid: {str(client)}!")
-                    continue
-
-                if "client_idle_time" not in client.keys():
-                    KickInactiveClients.logger.error(f"get_idle_list client without client_idle_time: {str(client)}!")
-                    continue
-
-                if int(client.get("client_idle_time")) / 1000 <= float(idle_time_seconds):
-                    KickInactiveClients.logger.debug(f"get_idle_list client is less or equal then {idle_time_seconds} seconds idle: {str(client)}!")
-                    continue
-
-                KickInactiveClients.logger.debug(f"get_idle_list adding client to list: {str(client)}!")
-                client_idle_list.append(client)
-
-            KickInactiveClients.logger.debug(f"get_idle_list updated idle_list: {str(client_idle_list)}!")
-
-            return client_idle_list
-        else:
+        if self.idle_list is None:
             KickInactiveClients.logger.debug("get_idle_list idle_list is None!")
             return list()
+
+        KickInactiveClients.logger.debug(f"get_idle_list current idle_list: {str(self.idle_list)}!")
+
+        client_idle_list = list()
+        for client in self.idle_list:
+            KickInactiveClients.logger.debug(f"get_idle_list checking client: {str(client)}")
+
+            if "cid" not in client.keys():
+                KickInactiveClients.logger.error(f"get_idle_list client without cid: {str(client)}!")
+                continue
+
+            if "client_idle_time" not in client.keys():
+                KickInactiveClients.logger.error(f"get_idle_list client without client_idle_time: {str(client)}!")
+                continue
+
+            if int(client.get("client_idle_time")) / 1000 <= float(idle_time_seconds):
+                KickInactiveClients.logger.debug(f"get_idle_list client is less or equal then {idle_time_seconds} seconds idle: {str(client)}!")
+                continue
+
+            KickInactiveClients.logger.debug(f"get_idle_list adding client to list: {str(client)}!")
+            client_idle_list.append(client)
+
+        KickInactiveClients.logger.debug(f"get_idle_list updated idle_list: {str(client_idle_list)}!")
+
+        return client_idle_list
 
     def kick_all_idle_clients(self):
         """
@@ -138,18 +138,22 @@ class KickInactiveClients(Thread):
             return
 
         idle_list = self.get_idle_list()
-        if idle_list is not None:
-            KickInactiveClients.logger.info(f"Kicking {len(idle_list)} clients from the server!")
+        if idle_list is None:
+            KickInactiveClients.logger.debug("kick_all_idle_clients idle_list is empty. Nothing todo.")
+            return
 
-            for client in idle_list:
-                KickInactiveClients.logger.debug(f"Kicking the following client from the server: {str(client)}")
+        KickInactiveClients.logger.info(f"Kicking {len(idle_list)} clients from the server!")
 
+        for client in idle_list:
+            KickInactiveClients.logger.debug(f"Kicking the following client from the server: {str(client)}")
+
+            if dry_run:
+                KickInactiveClients.logger.info(f"I would have kicked the following client from the server, when the dry-run would be disabled: {str(client)}")
+            else:
                 try:
                     self.ts3conn.clientkick(int(client.get("clid", '-1')), 5, kick_reason_message)
                 except TS3Exception:
                     KickInactiveClients.logger.exception(f"Error kicking client clid={str(client.get('clid', '-1'))}!")
-        else:
-            KickInactiveClients.logger.debug("kick_all_idle_clients idle_list is empty. Nothing todo.")
 
     def loop_until_stopped(self):
         """
