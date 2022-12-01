@@ -10,6 +10,7 @@ import Bot
 from typing import Union
 
 plugin_version = 0.1
+plugin_command_name = "plugintemplate"
 pluginInfo: Union[None, 'PluginTemplate'] = None
 pluginStopper = threading.Event()
 bot: Bot.Ts3Bot
@@ -121,7 +122,7 @@ class PluginTemplate(Thread):
             self.logger.exception("Exception occured in run:")
 
 
-@command('plugintemplate version')
+@command(f"{plugin_command_name} version")
 def start_plugin(sender=None, _msg=None):
     """
     Sends the plugin version as textmessage to the `sender`.
@@ -132,7 +133,7 @@ def start_plugin(sender=None, _msg=None):
         PluginTemplate.logger.exception("Error while sending the plugin version as a message to the client!")
 
 
-@command('plugintemplate start')
+@command(f"{plugin_command_name} start")
 def start_plugin(_sender=None, _msg=None):
     """
     Start the plugin by clearing the respective signal and starting it.
@@ -149,7 +150,7 @@ def start_plugin(_sender=None, _msg=None):
         PluginTemplate.logger.info("Started plugin!")
 
 
-@command('plugintemplate stop')
+@command(f"{plugin_command_name} stop")
 def stop_plugin(_sender=None, _msg=None):
     """
     Stop the plugin by setting the respective signal and undefining it.
@@ -161,7 +162,7 @@ def stop_plugin(_sender=None, _msg=None):
     PluginTemplate.logger.info("Stopped plugin!")
 
 
-@command('plugintemplate restart')
+@command(f"{plugin_command_name} restart")
 def restart_plugin(_sender=None, _msg=None):
     """
     Restarts the plugin by executing the respective functions.

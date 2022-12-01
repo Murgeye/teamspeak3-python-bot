@@ -9,8 +9,9 @@ The following table shows all available commands for this plugin:
 
 | Command | Description |
 | ---:   | :--- |
-| `!startkickinactiveclients`/`!kickinactiveclientsstart` | Start the plugin |
-| `!stopkickinactiveclients`/`!kickinactiveclientsstop` | Stop the plugin |
+| `!kickinactiveclients start` | Start this plugin |
+| `!kickinactiveclients stop` | Stop this plugin |
+| `!kickinactiveclients restart` | Restarts this plugin |
 
 
 # Configuration

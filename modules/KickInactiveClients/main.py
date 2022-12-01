@@ -9,6 +9,7 @@ from Moduleloader import *
 import Bot
 from typing import Union
 
+plugin_command_name = "kickinactiveclients"
 idleMover: Union[None, 'KickInactiveClients'] = None
 plugin_stopper = threading.Event()
 bot: Bot.Ts3Bot
@@ -170,7 +171,7 @@ class KickInactiveClients(Thread):
         self.client_channels = {}
 
 
-@command('startkickinactiveclients', 'kickinactiveclientsstart')
+@command(f"{plugin_command_name} start")
 def start_plugin(_sender=None, _msg=None):
     """
     Start the KickInactiveClients by clearing the plugin_stopper signal and starting the plugin.
@@ -189,7 +190,7 @@ def start_plugin(_sender=None, _msg=None):
         idleMover.start()
 
 
-@command('stopkickinactiveclients', 'kickinactiveclientsstop')
+@command(f"{plugin_command_name} stop")
 def stop_plugin(_sender=None, _msg=None):
     """
     Stop the KickInactiveClients by setting the plugin_stopper signal and undefining the plugin.
@@ -197,6 +198,14 @@ def stop_plugin(_sender=None, _msg=None):
     global idleMover
     plugin_stopper.set()
     idleMover = None
+
+@command(f"{plugin_command_name} restart")
+def restart_plugin(_sender=None, _msg=None):
+    """
+    Restarts the plugin by executing the respective functions.
+    """
+    stop_plugin()
+    start_plugin()
 
 
 @setup

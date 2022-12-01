@@ -9,8 +9,9 @@ The following table shows all available commands for this plugin:
 
 | Command | Description |
 | ---: | :--- |
-| `!startplugintemplate`/`!plugintemplatestart` | Start this plugin |
-| `!stopplugintemplate`/`!plugintemplatestop` | Stop this plugin |
+| `!plugintemplate start` | Start this plugin |
+| `!plugintemplate stop` | Stop this plugin |
+| `!plugintemplate restart` | Restarts this plugin |
 
 
 # Configuration

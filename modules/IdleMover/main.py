@@ -10,6 +10,7 @@ from Moduleloader import *
 import Bot
 from typing import Union
 
+plugin_command_name = "idlemover"
 idleMover: Union[None, 'IdleMover'] = None
 plugin_stopper = threading.Event()
 bot: Bot.Ts3Bot
@@ -247,8 +248,8 @@ class IdleMover(Thread):
         self.client_channels = {}
 
 
-@command('startidle', 'idlestart')
-def start_afkmover(_sender=None, _msg=None):
+@command(f"{plugin_command_name} start")
+def start_plugin(_sender=None, _msg=None):
     """
     Start the IdleMover by clearing the plugin_stopper signal and starting the mover.
     """
@@ -262,8 +263,8 @@ def start_afkmover(_sender=None, _msg=None):
         idleMover.start()
 
 
-@command('stopidle', 'idlestop')
-def stop_afkmover(_sender=None, _msg=None):
+@command(f"{plugin_command_name} stop")
+def stop_plugin(_sender=None, _msg=None):
     """
     Stop the IdleMover by setting the plugin_stopper signal and undefining the mover.
     """
@@ -271,14 +272,13 @@ def stop_afkmover(_sender=None, _msg=None):
     plugin_stopper.set()
     idleMover = None
 
-
-@command('idlegetclientchannellist')
-def get_afk_list(sender=None, _msg=None):
+@command(f"{plugin_command_name} restart")
+def restart_plugin(_sender=None, _msg=None):
     """
-    Get IdleMover saved client channels. Mainly for debugging.
+    Restarts the plugin by executing the respective functions.
     """
-    if idleMover is not None:
-        Bot.send_msg_to_client(bot.ts3conn, sender, str(idleMover.client_channels))
+    stop_plugin()
+    start_plugin()
 
 
 @event(Events.ClientLeftEvent)
@@ -305,7 +305,7 @@ def setup(ts3bot, auto_start = autoStart, enable_dry_run = dry_run, frequency = 
     channel_name = channel
 
     if autoStart:
-        start_afkmover()
+        start_plugin()
 
 
 @exit

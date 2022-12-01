@@ -9,8 +9,9 @@ The following table shows all available commands for this plugin:
 
 | Command | Description |
 | ---:   | :--- |
-| `!startidle`/`!idlestart`/`!idlemove` | Start the idle mover |
-| `!stopidle`/`!idlestop` | Stop the idle mover |
+| `!idlemover start` | Start this plugin |
+| `!idlemover stop` | Stop this plugin |
+| `!idlemover restart` | Restarts this plugin |
 
 
 # Configuration

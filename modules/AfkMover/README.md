@@ -9,8 +9,9 @@ The following table shows all available commands for this plugin:
 
 | Command | Description |
 | ---: | :--- |
-| `!startafk`/`!afkstart`/`!afkmove` | Start the AFK mover |
-| `!stopafk`/`!afkstop` | Stop the AFK mover |
+| `!afkmover start` | Start this plugin |
+| `!afkmover stop` | Stop this plugin |
+| `!afkmover restart` | Restarts this plugin |
 
 
 # Configuration
