@@ -5,14 +5,14 @@ This plugin extends your bot with the feature to automatically move clients to a
 
 # Available Commands
 
-The following table shows all available commands for this plugin:
+The following table shows all available arguments for the command `!afkmover` of this plugin:
 
-| Command | Description |
+| Argument | Description |
 | ---: | :--- |
-| `!afkmover version` | Sends a text message with the version of this plugin. |
-| `!afkmover start` | Start this plugin |
-| `!afkmover stop` | Stop this plugin |
-| `!afkmover restart` | Restarts this plugin |
+| `version` | Sends a text message with the version of this plugin. |
+| `start` | Start this plugin |
+| `stop` | Stop this plugin |
+| `restart` | Restarts this plugin |
 
 
 # Configuration

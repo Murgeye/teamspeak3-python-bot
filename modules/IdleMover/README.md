@@ -5,14 +5,14 @@ This plugin extends your bot with the feature to automatically move clients to a
 
 # Available Commands
 
-The following table shows all available commands for this plugin:
+The following table shows all available arguments for the command `!idlemover` of this plugin:
 
-| Command | Description |
+| Argument | Description |
 | ---:   | :--- |
-| `!idlemover version` | Sends a text message with the version of this plugin. |
-| `!idlemover start` | Start this plugin |
-| `!idlemover stop` | Stop this plugin |
-| `!idlemover restart` | Restarts this plugin |
+| `version` | Sends a text message with the version of this plugin. |
+| `start` | Start this plugin |
+| `stop` | Stop this plugin |
+| `restart` | Restarts this plugin |
 
 
 # Configuration

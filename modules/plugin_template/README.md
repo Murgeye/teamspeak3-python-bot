@@ -5,14 +5,14 @@ This plugin extends your bot with the feature to [...].
 
 # Available Commands
 
-The following table shows all available commands for this plugin:
+The following table shows all available arguments for the command `!plugintemplate` of this plugin:
 
-| Command | Description |
+| Argument | Description |
 | ---: | :--- |
-| `!plugintemplate version` | Sends a text message with the version of this plugin. |
-| `!plugintemplate start` | Start this plugin |
-| `!plugintemplate stop` | Stop this plugin |
-| `!plugintemplate restart` | Restarts this plugin |
+| `version` | Sends a text message with the version of this plugin. |
+| `start` | Start this plugin |
+| `stop` | Stop this plugin |
+| `restart` | Restarts this plugin |
 
 
 # Configuration
