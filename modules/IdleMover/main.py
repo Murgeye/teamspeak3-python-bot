@@ -11,6 +11,7 @@ from Moduleloader import *
 import Bot
 from typing import Union
 
+plugin_version = 0.1
 plugin_command_name = "idlemover"
 idleMover: Union[None, 'IdleMover'] = None
 plugin_stopper = threading.Event()
@@ -323,6 +324,17 @@ class IdleMover(Thread):
 
         IdleMover.logger.warning("AFKMover stopped!")
         self.client_channels = {}
+
+
+@command(f"{plugin_command_name} version")
+def send_version(sender=None, _msg=None):
+    """
+    Sends the plugin version as textmessage to the `sender`.
+    """
+    try:
+        Bot.send_msg_to_client(bot.ts3conn, sender, f"This plugin is installed in the version `{str(plugin_version)}`.")
+    except TS3Exception:
+        IdleMover.logger.exception("Error while sending the plugin version as a message to the client!")
 
 
 @command(f"{plugin_command_name} start")

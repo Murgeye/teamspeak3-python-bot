@@ -9,6 +9,7 @@ The following table shows all available commands for this plugin:
 
 | Command | Description |
 | ---:   | :--- |
+| `!kickinactiveclients version` | Sends a text message with the version of this plugin. |
 | `!kickinactiveclients start` | Start this plugin |
 | `!kickinactiveclients stop` | Stop this plugin |
 | `!kickinactiveclients restart` | Restarts this plugin |

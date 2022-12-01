@@ -127,7 +127,7 @@ class PluginTemplate(Thread):
 
 
 @command(f"{plugin_command_name} version")
-def start_plugin(sender=None, _msg=None):
+def send_version(sender=None, _msg=None):
     """
     Sends the plugin version as textmessage to the `sender`.
     """

@@ -9,6 +9,7 @@ The following table shows all available commands for this plugin:
 
 | Command | Description |
 | ---:   | :--- |
+| `!idlemover version` | Sends a text message with the version of this plugin. |
 | `!idlemover start` | Start this plugin |
 | `!idlemover stop` | Stop this plugin |
 | `!idlemover restart` | Restarts this plugin |

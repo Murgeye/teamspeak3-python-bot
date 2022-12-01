@@ -9,6 +9,7 @@ The following table shows all available commands for this plugin:
 
 | Command | Description |
 | ---: | :--- |
+| `!plugintemplate version` | Sends a text message with the version of this plugin. |
 | `!plugintemplate start` | Start this plugin |
 | `!plugintemplate stop` | Stop this plugin |
 | `!plugintemplate restart` | Restarts this plugin |

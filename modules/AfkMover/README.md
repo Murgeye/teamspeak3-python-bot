@@ -9,6 +9,7 @@ The following table shows all available commands for this plugin:
 
 | Command | Description |
 | ---: | :--- |
+| `!afkmover version` | Sends a text message with the version of this plugin. |
 | `!afkmover start` | Start this plugin |
 | `!afkmover stop` | Stop this plugin |
 | `!afkmover restart` | Restarts this plugin |
