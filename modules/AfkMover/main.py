@@ -197,7 +197,7 @@ class AfkMover(Thread):
         """
         self.servergroup_ids_to_ignore = []
 
-        if servergroups_to_exclude is None and len(servergroups_to_exclude) > 0:
+        if servergroups_to_exclude is None:
             AfkMover.logger.debug(f"No servergroups to exclude defined. Nothing todo.")
             return
 
@@ -255,7 +255,7 @@ class AfkMover(Thread):
                     AfkMover.logger.debug(f"Ignoring ServerQuery client: {client}")
                     continue
 
-                if servergroups_to_exclude is None and len(servergroups_to_exclude) > 0:
+                if servergroups_to_exclude is None:
                     client_is_in_group = False
                     for client_servergroup_id in self.get_servergroups_by_client(client.get("client_database_id")):
                         if client_servergroup_id in self.servergroup_ids_to_ignore:
