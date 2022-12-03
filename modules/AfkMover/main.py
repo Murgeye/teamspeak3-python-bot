@@ -21,6 +21,7 @@ bot: Bot.Ts3Bot
 autoStart = True
 dry_run = False # log instead of performing actual actions
 check_frequency = 30.0
+servergroups_to_exclude = None
 enable_auto_move_back = True
 resp_channel_settings = True
 fallback_action = None
@@ -55,6 +56,7 @@ class AfkMover(Thread):
         self.ts3conn = ts3conn
         self.afk_channel = self.get_channel_by_name(channel_name)
         self.client_channels = {}
+        self.update_servergroup_ids_list()
         self.afk_list = None
         if self.afk_channel is None:
             AfkMover.logger.error("Could not get afk channel")
@@ -109,6 +111,8 @@ class AfkMover(Thread):
         try:
             self.ts3conn.clientmove(self.get_channel_by_name(channel_name), client_id)
             del self.client_channels[client_id]
+        except KeyError:
+            AfkMover.logger.error(f"Error moving client! clid={client_id} not found in {str(self.client_channels)}")
         except TS3Exception:
             AfkMover.logger.exception(f"Error moving client! clid={client_id}")
 
@@ -187,6 +191,49 @@ class AfkMover(Thread):
                 self.fallback_action(client_id)
 
 
+    def update_servergroup_ids_list(self):
+        """
+        Updates the list of servergroup IDs, which should be ignored.
+        """
+        self.servergroup_ids_to_ignore = []
+
+        if servergroups_to_exclude is None and len(servergroups_to_exclude) > 0:
+            AfkMover.logger.debug(f"No servergroups to exclude defined. Nothing todo.")
+            return
+
+        try:
+            servergroup_list = self.ts3conn.servergrouplist()
+        except TS3QueryException:
+            AfkMover.logger.exception(f"Failed to get the list of available servergroups.")
+
+        self.servergroup_ids_to_ignore.clear()
+        for servergroup in servergroup_list:
+            if servergroup.get("name") in servergroups_to_exclude.split(','):
+                self.servergroup_ids_to_ignore.append(servergroup.get("sgid"))
+
+
+    def get_servergroups_by_client(self, cldbid):
+        """
+        Returns the list of servergroup IDs, which the client is assigned to.
+        :param: cldbid: The client database ID.
+        :returns: List of servergroup IDs assigned to the client.
+        """
+        client_servergroup_ids = []
+
+        try:
+            client_servergroups = self.ts3conn._parse_resp_to_list_of_dicts(self.ts3conn._send("servergroupsbyclientid", [f"cldbid={cldbid}"]))
+        except TS3QueryException:
+            AfkMover.logger.exception(f"Failed to get the list of assigned servergroups for the client cldbid={cldbid}.")
+            return client_servergroup_ids
+
+        for servergroup in client_servergroups:
+            client_servergroup_ids.append(servergroup.get("sgid"))
+
+        AfkMover.logger.debug(f"client_database_id={cldbid} has these servergroups: {str(client_servergroup_ids)}")
+
+        return client_servergroup_ids
+
+
     def get_away_list(self):
         """
         Get list of clients with afk status.
@@ -194,15 +241,44 @@ class AfkMover(Thread):
         """
         if self.afk_list is not None:
             AfkMover.logger.debug(str(self.afk_list))
+
             awaylist = list()
             for client in self.afk_list:
                 AfkMover.logger.debug(str(self.afk_list))
+
                 if "cid" not in client.keys():
                     AfkMover.logger.error("Client without cid!")
                     AfkMover.logger.error(str(client))
-                elif "client_away" in client.keys() and client.get("client_away", '0') == '1' \
-                        and int(client.get("cid", '-1')) != int(self.afk_channel):
-                    awaylist.append(client)
+                    continue
+
+                if client.get("client_type") == '1':
+                    AfkMover.logger.debug(f"Ignoring ServerQuery client: {client}")
+                    continue
+
+                if servergroups_to_exclude is None and len(servergroups_to_exclude) > 0:
+                    client_is_in_group = False
+                    for client_servergroup_id in self.get_servergroups_by_client(client.get("client_database_id")):
+                        if client_servergroup_id in self.servergroup_ids_to_ignore:
+                            AfkMover.logger.debug(f"The client is in the servergroup sgid={client_servergroup_id}, which should be ignored: {client}")
+                            client_is_in_group = True
+                            break
+
+                    if client_is_in_group:
+                        continue
+
+                if "client_away" not in client.keys():
+                    AfkMover.logger.debug(f"The client has no `client_away` property: {client}")
+                    continue
+
+                if client.get("client_away", '0') == '0':
+                    AfkMover.logger.debug(f"The client is not away: {client}")
+                    continue
+
+                if int(client.get("cid", '-1')) == int(self.afk_channel):
+                    AfkMover.logger.debug(f"The client is already in the `afk_channel`: {client}")
+                    continue
+
+                awaylist.append(client)
             return awaylist
         else:
             AfkMover.logger.error("Clientlist is None!")
@@ -252,8 +328,8 @@ class AfkMover(Thread):
         """
         while not self.stopped.wait(float(check_frequency)):
             AfkMover.logger.debug("Afkmover running!")
-            self.update_afk_list()
             try:
+                self.update_afk_list()
                 if enable_auto_move_back:
                     self.move_all_back()
                 self.move_all_afk()
@@ -338,17 +414,19 @@ def setup(ts3bot,
             auto_start = autoStart,
             enable_dry_run = dry_run,
             frequency = check_frequency,
+            exclude_servergroups = servergroups_to_exclude,
             auto_move_back = enable_auto_move_back,
             respect_channel_settings = resp_channel_settings,
             fallback_channel = fallback_action,
             channel = channel_name
     ):
-    global bot, autoStart, dry_run, check_frequency, enable_auto_move_back, resp_channel_settings, fallback_action, channel_name
+    global bot, autoStart, dry_run, check_frequency, servergroups_to_exclude, enable_auto_move_back, resp_channel_settings, fallback_action, channel_name
 
     bot = ts3bot
     autoStart = auto_start
     dry_run = enable_dry_run
     check_frequency = frequency
+    servergroups_to_exclude = exclude_servergroups
     enable_auto_move_back = auto_move_back
     resp_channel_settings = respect_channel_settings
     fallback_action = fallback_channel

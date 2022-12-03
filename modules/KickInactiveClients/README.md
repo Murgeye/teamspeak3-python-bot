@@ -33,6 +33,7 @@ This plugin supports the following options:
 | `auto_start` | `True` | Either if the plugin should automatically start when the Bot starts and it's configured or not. |
 | `enable_dry_run` | `False` | Set to `True`, if you want to test the plugin without executing the actual tasks. Instead it logs what it would have done. |
 | `frequency` | `300.0` | The frequency in seconds how often (and fast) the plugin should react (e.g. somebody is idle, every 300 seconds the bot would notice this and do something). |
+| `exclude_servergroups` | `None` | Provide a comma seperated list of servergroup names, which should never get kicked by the bot. |
 | `min_idle_time_seconds` | `7200` | The minimum time in seconds a client must be idle to get kicked from the server. |
 | `min_clientsonline_kick_threshold` | `108` | Only start kicking idle clients from the server, when more clients than this value are online. Set this to `0` to always kick idle clients. |
 | `kick_reason_message` | `Sorry for kicking, but we need slots!` | The kick reason message, which will be shown the respective kicked client. (Maximum supported length: 40 characters) |
@@ -42,6 +43,7 @@ If you need to change some of these default options, simply add them to your `co
 ```
 [KickInactiveClients]
 frequency: 60.0
+exclude_servergroups: Server Admin,Bot
 min_idle_time_seconds: 3600
 min_clientsonline_kick_threshold: 55
 ```

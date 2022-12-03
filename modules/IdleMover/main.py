@@ -21,6 +21,7 @@ bot: Bot.Ts3Bot
 autoStart = True
 dry_run = False # log instead of performing actual actions
 check_frequency = 30.0
+servergroups_to_exclude = None
 enable_auto_move_back = True
 resp_channel_settings = True
 fallback_action = None
@@ -56,6 +57,7 @@ class IdleMover(Thread):
         self.ts3conn = ts3conn
         self.afk_channel = self.get_channel_by_name(channel_name)
         self.client_channels = {}
+        self.update_servergroup_ids_list()
         self.idle_list = None
         if self.afk_channel is None:
             IdleMover.logger.error("Could not get afk channel")
@@ -90,6 +92,49 @@ class IdleMover(Thread):
             self.idle_list = list()
 
 
+    def update_servergroup_ids_list(self):
+        """
+        Updates the list of servergroup IDs, which should be ignored.
+        """
+        self.servergroup_ids_to_ignore = []
+
+        if servergroups_to_exclude is None and len(servergroups_to_exclude) > 0:
+            IdleMover.logger.debug(f"No servergroups to exclude defined. Nothing todo.")
+            return
+
+        try:
+            servergroup_list = self.ts3conn.servergrouplist()
+        except TS3QueryException:
+            IdleMover.logger.exception(f"Failed to get the list of available servergroups.")
+
+        self.servergroup_ids_to_ignore.clear()
+        for servergroup in servergroup_list:
+            if servergroup.get("name") in servergroups_to_exclude.split(','):
+                self.servergroup_ids_to_ignore.append(servergroup.get("sgid"))
+
+
+    def get_servergroups_by_client(self, cldbid):
+        """
+        Returns the list of servergroup IDs, which the client is assigned to.
+        :param: cldbid: The client database ID.
+        :returns: List of servergroup IDs assigned to the client.
+        """
+        client_servergroup_ids = []
+
+        try:
+            client_servergroups = self.ts3conn._parse_resp_to_list_of_dicts(self.ts3conn._send("servergroupsbyclientid", [f"cldbid={cldbid}"]))
+        except TS3QueryException:
+            IdleMover.logger.exception(f"Failed to get the list of assigned servergroups for the client cldbid={cldbid}.")
+            return client_servergroup_ids
+
+        for servergroup in client_servergroups:
+            client_servergroup_ids.append(servergroup.get("sgid"))
+
+        IdleMover.logger.debug(f"client_database_id={cldbid} has these servergroups: {str(client_servergroup_ids)}")
+
+        return client_servergroup_ids
+
+
     def get_idle_list(self):
         """
         Get list of clients which are idle since more than `idle_time_seconds` seconds.
@@ -97,6 +142,7 @@ class IdleMover(Thread):
         """
         if self.idle_list is not None:
             IdleMover.logger.debug(f"get_idle_list current awaylist: {str(self.idle_list)}!")
+
             client_idle_list = list()
             for client in self.idle_list:
                 IdleMover.logger.debug(f"get_idle_list checking client: {str(client)}")
@@ -104,6 +150,21 @@ class IdleMover(Thread):
                 if "cid" not in client.keys():
                     IdleMover.logger.error(f"get_idle_list client without cid: {str(client)}!")
                     continue
+
+                if client.get("client_type") == '1':
+                    IdleMover.logger.debug(f"Ignoring ServerQuery client: {client}")
+                    continue
+
+                if servergroups_to_exclude is None and len(servergroups_to_exclude) > 0:
+                    client_is_in_group = False
+                    for client_servergroup_id in self.get_servergroups_by_client(client.get("client_database_id")):
+                        if client_servergroup_id in self.servergroup_ids_to_ignore:
+                            IdleMover.logger.debug(f"The client is in the servergroup sgid={client_servergroup_id}, which should be ignored: {client}")
+                            client_is_in_group = True
+                            break
+
+                    if client_is_in_group:
+                        continue
 
                 if "client_idle_time" not in client.keys():
                     IdleMover.logger.error(f"get_idle_list client without client_idle_time: {str(client)}!")
@@ -224,6 +285,8 @@ class IdleMover(Thread):
         try:
             self.ts3conn.clientmove(self.get_channel_by_name(channel_name), client_id)
             del self.client_channels[client_id]
+        except KeyError:
+            IdleMover.logger.error(f"Error moving client! clid={client_id} not found in {str(self.client_channels)}")
         except TS3Exception:
             IdleMover.logger.exception(f"Error moving client! clid={client_id}")
 
@@ -386,18 +449,20 @@ def setup(ts3bot,
             auto_start = autoStart,
             enable_dry_run = dry_run,
             frequency = check_frequency,
+            exclude_servergroups = servergroups_to_exclude,
             auto_move_back = enable_auto_move_back,
             respect_channel_settings = resp_channel_settings,
             fallback_channel = fallback_action,
             min_idle_time_seconds = idle_time_seconds,
             channel = channel_name
     ):
-    global bot, autoStart, dry_run, check_frequency, enable_auto_move_back, resp_channel_settings, fallback_action, idle_time_seconds, channel_name
+    global bot, autoStart, dry_run, check_frequency, servergroups_to_exclude, enable_auto_move_back, resp_channel_settings, fallback_action, idle_time_seconds, channel_name
 
     bot = ts3bot
     autoStart = auto_start
     dry_run = enable_dry_run
     check_frequency = frequency
+    servergroups_to_exclude = exclude_servergroups
     enable_auto_move_back = auto_move_back
     resp_channel_settings = respect_channel_settings
     fallback_action = fallback_channel

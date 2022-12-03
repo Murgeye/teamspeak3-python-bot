@@ -33,6 +33,7 @@ This plugin supports the following options:
 | `auto_start` | `True` | Either if the plugin should automatically start when the Bot starts and it's configured or not. |
 | `enable_dry_run` | `False` | Set to `True`, if you want to test the plugin without executing the actual tasks. Instead it logs what it would have done. |
 | `frequency` | `30.0` | The frequency in seconds how often (and fast) the plugin should react (e.g. somebody is idle, every 30 seconds the bot would notice this and do something). |
+| `exclude_servergroups` | `None` | Provide a comma seperated list of servergroup names, which should never get moved by the bot. |
 | `auto_move_back` | `True` | Either if clients, which are no longer idle should be moved back to their original channel or not. |
 | `min_idle_time_seconds` | `600` | The minimum time in seconds a client must be idle to get moved to the channel `channel`. |
 | `resp_channel_settings` | `True` | Either if the channel settings like max. clients and password should be respected or not, even when the ServerQuery user could ignore them. |
@@ -44,6 +45,7 @@ If you need to change some of these default options, simply add them to your `co
 ```
 [IdleMover]
 frequency: 60.0
+exclude_servergroups: Server Admin,Bot
 min_idle_time_seconds: 300
 channel: Away
 ```
