@@ -72,24 +72,30 @@ class CommandHandler:
         :param msg: Command message.
         :param sender: Client id of the sender.
         """
-        command = msg
-        logger.debug(f"`clid={str(sender)}` sent a command: {str(command)}")
-        if len(command) > 1:
-            command = command[1:]
-            handlers = self.handlers.get(command)
-            ci = ClientInfo.ClientInfo(sender, self.ts3conn)
-            handled = False 
-            if handlers is not None:
-                for handler in handlers:
-                    if self.check_permission(handler, ci):
-                        handled = True
-                        handler(sender, msg)
-                if not handled:
-                    Bot.send_msg_to_client(self.ts3conn, sender, "You are not allowed to use this command!")
-            else:
-                Bot.send_msg_to_client(self.ts3conn, sender, "I cannot interpret your command. I am very sorry. :(")
-                Bot.send_msg_to_client(self.ts3conn, sender, "Use `!help` to get a list of available commands.")
-                logger.info(f"`clid={sender}` sent an unknown command: {str(command)}")
+        if not msg.startswith('!') and len(msg) > 2:
+            Bot.send_msg_to_client(self.ts3conn, sender, "Sorry, I only understand defined commands.")
+            Bot.send_msg_to_client(self.ts3conn, sender, "Use `!help` to get a list of available commands.")
+            logger.info(f"`clid={sender}` sent a textmessage without any command: {str(msg)}")
+            return
+
+        logger.info(f"`clid={str(sender)}` sent a command: {str(msg)}")
+
+        command = msg.split(None, 1)[0][1:]
+        handlers = self.handlers.get(command)
+
+        if handlers is None:
+            Bot.send_msg_to_client(self.ts3conn, sender, f"Sorry, but I could neither find your command `{command}`.")
+            Bot.send_msg_to_client(self.ts3conn, sender, "Use `!help` to get a list of available commands.")
+            logger.info(f"`clid={sender}` sent an unknown command: {str(msg)}")
+
+        has_permissions = False
+        for handler in handlers:
+            if self.check_permission(handler, ClientInfo.ClientInfo(sender, self.ts3conn)):
+                has_permissions = True
+                handler(sender, msg)
+
+        if not has_permissions:
+            Bot.send_msg_to_client(self.ts3conn, sender, "You are not allowed to use this command!")
 
     def inform(self, event):
         """
