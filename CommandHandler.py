@@ -33,8 +33,8 @@ class CommandHandler:
         """
         self.handlers = {}
         self.ts3conn = ts3conn
-        # Default groups if group not specified.
-        self.accept_from_groups = ['Server Admin', 'Moderator']
+        # Default group if group not specified.
+        self.accept_from_groups = ['Server Admin']
 
     def add_handler(self, handler, command):
         """
