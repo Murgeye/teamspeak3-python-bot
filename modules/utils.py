@@ -30,7 +30,7 @@ def send_version(sender, _msg):
     Sends a text message with the current version of this module to the `sender`.
     :param sender: Client id of sender that sent the command.
     """
-    Bot.send_msg_to_client(bot.ts3conn, sender, __version__)
+    Bot.send_msg_to_client(bot.ts3conn, sender, f"The version of the `utils` plugin is `{__version__}`.")
 
 
 @command('stop', )
