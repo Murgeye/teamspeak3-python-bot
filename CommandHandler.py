@@ -84,7 +84,7 @@ class CommandHandler:
         handlers = self.handlers.get(command)
 
         if handlers is None:
-            Bot.send_msg_to_client(self.ts3conn, sender, f"Sorry, but I could neither find your command `{command}`.")
+            Bot.send_msg_to_client(self.ts3conn, sender, f"Sorry, but I could not find your command `{command}`.")
             Bot.send_msg_to_client(self.ts3conn, sender, "Use `!help` to get a list of available commands.")
             logger.info(f"`clid={sender}` sent an unknown command: {str(msg)}")
 
