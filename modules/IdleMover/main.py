@@ -245,7 +245,7 @@ class IdleMover(Thread):
             IdleMover.logger.debug("move_to_afk idle list is empty. Nothing todo.")
             return
 
-        IdleMover.logger.info("Moving clients to afk!")
+        IdleMover.logger.debug("Moving clients to afk!")
 
         for client in idle_list:
             if dry_run:

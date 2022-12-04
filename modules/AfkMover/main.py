@@ -294,7 +294,7 @@ class AfkMover(Thread):
             AfkMover.logger.debug("move_to_afk client list is empty. Nothing todo.")
             return
 
-        AfkMover.logger.info("Moving clients to afk!")
+        AfkMover.logger.debug("Moving clients to afk!")
 
         for client in client_list:
             if dry_run:
