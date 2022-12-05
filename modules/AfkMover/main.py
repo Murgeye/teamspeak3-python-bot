@@ -110,7 +110,7 @@ class AfkMover(Thread):
 
         try:
             self.ts3conn.clientmove(self.get_channel_by_name(channel_name), client_id)
-            del self.client_channels[client_id]
+            del self.client_channels[str(client_id)]
         except KeyError:
             AfkMover.logger.error(f"Error moving client! clid={client_id} not found in {str(self.client_channels)}")
         except TS3Exception:
@@ -174,7 +174,7 @@ class AfkMover(Thread):
             try:
                 self.ts3conn.clientmove(channel_id, client_id)
 
-                del self.client_channels[client_id]
+                del self.client_channels[str(client_id)]
             except TS3QueryException as e:
                 # Error: invalid channel ID (channel ID does not exist (anymore))
                 if int(e.id) == 768:
