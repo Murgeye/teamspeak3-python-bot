@@ -21,6 +21,7 @@ All existing functionality is based on plugins.
 | AfkMover | [Open documentation](/modules/AfkMover/README.md) |
 | IdleMover | [Open documentation](/modules/IdleMover/README.md) |
 | KickInactiveClients | [Open documentation](/modules/KickInactiveClients/README.md) |
+| BadNickname | [Open documentation](/modules/BadNickname/README.md) |
 
 Also see the [configuration](#configuration) section for further details regarding configuration.
 
