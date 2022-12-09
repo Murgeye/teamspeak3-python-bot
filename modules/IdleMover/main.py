@@ -88,7 +88,7 @@ class IdleMover(Thread):
 
             IdleMover.logger.debug(f"update_idle_list: {str(self.idle_list)}")
         except TS3Exception:
-            IdleMover.logger.exception("Error getting away list!")
+            IdleMover.logger.exception("Error getting client list with times!")
             self.idle_list = list()
 
 
@@ -232,7 +232,7 @@ class IdleMover(Thread):
         try:
             channel = self.ts3conn.channelfind(name)[0].get("cid", '-1')
         except TS3Exception:
-            IdleMover.logger.exception("Error getting afk channel")
+            IdleMover.logger.exception(f"Error while finding a channel with the name `{name}`.")
             raise
         return channel
 
@@ -251,7 +251,7 @@ class IdleMover(Thread):
             if dry_run:
                 IdleMover.logger.info(f"I would have moved this client: {str(client)}")
             else:
-                IdleMover.logger.info("Moving somebody to afk!")
+                IdleMover.logger.info(f"Moving the client clid={client.get('clid', '-1')} client_nickname={client.get('client_nickname', '-1')} to afk!")
                 IdleMover.logger.debug("Client: " + str(client))
 
                 try:
@@ -313,7 +313,7 @@ class IdleMover(Thread):
             if client.get("clid", -1) not in self.client_channels.keys():
                 continue
 
-            IdleMover.logger.info("Moving a client back!")
+            IdleMover.logger.info(f"Moving the client clid={client.get('clid', -1)} client_nickname={client.get('client_nickname', -1)} back!")
             IdleMover.logger.debug("Client: " + str(client))
             IdleMover.logger.debug("Saved channel list keys:" + str(self.client_channels))
 

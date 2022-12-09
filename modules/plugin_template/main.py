@@ -74,11 +74,11 @@ class PluginTemplate(Thread):
 
         for client in self.client_list:
             if 'clid' not in client:
-                PluginTemplate.logger.debug(f"Skipping the following client as it has no clid: {client}")
+                PluginTemplate.logger.error(f"Error, because the following client has no clid: {client}")
                 continue
 
             if 'client_type' not in client:
-                PluginTemplate.logger.debug(f"Skipping the following client as it has no client_type: {client}")
+                PluginTemplate.logger.error(f"Error, because the following client has no client_type: {client}")
                 continue
 
             if client['client_type'] == 1:
@@ -95,7 +95,7 @@ class PluginTemplate(Thread):
                 except AttributeError:
                     PluginTemplate.logger.exception(f"AttributeError: {client}")
                 except TS3Exception:
-                    PluginTemplate.logger.exception("Error while sending a message to clients!")
+                    PluginTemplate.logger.exception(f"Error while sending a message to the client: {client}")
 
     def loop_until_stopped(self):
         """
@@ -103,7 +103,7 @@ class PluginTemplate(Thread):
         """
         while not self.stopped.wait(float(check_frequency)):
             PluginTemplate.logger.debug("Thread running!")
-            PluginTemplate.logger.debug(f"some_option value: {some_option}")
+            PluginTemplate.logger.info(f"some_option value: {some_option}")
 
             try:
                 self.update_client_list()

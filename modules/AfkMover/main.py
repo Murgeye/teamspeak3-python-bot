@@ -59,7 +59,7 @@ class AfkMover(Thread):
         self.update_servergroup_ids_list()
         self.afk_list = None
         if self.afk_channel is None:
-            AfkMover.logger.error("Could not get afk channel")
+            AfkMover.logger.error(f"Could not find any channel with the name `{channel_name}`.")
 
 
     def get_channel_by_name(self, name="AFK"):
@@ -71,7 +71,7 @@ class AfkMover(Thread):
         try:
             channel = self.ts3conn.channelfind(name)[0].get("cid", '-1')
         except TS3Exception:
-            AfkMover.logger.exception("Error getting afk channel")
+            AfkMover.logger.exception(f"Error while finding a channel with the name `{name}`.")
             raise
         return channel
 
@@ -82,10 +82,11 @@ class AfkMover(Thread):
         """
         try:
             self.afk_list = self.ts3conn.clientlist(["away"])
-            AfkMover.logger.debug("Awaylist: " + str(self.afk_list))
         except TS3Exception:
-            AfkMover.logger.exception("Error getting away list!")
+            AfkMover.logger.exception("Error while getting client list with away status!")
             self.afk_list = list()
+        
+        AfkMover.logger.debug("Awaylist: " + str(self.afk_list))
 
 
     def get_back_list(self):
@@ -139,7 +140,7 @@ class AfkMover(Thread):
             if client.get("clid", -1) not in self.client_channels.keys():
                 continue
 
-            AfkMover.logger.info("Moving a client back!")
+            AfkMover.logger.info(f"Moving the client clid={client.get('clid', -1)} client_nickname={client.get('client_nickname', -1)} back!")
             AfkMover.logger.debug("Client: " + str(client))
             AfkMover.logger.debug("Saved channel list keys:" + str(self.client_channels))
 
@@ -298,9 +299,9 @@ class AfkMover(Thread):
 
         for client in client_list:
             if dry_run:
-                AfkMover.logger.debug(f"I would have moved this client: {str(client)}")
+                AfkMover.logger.info(f"I would have moved this client: {str(client)}")
             else:
-                AfkMover.logger.info("Moving somebody to afk!")
+                AfkMover.logger.info(f"Moving the client clid={client.get('clid', '-1')} client_nickname={client.get('client_nickname', '-1')} to afk!")
                 AfkMover.logger.debug("Client: " + str(client))
 
                 try:

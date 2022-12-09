@@ -41,12 +41,12 @@ def stop_bot(sender, _msg):
     :param sender: Client id of sender that sent the command.
     """
     if dry_run:
-        logger.warning(f"Bot would have been stopped by clid={sender}, when dry-run would be disabled!")
+        logger.info(f"Bot would have been stopped by clid={sender}, when dry-run would be disabled!")
         return
 
     Moduleloader.exit_all()
     bot.ts3conn.quit()
-    logger.warning(f"Bot has been stopped by clid={sender}!")
+    logger.info(f"Bot has been stopped by clid={sender}!")
 
 
 @command('restart', 'reload' )
@@ -57,12 +57,12 @@ def restart_bot(sender, _msg):
     :param sender: Client id of sender that sent the command.
     """
     if dry_run:
-        logger.warning(f"Bot would have been restarted by clid={sender}, when dry-run would be disabled!")
+        logger.info(f"Bot would have been restarted by clid={sender}, when dry-run would be disabled!")
         return
 
     Moduleloader.exit_all()
     bot.ts3conn.quit()
-    logger.warning(f"Bot has been restarted by clid={sender}!")
+    logger.info(f"Bot has been restarted by clid={sender}!")
     import main
     main.restart_program()
 
@@ -100,7 +100,7 @@ def multi_move(sender, msg):
 
         _, source_channels, target_channel = command_args
     except ValueError:
-        logger.debug(f"Expected three values for this command, got instead: {msg}")
+        logger.error(f"Expected three values for this command, got instead: {msg}")
 
         try:
             Bot.send_msg_to_client(ts3conn, sender, "Your command was incorrect.")
@@ -108,7 +108,7 @@ def multi_move(sender, msg):
             Bot.send_msg_to_client(ts3conn, sender, "Usage: !multimove 'sourceChannelNamePattern' 'targetChannelNamePattern'")
             Bot.send_msg_to_client(ts3conn, sender, "Usage: !multimove 'sourceChannelNamePattern1;sourceChannelNamePattern2[;...]' 'targetChannelNamePattern'")
         except TS3QueryException:
-            logger.error(f"Failed to send the error message as textmessage to clid={sender}.")
+            logger.exception(f"Failed to send the error message as textmessage to clid={sender}.")
 
         return
 

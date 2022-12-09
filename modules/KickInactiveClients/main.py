@@ -94,7 +94,7 @@ class KickInactiveClients(Thread):
 
             KickInactiveClients.logger.debug(f"update_idle_list: {str(self.idle_list)}")
         except TS3Exception:
-            KickInactiveClients.logger.exception("Error getting client list!")
+            KickInactiveClients.logger.exception("Error getting client list with times!")
             self.idle_list = list()
 
 
@@ -207,11 +207,11 @@ class KickInactiveClients(Thread):
         KickInactiveClients.logger.info(f"Kicking {len(idle_list)} clients from the server!")
 
         for client in idle_list:
-            KickInactiveClients.logger.debug(f"Kicking the following client from the server: {str(client)}")
-
             if dry_run:
                 KickInactiveClients.logger.info(f"I would have kicked the following client from the server, when the dry-run would be disabled: {str(client)}")
             else:
+                KickInactiveClients.logger.info(f"Kicking the following client from the server: {str(client)}")
+
                 try:
                     self.ts3conn.clientkick(int(client.get("clid", '-1')), 5, kick_reason_message)
                 except TS3Exception:
