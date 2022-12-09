@@ -204,9 +204,9 @@ class KickInactiveClients(Thread):
             KickInactiveClients.logger.debug("kick_all_idle_clients idle_list is empty. Nothing todo.")
             return
 
-        KickInactiveClients.logger.info(f"Kicking {len(idle_list)} clients from the server!")
-
         for client in idle_list:
+            KickInactiveClients.logger.info(f"Kicking {len(idle_list)} clients from the server!")
+
             if dry_run:
                 KickInactiveClients.logger.info(f"I would have kicked the following client from the server, when the dry-run would be disabled: {str(client)}")
             else:

@@ -212,9 +212,9 @@ class BadNickname(Thread):
             BadNickname.logger.debug("bad_nickname_list is empty. Nothing todo.")
             return
 
-        BadNickname.logger.info(f"Kicking {len(bad_nickname_list)} clients from the server!")
-
         for client in bad_nickname_list:
+            BadNickname.logger.info(f"Kicking {len(bad_nickname_list)} clients from the server!")
+
             if dry_run:
                 BadNickname.logger.info(f"I would have kicked the following client from the server, when the dry-run would be disabled: {str(client)}")
             else:
