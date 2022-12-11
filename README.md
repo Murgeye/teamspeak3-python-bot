@@ -22,6 +22,7 @@ All existing functionality is based on plugins.
 | IdleMover | [Open documentation](/modules/IdleMover/README.md) |
 | KickInactiveClients | [Open documentation](/modules/KickInactiveClients/README.md) |
 | BadNickname | [Open documentation](/modules/BadNickname/README.md) |
+| TwitchLive | [Open documentation](/modules/TwitchLive/README.md) |
 
 Also see the [configuration](#configuration) section for further details regarding configuration.
 
