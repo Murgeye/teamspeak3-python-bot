@@ -1,5 +1,16 @@
 # Requirements
 
+Hardware (minimum):
+
+> **Note**
+>
+> Depending on the used plugins for this bot and the size of your TeamSpeak server (amount of channels, clients, etc.), you might need more CPU cores and/or memory.
+
+- 1 CPU Core
+- 128 MB Memory
+
+Software:
+
 - [Git](https://git-scm.com/)
 - [Python 3](https://www.python.org/)
   - [pip](https://pip.pypa.io/en/stable/installation/) (usually a part of Python)
