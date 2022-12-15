@@ -1,0 +1,38 @@
+name: Python Lint
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  python_lint:
+    strategy:
+      matrix:
+        python_versions: [
+          '3.9',
+          '3.10',
+          '3.11',
+        ]
+    name: Python ${{ matrix.python_versions }} Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: set up python ${{ matrix.python_versions }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python_versions }}
+      
+      - name: print python version
+        run: python --version
+
+      - name: install python dependencies
+        run: pip install -r requirements.txt
+
+      - name: install pylint
+        run: pip install pylint
+
+      - name: run pylint
+        run: pylint --rcfile=pylintrc $(find . -type f -name "*.py")
