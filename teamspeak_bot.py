@@ -1,18 +1,22 @@
+# standard imports
 import configparser
 import logging
-import os
+import sys
 from distutils.util import strtobool
 
+# third-party imports
 import ts3API.TS3Connection
 from ts3API.TS3Connection import TS3QueryException
 from ts3API.TS3QueryExceptionType import TS3QueryExceptionType
 
-import CommandHandler
-import EventHandler
-import Moduleloader
+# local imports
+import command_handler
+import event_handler
+import module_loader
 
 
 def stop_conn(ts3conn):
+    """Stops the connection."""
     ts3conn.stop_recv.set()
 
 
@@ -31,7 +35,7 @@ def send_msg_to_client(ts3conn, clid, msg):
         ts3conn.sendtextmessage(targetmode=1, target=clid, msg=msg)
     except ts3API.TS3Connection.TS3QueryException:
         logger = logging.getLogger("bot")
-        logger.exception("Error sending a message to clid " + str(clid))
+        logger.exception("Error sending a message to clid %s", int(clid))
 
 
 class Ts3Bot:
@@ -74,13 +78,13 @@ class Ts3Bot:
         config = configparser.ConfigParser()
         if len(config.read('config.ini')) == 0:
             logger.error("Config file missing!")
-            exit()
+            sys.exit(1)
         if not config.has_section('General'):
             logger.error("Config file is missing general section!")
-            exit()
+            sys.exit(1)
         if not config.has_section('Plugins'):
             logger.error("Config file is missing plugins section")
-            exit()
+            sys.exit(1)
         return config._sections
 
     def connect(self):
@@ -97,8 +101,6 @@ class Ts3Bot:
             # self.ts3conn.login(self.user, self.password)
         except ts3API.TS3Connection.TS3QueryException:
             self.logger.exception("Error while connecting, IP propably not whitelisted or Login data wrong!")
-            # This is a very ungraceful exit!
-            os._exit(-1)
             raise
 
     def setup_bot(self):
@@ -114,36 +116,36 @@ class Ts3Bot:
             self.ts3conn.use(sid=self.sid)
         except ts3API.TS3Connection.TS3QueryException:
             self.logger.exception("Error on use SID")
-            exit()
+            sys.exit(1)
         try:
             try:
                 self.ts3conn.clientupdate(["client_nickname=" + self.bot_name])
-            except TS3QueryException as e:
-                if e.type == TS3QueryExceptionType.CLIENT_NICKNAME_INUSE:
+            except TS3QueryException as query_exception:
+                if query_exception.type == TS3QueryExceptionType.CLIENT_NICKNAME_INUSE:
                     self.logger.info("The choosen bot nickname is already in use, keeping the default nickname")
                 else:
-                    raise e
+                    raise query_exception
             try:
                 self.channel = self.get_channel_id(self.default_channel)
                 self.ts3conn.clientmove(self.channel, int(self.ts3conn.whoami()["client_id"]))
-            except TS3QueryException as e:
-                if e.type == TS3QueryExceptionType.CHANNEL_ALREADY_IN:
+            except TS3QueryException as query_exception:
+                if query_exception.type == TS3QueryExceptionType.CHANNEL_ALREADY_IN:
                     self.logger.info("The bot is already in the configured default channel")
                 else:
-                    raise e
+                    raise query_exception
         except TS3QueryException:
             self.logger.exception("Error on setting up client")
             self.ts3conn.quit()
             return
-        self.command_handler = CommandHandler.CommandHandler(self.ts3conn)
-        self.event_handler = EventHandler.EventHandler(ts3conn=self.ts3conn, command_handler=self.command_handler)
+        self.command_handler = command_handler.CommandHandler(self.ts3conn)
+        self.event_handler = event_handler.EventHandler(ts3conn=self.ts3conn, command_handler=self.command_handler)
         try:
             self.ts3conn.register_for_server_events(self.event_handler.on_event)
             self.ts3conn.register_for_channel_events(0, self.event_handler.on_event)
             self.ts3conn.register_for_private_messages(self.event_handler.on_event)
         except ts3API.TS3Connection.TS3QueryException:
             self.logger.exception("Error on registering for events.")
-            exit()
+            sys.exit(1)
 
     def __del__(self):
         if self.ts3conn is not None:
@@ -185,5 +187,5 @@ class Ts3Bot:
         self.connect()
         self.setup_bot()
         # Load modules
-        Moduleloader.load_modules(self, plugins)
+        module_loader.load_modules(self, plugins)
         self.ts3conn.start_keepalive_loop()

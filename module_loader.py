@@ -1,9 +1,11 @@
+# standard imports
 import importlib
 import logging
 import sys
 
-from CommandHandler import CommandHandler
-from EventHandler import EventHandler
+# local imports
+from command_handler import CommandHandler
+from event_handler import EventHandler
 
 setups = []
 exits = []
@@ -12,15 +14,15 @@ event_handler: 'EventHandler'
 command_handler: 'CommandHandler'
 
 # configure logger
-class_name = "ModuleLoader"
-logger = logging.getLogger(class_name)
+CLASS_NAME = "ModuleLoader"
+logger = logging.getLogger(CLASS_NAME)
 logger.propagate = 0
 logger.setLevel(logging.INFO)
-file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
+file_handler = logging.FileHandler(f"logs/{CLASS_NAME.lower()}.log", mode='a+')
 formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
-logger.info(f"Configured {class_name} logger")
+logger.info("Configured %s logger", str(CLASS_NAME))
 logger.propagate = 0
 
 
@@ -42,33 +44,33 @@ def load_modules(bot, config):
         try:
             plugin_modules[plugin[0]] = importlib.import_module(f"modules.{plugin[1]}", package="modules")
             plugin_modules[plugin[0]].pluginname = plugin[1]
-            logger.info(f"Loaded module {plugin[1]}")
-        except BaseException:
-            logger.exception(f"Error while loading plugin {str(plugin[0])} from modules.{plugin[1]}")
+            logger.info("Loaded module %s", str(plugin[1]))
+        except ImportError:
+            logger.exception("Error while loading plugin %s from modules. %s", str(plugin[0]), str(plugin[1]))
+        except KeyError:
+            logger.exception("Error while loading plugin from modules: %s", str(plugin))
 
     # Call all registered setup functions
     for setup_func in setups:
         try:
+            # `SomeModule` => `SomeModule`
             plugin_name = sys.modules.get(setup_func.__module__).pluginname
             if plugin_name.count('.') == 1:
                 # `SomeModule.main` => `SomeModule`
                 plugin_name = plugin_name.split('.')[0]
-            else:
-                # `SomeModule` => `SomeModule`
-                plugin_name = plugin_name
-
-            if plugin_name in config:
-                plugin_config = config.pop(plugin_name)
-                logger.info(f"{plugin_name} plugin config: {plugin_config}")
-                setup_func(ts3bot=bot, **plugin_config)
-            else:
-                logger.info(f"{plugin_name} plugin config: Unconfigured, using plugin defaults.")
-                setup_func(bot)
         except BaseException:
-            logger.exception(f"Error while setting up the module {plugin_name}.")
+            logger.exception("Error while setting up the module %s.", str(plugin_name))
+
+        if plugin_name in config:
+            plugin_config = config.pop(plugin_name)
+            logger.info("%s plugin config: %s", str(plugin_name), str(plugin_config))
+            setup_func(ts3bot=bot, **plugin_config)
+        else:
+            logger.info("%s plugin config: Unconfigured, using plugin defaults.", str(plugin_name))
+            setup_func(bot)
 
 
-def setup(function):
+def setup_plugin(function):
     """
     Decorator for registering the setup function of a module.
     :param function: Function to register as setup
@@ -119,7 +121,7 @@ def group(*groups):
     return save_allowed_groups
 
 
-def exit(function):
+def exit_plugin(function):
     """
     Decorator to mark a function to be called upon module exit.
     :param function: Exit function to call.
@@ -138,4 +140,4 @@ def exit_all():
         try:
             exit_func()
         except BaseException:
-            logger.exception(f"Error while exiting the module {exit_func}.")
+            logger.exception("Error while exiting the module %s.", str(exit_func))

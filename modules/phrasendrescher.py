@@ -1,20 +1,22 @@
-"""Quote module for the Teamspeak 3 Bot. Sends quotes to people joining the server."""
+# standard imports
 import os
 import sqlite3
 
-import ts3API.Events as Events
+# third-party imports
+from ts3API.Events import ClientEnteredEvent
 
-import Bot
-import Moduleloader
+# local imports
+import teamspeak_bot
+from module_loader import setup_plugin, command, event
 
-bot: Bot.Ts3Bot
+bot: teamspeak_bot.Ts3Bot
 path: str
 # Server groups who should not receive quotes upon joining the server
 dont_send = []
 
 
-@Moduleloader.setup
-def setup_quoter(ts3bot, db):
+@setup_plugin
+def setup_quoter(ts3bot, database_filename):
     """
     Setup the quoter. Define groups not to send quotes to.
     :return:
@@ -22,14 +24,17 @@ def setup_quoter(ts3bot, db):
     global bot, dont_send, path
     bot = ts3bot
     ts3conn = bot.ts3conn
-    for g in ts3conn.servergrouplist():
-        if g.get('name', '') in ["Guest", "Admin Server Query"]:
-            dont_send.append(int(g.get('sgid', 0)))
-    if not os.path.isabs(db):
+
+    for servergroup in ts3conn.servergrouplist():
+        if servergroup.get('name', '') in ["Guest", "Admin Server Query"]:
+            dont_send.append(int(servergroup.get('sgid', 0)))
+
+    if not os.path.isabs(database_filename):
         path = os.path.dirname(__file__)
-        path = os.path.join(path, db)
+        path = os.path.join(path, database_filename)
     else:
-        path = db
+        path = database_filename
+
     path = os.path.abspath(path)
     # setup and connect to database
     conn = sqlite3.connect(path)
@@ -41,35 +46,37 @@ def setup_quoter(ts3bot, db):
     conn.close()
 
 
-@Moduleloader.command('quote',)
+@command('quote',)
 def add_quote(sender, msg):
+    """Adds a new quote to the database."""
     if len(msg) <= len('!quote '):
-        Bot.send_msg_to_client(bot.ts3conn, sender, 'Please include a quote to save.')
+        teamspeak_bot.send_msg_to_client(bot.ts3conn, sender, 'Please include a quote to save.')
     else:
         conn = sqlite3.connect(path)
-        c = conn.cursor()
+        curs = conn.cursor()
         quote = msg[len('!quote')+1:]
         quote = quote.replace('" ', '"\n')
         submitter = bot.ts3conn.clientinfo(sender)
         submitter = submitter['client_nickname']
-        c.execute('INSERT INTO Quotes (quote, submitter, time, shown) VALUES (?, ?,'
+        curs.execute('INSERT INTO Quotes (quote, submitter, time, shown) VALUES (?, ?,'
                   'strftime("%s", "now"), ?)', (quote, submitter, 0))
         conn.commit()
         conn.close()
-        Bot.send_msg_to_client(bot.ts3conn, sender, 'Your quote has been saved!')
+        teamspeak_bot.send_msg_to_client(bot.ts3conn, sender, 'Your quote has been saved!')
 
 
-@Moduleloader.event(Events.ClientEnteredEvent,)
+@event(ClientEnteredEvent)
 def send_quote(evt):
-    for g in evt.client_servergroups.split(','):
-        if len(g) == 0 or int(g) in dont_send:
+    """Sends a random quote to a client."""
+    for servergroup in evt.client_servergroups.split(','):
+        if len(servergroup) == 0 or int(servergroup) in dont_send:
             return
+
     conn = sqlite3.connect(path)
-    c = conn.cursor()
-    c.execute('SELECT * FROM Quotes ORDER BY RANDOM() LIMIT 1')
-    quote = c.fetchone()
-    Bot.send_msg_to_client(bot.ts3conn, evt.client_id, quote[1])
-    c.execute('UPDATE Quotes SET shown=? WHERE id=?', (quote[4] + 1, quote[0]))
+    curs = conn.cursor()
+    curs.execute('SELECT * FROM Quotes ORDER BY RANDOM() LIMIT 1')
+    quote = curs.fetchone()
+    teamspeak_bot.send_msg_to_client(bot.ts3conn, evt.client_id, quote[1])
+    curs.execute('UPDATE Quotes SET shown=? WHERE id=?', (quote[4] + 1, quote[0]))
     conn.commit()
     conn.close()
-

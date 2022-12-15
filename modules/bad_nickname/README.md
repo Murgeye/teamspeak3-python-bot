@@ -21,7 +21,7 @@ Enable this plugin by adding the following line under the `Plugins` section to y
 
 ```
 [Plugins]
-BadNickname: BadNickname.main
+BadNickname: bad_nickname.main
 ```
 
 ## Options
@@ -40,7 +40,7 @@ This plugin supports the following options:
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
 
 ```
-[BadNickname]
+[bad_nickname]
 frequency: 10.0
 exclude_servergroups: Server Admin,Bot
 name_pattern: [a|4]dm[i|1]n[i|1][s|5][tr][a|4][t][o|0][r]?

@@ -18,22 +18,24 @@ Please check out the [ts3API](https://github.com/Murgeye/teamspeak3-python-api) 
 
 ## Adding setup and exit methods
 
-Upon loading a plugin the ModuleLoader calls any method marked as `@setup` in the plugin.
+Upon loading a plugin the ModuleLoader calls any method marked as `@setup_plugin` in the plugin.
 
 ```
-from Moduleloader import *
-
-@setup
+from module_loader import setup_plugin
+# ...
+@setup_plugin
 def setup_module(ts3bot):
   #Do something, save the bot reference, etc
   pass
 ```
 
 Upon unloading a module (usually if the bot is closed etc) the ModuleLoader calls any method
-marked as `@exit` in the plugin.
+marked as `@exit_plugin` in the plugin.
 
 ```
-@exit
+from module_loader import exit_plugin
+# ...
+@exit_plugin
 def exit_module():
   #Do something, save your state, etc
   pass
@@ -47,8 +49,10 @@ by using the `@command` decorator.
 The following code example registers the `test_command` function for the command `!test1` and `!test2`:
 
 ```
-@command('test1','test2',)
-@group('Server Admin',)
+from module_loader import command, group
+# ...
+@command('test1','test2')
+@group('Server Admin')
 def test_command(sender, msg):
   print("test")
 ```
@@ -73,9 +77,10 @@ You can register a function in your plugin to listen for specific server events 
 The following code snippet registers the `inform_enter` function as a listener for the `Events.ClientEnteredEvent`:
 
 ```
-import ts3API.Events as Events
+from module_loader import event
+from ts3API.Events import ClientEnteredEvent
 # ...
-@event(Events.ClientEnteredEvent,)
+@event(Events.ClientEnteredEvent)
 def inform_enter(event):
   print("Client with id " + event.client_id + " left.")
 ```

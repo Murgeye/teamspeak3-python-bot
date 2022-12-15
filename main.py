@@ -1,26 +1,30 @@
 #!/usr/bin/env python3
+
+# standard imports
 import logging
 import os
 import sys
 import threading
 
+# third-party imports
 from ts3API.utilities import TS3ConnectionClosedException
 
-import Bot
+# local imports
+import teamspeak_bot
 
-logger = None
-bot = None
+LOGGER = None
+BOT = None
 
 
-def exception_handler(exctype, value, tb):
+def exception_handler(exctype, value, exception_tb):
     """
-    Exception handler to prevent any exceptions from printing to stdout. Logs all exceptions to the logger.
+    Exception handler to prevent any exceptions from printing to stdout. Logs all exceptions to the LOGGER.
     :param exctype: Exception type
     :param value: Exception value
-    :param tb: Exception traceback
+    :param exception_tb: Exception traceback
     :return:
     """
-    logger.error("Uncaught exception.", exc_info=(exctype, value, tb))
+    LOGGER.error("Uncaught exception.", exc_info=(exctype, value, exception_tb))
 
 
 def restart_program():
@@ -35,7 +39,7 @@ def restart_program():
 
 def main():
     """
-    Start the bot, set up logger and set exception hook.
+    Start the BOT, set up LOGGER and set exception hook.
     :return:
     """
     run_old = threading.Thread.run
@@ -44,29 +48,30 @@ def main():
         try:
             run_old(*args, **kwargs)
         except (KeyboardInterrupt, SystemExit, TS3ConnectionClosedException):
-            # This is a very ungraceful exit!
-            os._exit(-1)
             raise
         except:
             sys.excepthook(*sys.exc_info())
+
     threading.Thread.run = run
-    global bot, logger
-    logger = logging.getLogger("bot")
-    if not logger.hasHandlers():
+
+    global BOT, LOGGER
+    LOGGER = logging.getLogger("BOT")
+
+    if not LOGGER.hasHandlers():
         class_name = "Bot"
-        logger = logging.getLogger(class_name)
-        logger.propagate = 0
-        logger.setLevel(logging.INFO)
+        LOGGER = logging.getLogger(class_name)
+        LOGGER.propagate = 0
+        LOGGER.setLevel(logging.INFO)
         file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
         formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
         file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-        logger.info(f"Configured {class_name} logger")
-        logger.propagate = 0
-        logger.info(f"Started {class_name}")
+        LOGGER.addHandler(file_handler)
+        LOGGER.info("Configured %s logger", str(class_name))
+        LOGGER.propagate = 0
+
     sys.excepthook = exception_handler
-    config = Bot.Ts3Bot.parse_config(logger)
-    bot = Bot.Ts3Bot.bot_from_config(config)
+    config = teamspeak_bot.Ts3Bot.parse_config(LOGGER)
+    BOT = teamspeak_bot.Ts3Bot.bot_from_config(config)
 
 if __name__ == "__main__":
     main()
