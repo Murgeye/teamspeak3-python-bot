@@ -42,6 +42,7 @@ class Ts3Bot:
     """
     Teamspeak 3 Bot with module support.
     """
+
     def get_channel_id(self, name):
         """
         Covenience method for getting a channel by name.
@@ -64,7 +65,7 @@ class Ts3Bot:
         """
         logger = logging.getLogger("bot")
         plugins = config
-        config = config.pop('General')
+        config = config.pop("General")
         return Ts3Bot(logger=logger, plugins=plugins, **config)
 
     @staticmethod
@@ -76,13 +77,13 @@ class Ts3Bot:
         :rtype: dict[str, dict[str, str]]
         """
         config = configparser.ConfigParser()
-        if len(config.read('config.ini')) == 0:
+        if len(config.read("config.ini")) == 0:
             logger.error("Config file missing!")
             sys.exit(1)
-        if not config.has_section('General'):
+        if not config.has_section("General"):
             logger.error("Config file is missing general section!")
             sys.exit(1)
-        if not config.has_section('Plugins'):
+        if not config.has_section("Plugins"):
             logger.error("Config file is missing plugins section")
             sys.exit(1)
         return config._sections
@@ -93,14 +94,23 @@ class Ts3Bot:
         :return:
         """
         try:
-            self.ts3conn = ts3API.TS3Connection.TS3Connection(self.host, self.port,
-                                                              use_ssh=self.is_ssh, username=self.user,
-                                                              password=self.password, accept_all_keys=self.accept_all_keys,
-                                                              host_key_file=self.host_key_file,
-                                                              use_system_hosts=self.use_system_hosts, sshtimeout=self.sshtimeout, sshtimeoutlimit=self.sshtimeoutlimit)
+            self.ts3conn = ts3API.TS3Connection.TS3Connection(
+                self.host,
+                self.port,
+                use_ssh=self.is_ssh,
+                username=self.user,
+                password=self.password,
+                accept_all_keys=self.accept_all_keys,
+                host_key_file=self.host_key_file,
+                use_system_hosts=self.use_system_hosts,
+                sshtimeout=self.sshtimeout,
+                sshtimeoutlimit=self.sshtimeoutlimit,
+            )
             # self.ts3conn.login(self.user, self.password)
         except ts3API.TS3Connection.TS3QueryException:
-            self.logger.exception("Error while connecting, IP propably not whitelisted or Login data wrong!")
+            self.logger.exception(
+                "Error while connecting, IP propably not whitelisted or Login data wrong!"
+            )
             raise
 
     def setup_bot(self):
@@ -122,15 +132,21 @@ class Ts3Bot:
                 self.ts3conn.clientupdate(["client_nickname=" + self.bot_name])
             except TS3QueryException as query_exception:
                 if query_exception.type == TS3QueryExceptionType.CLIENT_NICKNAME_INUSE:
-                    self.logger.info("The choosen bot nickname is already in use, keeping the default nickname")
+                    self.logger.info(
+                        "The choosen bot nickname is already in use, keeping the default nickname"
+                    )
                 else:
                     raise query_exception
             try:
                 self.channel = self.get_channel_id(self.default_channel)
-                self.ts3conn.clientmove(self.channel, int(self.ts3conn.whoami()["client_id"]))
+                self.ts3conn.clientmove(
+                    self.channel, int(self.ts3conn.whoami()["client_id"])
+                )
             except TS3QueryException as query_exception:
                 if query_exception.type == TS3QueryExceptionType.CHANNEL_ALREADY_IN:
-                    self.logger.info("The bot is already in the configured default channel")
+                    self.logger.info(
+                        "The bot is already in the configured default channel"
+                    )
                 else:
                     raise query_exception
         except TS3QueryException:
@@ -138,7 +154,9 @@ class Ts3Bot:
             self.ts3conn.quit()
             return
         self.command_handler = command_handler.CommandHandler(self.ts3conn)
-        self.event_handler = event_handler.EventHandler(ts3conn=self.ts3conn, command_handler=self.command_handler)
+        self.event_handler = event_handler.EventHandler(
+            ts3conn=self.ts3conn, command_handler=self.command_handler
+        )
         try:
             self.ts3conn.register_for_server_events(self.event_handler.on_event)
             self.ts3conn.register_for_channel_events(0, self.event_handler.on_event)
@@ -151,8 +169,26 @@ class Ts3Bot:
         if self.ts3conn is not None:
             self.ts3conn.quit()
 
-    def __init__(self, host, port, serverid, user, password, defaultchannel, botname, logger, plugins, ssh="False",
-                 acceptallsshkeys="False", sshhostkeyfile=None, sshloadsystemhostkeys="False", sshtimeout=None, sshtimeoutlimit=3, *_, **__):
+    def __init__(
+        self,
+        host,
+        port,
+        serverid,
+        user,
+        password,
+        defaultchannel,
+        botname,
+        logger,
+        plugins,
+        ssh="False",
+        acceptallsshkeys="False",
+        sshhostkeyfile=None,
+        sshloadsystemhostkeys="False",
+        sshtimeout=None,
+        sshtimeoutlimit=3,
+        *_,
+        **__,
+    ):
         """
         Create a new Ts3Bot.
         :param host: Host to connect to, can be a IP or a host name

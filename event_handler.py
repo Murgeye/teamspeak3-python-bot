@@ -3,7 +3,16 @@ import logging
 import threading
 
 # third-party imports
-from ts3API.Events import TextMessageEvent, ChannelEditedEvent, ChannelDescriptionEditedEvent, ClientEnteredEvent, ClientLeftEvent, ClientMovedEvent, ClientMovedSelfEvent, ServerEditedEvent
+from ts3API.Events import (
+    TextMessageEvent,
+    ChannelEditedEvent,
+    ChannelDescriptionEditedEvent,
+    ClientEnteredEvent,
+    ClientLeftEvent,
+    ClientMovedEvent,
+    ClientMovedSelfEvent,
+    ServerEditedEvent,
+)
 
 
 class EventHandler:
@@ -16,7 +25,7 @@ class EventHandler:
     logger = logging.getLogger(class_name)
     logger.propagate = 0
     logger.setLevel(logging.INFO)
-    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
+    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode="a+")
     formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
@@ -106,6 +115,10 @@ class EventHandler:
             try:
                 threading.Thread(target=observer(evt)).start()
             except BaseException:
-                EventHandler.logger.exception("Exception while informing %s of Event of type "
-                                              "%s\nOriginal data: %s", str(observer), str(type(evt)),
-                                              str(evt.data))
+                EventHandler.logger.exception(
+                    "Exception while informing %s of Event of type "
+                    "%s\nOriginal data: %s",
+                    str(observer),
+                    str(type(evt)),
+                    str(evt.data),
+                )

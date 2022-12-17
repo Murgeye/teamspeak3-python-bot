@@ -16,29 +16,33 @@ import teamspeak_bot
 
 PLUGIN_VERSION = 0.1
 PLUGIN_COMMAND_NAME = "kickinactiveclients"
-PLUGIN_INFO: Union[None, 'KickInactiveClients'] = None
+PLUGIN_INFO: Union[None, "KickInactiveClients"] = None
 PLUGIN_STOPPER = threading.Event()
 BOT: teamspeak_bot.Ts3Bot
 
 # defaults for configureable options
 AUTO_START = True
-DRY_RUN = False # log instead of performing actual actions
-CHECK_FREQUENCY_SECONDS = 60.0 * 5 # 300 seconds => 5 minutes
+DRY_RUN = False  # log instead of performing actual actions
+CHECK_FREQUENCY_SECONDS = 60.0 * 5  # 300 seconds => 5 minutes
 SERVERGROUPS_TO_EXCLUDE = None
-IDLE_TIME_SECONDS = 60.0 * 60 * 2 # 7200 seconds => 120 minutes => 2 hours
-CLIENTSONLINE_KICK_THRESHOLD = 108 # Earliest start kicking clients when e.g. 108 of 128 slots are in use
+IDLE_TIME_SECONDS = 60.0 * 60 * 2  # 7200 seconds => 120 minutes => 2 hours
+CLIENTSONLINE_KICK_THRESHOLD = (
+    108  # Earliest start kicking clients when e.g. 108 of 128 slots are in use
+)
 KICK_REASON_MESSAGE = "Sorry for kicking, but we need slots!"
+
 
 class KickInactiveClients(Thread):
     """
     KickInactiveClients class. Kicks clients from the server which are idle since more than `IDLE_TIME_SECONDS` seconds.
     """
+
     # configure logger
     class_name = __qualname__
     logger = logging.getLogger(class_name)
     logger.propagate = 0
     logger.setLevel(logging.INFO)
-    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
+    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode="a+")
     formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
@@ -91,16 +95,22 @@ class KickInactiveClients(Thread):
             self.idle_list = []
             for client in self.ts3conn.clientlist(["times"]):
                 if int(client.get("client_type")) == 1:
-                    KickInactiveClients.logger.debug("update_client_list ignoring ServerQuery client: %s", str(client))
+                    KickInactiveClients.logger.debug(
+                        "update_client_list ignoring ServerQuery client: %s",
+                        str(client),
+                    )
                     continue
 
                 self.idle_list.append(client)
 
-            KickInactiveClients.logger.debug("update_idle_list: %s", str(self.idle_list))
+            KickInactiveClients.logger.debug(
+                "update_idle_list: %s", str(self.idle_list)
+            )
         except TS3Exception:
-            KickInactiveClients.logger.exception("Error getting client list with times!")
+            KickInactiveClients.logger.exception(
+                "Error getting client list with times!"
+            )
             self.idle_list = []
-
 
     def update_servergroup_ids_list(self):
         """
@@ -109,19 +119,22 @@ class KickInactiveClients(Thread):
         self.servergroup_ids_to_ignore = []
 
         if SERVERGROUPS_TO_EXCLUDE is None:
-            KickInactiveClients.logger.debug("No servergroups to exclude defined. Nothing todo.")
+            KickInactiveClients.logger.debug(
+                "No servergroups to exclude defined. Nothing todo."
+            )
             return
 
         try:
             servergroup_list = self.ts3conn.servergrouplist()
         except TS3QueryException:
-            KickInactiveClients.logger.exception("Failed to get the list of available servergroups.")
+            KickInactiveClients.logger.exception(
+                "Failed to get the list of available servergroups."
+            )
 
         self.servergroup_ids_to_ignore.clear()
         for servergroup in servergroup_list:
-            if servergroup.get("name") in SERVERGROUPS_TO_EXCLUDE.split(','):
+            if servergroup.get("name") in SERVERGROUPS_TO_EXCLUDE.split(","):
                 self.servergroup_ids_to_ignore.append(servergroup.get("sgid"))
-
 
     def get_servergroups_by_client(self, cldbid):
         """
@@ -132,18 +145,26 @@ class KickInactiveClients(Thread):
         client_servergroup_ids = []
 
         try:
-            client_servergroups = self.ts3conn._parse_resp_to_list_of_dicts(self.ts3conn._send("servergroupsbyclientid", [f"cldbid={cldbid}"]))
+            client_servergroups = self.ts3conn._parse_resp_to_list_of_dicts(
+                self.ts3conn._send("servergroupsbyclientid", [f"cldbid={cldbid}"])
+            )
         except TS3QueryException:
-            KickInactiveClients.logger.exception("Failed to get the list of assigned servergroups for the client cldbid=%s.", int(cldbid))
+            KickInactiveClients.logger.exception(
+                "Failed to get the list of assigned servergroups for the client cldbid=%s.",
+                int(cldbid),
+            )
             return client_servergroup_ids
 
         for servergroup in client_servergroups:
             client_servergroup_ids.append(servergroup.get("sgid"))
 
-        KickInactiveClients.logger.debug("client_database_id=%s has these servergroups: %s", int(cldbid), str(client_servergroup_ids))
+        KickInactiveClients.logger.debug(
+            "client_database_id=%s has these servergroups: %s",
+            int(cldbid),
+            str(client_servergroup_ids),
+        )
 
         return client_servergroup_ids
-
 
     def get_idle_list(self):
         """
@@ -154,29 +175,45 @@ class KickInactiveClients(Thread):
             KickInactiveClients.logger.debug("get_idle_list idle_list is None!")
             return []
 
-        KickInactiveClients.logger.debug("get_idle_list current idle_list: %s!", str(self.idle_list))
+        KickInactiveClients.logger.debug(
+            "get_idle_list current idle_list: %s!", str(self.idle_list)
+        )
 
         client_idle_list = []
         for client in self.idle_list:
-            KickInactiveClients.logger.debug("get_idle_list checking client: %s", str(client))
+            KickInactiveClients.logger.debug(
+                "get_idle_list checking client: %s", str(client)
+            )
 
             if "cid" not in client.keys():
-                KickInactiveClients.logger.error("get_idle_list client without cid: %s!", str(client))
+                KickInactiveClients.logger.error(
+                    "get_idle_list client without cid: %s!", str(client)
+                )
                 continue
 
             if "client_idle_time" not in client.keys():
-                KickInactiveClients.logger.error("get_idle_list client without client_idle_time: %s!", str(client))
+                KickInactiveClients.logger.error(
+                    "get_idle_list client without client_idle_time: %s!", str(client)
+                )
                 continue
 
-            if client.get("client_type") == '1':
-                KickInactiveClients.logger.debug("Ignoring ServerQuery client: %s", str(client))
+            if client.get("client_type") == "1":
+                KickInactiveClients.logger.debug(
+                    "Ignoring ServerQuery client: %s", str(client)
+                )
                 continue
 
             if SERVERGROUPS_TO_EXCLUDE is not None:
                 client_is_in_group = False
-                for client_servergroup_id in self.get_servergroups_by_client(client.get("client_database_id")):
+                for client_servergroup_id in self.get_servergroups_by_client(
+                    client.get("client_database_id")
+                ):
                     if client_servergroup_id in self.servergroup_ids_to_ignore:
-                        KickInactiveClients.logger.debug("The client is in the servergroup sgid=%s, which should be ignored: %s", int(client_servergroup_id), str(client))
+                        KickInactiveClients.logger.debug(
+                            "The client is in the servergroup sgid=%s, which should be ignored: %s",
+                            int(client_servergroup_id),
+                            str(client),
+                        )
                         client_is_in_group = True
                         break
 
@@ -184,13 +221,21 @@ class KickInactiveClients(Thread):
                     continue
 
             if int(client.get("client_idle_time")) / 1000 <= float(IDLE_TIME_SECONDS):
-                KickInactiveClients.logger.debug("get_idle_list client is less or equal then %s seconds idle: %s!", int(IDLE_TIME_SECONDS), str(client))
+                KickInactiveClients.logger.debug(
+                    "get_idle_list client is less or equal then %s seconds idle: %s!",
+                    int(IDLE_TIME_SECONDS),
+                    str(client),
+                )
                 continue
 
-            KickInactiveClients.logger.debug("get_idle_list adding client to list: %s!", str(client))
+            KickInactiveClients.logger.debug(
+                "get_idle_list adding client to list: %s!", str(client)
+            )
             client_idle_list.append(client)
 
-        KickInactiveClients.logger.debug("get_idle_list updated idle_list: %s!", str(client_idle_list))
+        KickInactiveClients.logger.debug(
+            "get_idle_list updated idle_list: %s!", str(client_idle_list)
+        )
 
         return client_idle_list
 
@@ -200,26 +245,43 @@ class KickInactiveClients(Thread):
         """
         virtualserver_clientsonline = self.serverinfo.get("virtualserver_clientsonline")
         if int(virtualserver_clientsonline) < int(CLIENTSONLINE_KICK_THRESHOLD):
-            KickInactiveClients.logger.debug("Only %s of %s slots used. Nothing todo.", int(virtualserver_clientsonline), int(self.serverinfo.get('virtualserver_maxclients')))
+            KickInactiveClients.logger.debug(
+                "Only %s of %s slots used. Nothing todo.",
+                int(virtualserver_clientsonline),
+                int(self.serverinfo.get("virtualserver_maxclients")),
+            )
             return
 
         idle_list = self.get_idle_list()
         if idle_list is None:
-            KickInactiveClients.logger.debug("kick_all_idle_clients idle_list is empty. Nothing todo.")
+            KickInactiveClients.logger.debug(
+                "kick_all_idle_clients idle_list is empty. Nothing todo."
+            )
             return
 
         for client in idle_list:
-            KickInactiveClients.logger.info("Kicking %s clients from the server!", int(len(idle_list)))
+            KickInactiveClients.logger.info(
+                "Kicking %s clients from the server!", int(len(idle_list))
+            )
 
             if DRY_RUN:
-                KickInactiveClients.logger.info("I would have kicked the following client from the server, when the dry-run would be disabled: %s", str(client))
+                KickInactiveClients.logger.info(
+                    "I would have kicked the following client from the server, when the dry-run would be disabled: %s",
+                    str(client),
+                )
             else:
-                KickInactiveClients.logger.info("Kicking the following client from the server: %s", str(client))
+                KickInactiveClients.logger.info(
+                    "Kicking the following client from the server: %s", str(client)
+                )
 
                 try:
-                    self.ts3conn.clientkick(int(client.get("clid", '-1')), 5, KICK_REASON_MESSAGE)
+                    self.ts3conn.clientkick(
+                        int(client.get("clid", "-1")), 5, KICK_REASON_MESSAGE
+                    )
                 except TS3Exception:
-                    KickInactiveClients.logger.exception("Error kicking client clid=%s!", int(client.get('clid', '-1')))
+                    KickInactiveClients.logger.exception(
+                        "Error kicking client clid=%s!", int(client.get("clid", "-1"))
+                    )
 
     def loop_until_stopped(self):
         """
@@ -233,7 +295,9 @@ class KickInactiveClients(Thread):
                 self.update_client_list()
                 self.kick_all_idle_clients()
             except BaseException:
-                KickInactiveClients.logger.error("Uncaught exception: %s", str(sys.exc_info()[0]))
+                KickInactiveClients.logger.error(
+                    "Uncaught exception: %s", str(sys.exc_info()[0])
+                )
                 KickInactiveClients.logger.error(str(sys.exc_info()[1]))
                 KickInactiveClients.logger.error(traceback.format_exc())
 
@@ -247,9 +311,15 @@ def send_version(sender=None, _msg=None):
     Sends the plugin version as textmessage to the `sender`.
     """
     try:
-        teamspeak_bot.send_msg_to_client(BOT.ts3conn, sender, f"This plugin is installed in the version `{str(PLUGIN_VERSION)}`.")
+        teamspeak_bot.send_msg_to_client(
+            BOT.ts3conn,
+            sender,
+            f"This plugin is installed in the version `{str(PLUGIN_VERSION)}`.",
+        )
     except TS3Exception:
-        KickInactiveClients.logger.exception("Error while sending the plugin version as a message to the client!")
+        KickInactiveClients.logger.exception(
+            "Error while sending the plugin version as a message to the client!"
+        )
 
 
 @command(f"{PLUGIN_COMMAND_NAME} start")
@@ -260,11 +330,16 @@ def start_plugin(_sender=None, _msg=None):
     global PLUGIN_INFO
     if PLUGIN_INFO is None:
         if len(KICK_REASON_MESSAGE) > 40:
-            KickInactiveClients.logger.error("The `kick_message` has %s characters, but only 40 are supported! Aborted the plugin start.", int(len(KICK_REASON_MESSAGE)))
+            KickInactiveClients.logger.error(
+                "The `kick_message` has %s characters, but only 40 are supported! Aborted the plugin start.",
+                int(len(KICK_REASON_MESSAGE)),
+            )
             return
 
         if DRY_RUN:
-            KickInactiveClients.logger.info("Dry run is enabled - logging actions intead of actually performing them.")
+            KickInactiveClients.logger.info(
+                "Dry run is enabled - logging actions intead of actually performing them."
+            )
 
         PLUGIN_INFO = KickInactiveClients(PLUGIN_STOPPER, BOT.ts3conn)
         PLUGIN_STOPPER.clear()
@@ -280,6 +355,7 @@ def stop_plugin(_sender=None, _msg=None):
     PLUGIN_STOPPER.set()
     PLUGIN_INFO = None
 
+
 @command(f"{PLUGIN_COMMAND_NAME} restart")
 def restart_plugin(_sender=None, _msg=None):
     """
@@ -290,15 +366,16 @@ def restart_plugin(_sender=None, _msg=None):
 
 
 @setup_plugin
-def setup(ts3bot,
-            auto_start = AUTO_START,
-            enable_dry_run = DRY_RUN,
-            frequency = CHECK_FREQUENCY_SECONDS,
-            exclude_servergroups = SERVERGROUPS_TO_EXCLUDE,
-            min_idle_time_seconds = IDLE_TIME_SECONDS,
-            min_clientsonline_kick_threshold = CLIENTSONLINE_KICK_THRESHOLD,
-            kick_message = KICK_REASON_MESSAGE
-    ):
+def setup(
+    ts3bot,
+    auto_start=AUTO_START,
+    enable_dry_run=DRY_RUN,
+    frequency=CHECK_FREQUENCY_SECONDS,
+    exclude_servergroups=SERVERGROUPS_TO_EXCLUDE,
+    min_idle_time_seconds=IDLE_TIME_SECONDS,
+    min_clientsonline_kick_threshold=CLIENTSONLINE_KICK_THRESHOLD,
+    kick_message=KICK_REASON_MESSAGE,
+):
     """
     Sets up this plugin.
     """

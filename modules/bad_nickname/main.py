@@ -18,28 +18,30 @@ import teamspeak_bot
 
 PLUGIN_VERSION = 0.1
 PLUGIN_COMMAND_NAME = "badnickname"
-PLUGIN_INFO: Union[None, 'BadNickname'] = None
+PLUGIN_INFO: Union[None, "BadNickname"] = None
 PLUGIN_STOPPER = threading.Event()
 BOT: teamspeak_bot.Ts3Bot
 
 # defaults for configureable options
 AUTO_START = True
-DRY_RUN = False # log instead of performing actual actions
-CHECK_FREQUENCY_SECONDS = 60.0 * 5 # 300 seconds => 5 minutes
+DRY_RUN = False  # log instead of performing actual actions
+CHECK_FREQUENCY_SECONDS = 60.0 * 5  # 300 seconds => 5 minutes
 SERVERGROUPS_TO_EXCLUDE = None
 BAD_NAME_PATTERN = "[a|4]dm[i|1]n"
 KICK_REASON_MESSAGE = "Your client nickname is not allowed!"
+
 
 class BadNickname(Thread):
     """
     BadNickname class. Kicks clients from the server which are using a not allowed nickname.
     """
+
     # configure logger
     class_name = __qualname__
     logger = logging.getLogger(class_name)
     logger.propagate = 0
     logger.setLevel(logging.INFO)
-    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
+    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode="a+")
     formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
@@ -63,7 +65,9 @@ class BadNickname(Thread):
         self.regex_object = self.compile_regex_pattern(BAD_NAME_PATTERN)
 
         if self.regex_object is None:
-            self.logger.error("Could not compile your given regex: `%s`.", str(BAD_NAME_PATTERN))
+            self.logger.error(
+                "Could not compile your given regex: `%s`.", str(BAD_NAME_PATTERN)
+            )
 
     def run(self):
         """
@@ -85,11 +89,12 @@ class BadNickname(Thread):
         try:
             regex_object = re.compile(regex_pattern)
         except re.error as query_exception:
-            self.logger.error("The provided regex pattern is invalid: %s", str(regex_pattern))
+            self.logger.error(
+                "The provided regex pattern is invalid: %s", str(regex_pattern)
+            )
             self.logger.exception(query_exception.msg)
 
         return regex_object
-
 
     def update_client_list(self):
         """
@@ -100,7 +105,10 @@ class BadNickname(Thread):
             self.client_list = []
             for client in self.ts3conn.clientlist():
                 if int(client.get("client_type")) == 1:
-                    self.logger.debug("update_client_list ignoring ServerQuery client: %s", str(client))
+                    self.logger.debug(
+                        "update_client_list ignoring ServerQuery client: %s",
+                        str(client),
+                    )
                     continue
 
                 self.client_list.append(client)
@@ -109,7 +117,6 @@ class BadNickname(Thread):
         except TS3Exception:
             self.logger.exception("Error getting client list!")
             self.client_list = []
-
 
     def update_servergroup_ids_list(self):
         """
@@ -128,9 +135,8 @@ class BadNickname(Thread):
 
         self.servergroup_ids_to_ignore.clear()
         for servergroup in servergroup_list:
-            if servergroup.get("name") in SERVERGROUPS_TO_EXCLUDE.split(','):
+            if servergroup.get("name") in SERVERGROUPS_TO_EXCLUDE.split(","):
                 self.servergroup_ids_to_ignore.append(servergroup.get("sgid"))
-
 
     def get_servergroups_by_client(self, cldbid):
         """
@@ -141,18 +147,26 @@ class BadNickname(Thread):
         client_servergroup_ids = []
 
         try:
-            client_servergroups = self.ts3conn._parse_resp_to_list_of_dicts(self.ts3conn._send("servergroupsbyclientid", [f"cldbid={cldbid}"]))
+            client_servergroups = self.ts3conn._parse_resp_to_list_of_dicts(
+                self.ts3conn._send("servergroupsbyclientid", [f"cldbid={cldbid}"])
+            )
         except TS3QueryException:
-            self.logger.exception("Failed to get the list of assigned servergroups for the client cldbid=%s.", int(cldbid))
+            self.logger.exception(
+                "Failed to get the list of assigned servergroups for the client cldbid=%s.",
+                int(cldbid),
+            )
             return client_servergroup_ids
 
         for servergroup in client_servergroups:
             client_servergroup_ids.append(servergroup.get("sgid"))
 
-        self.logger.debug("client_database_id=%s has these servergroups: %s", int(cldbid), str(client_servergroup_ids))
+        self.logger.debug(
+            "client_database_id=%s has these servergroups: %s",
+            int(cldbid),
+            str(client_servergroup_ids),
+        )
 
         return client_servergroup_ids
-
 
     def get_client_list_with_bad_nickname(self):
         """
@@ -163,7 +177,10 @@ class BadNickname(Thread):
             self.logger.debug("get_client_list_with_bad_nickname client_list is None!")
             return []
 
-        self.logger.debug("get_client_list_with_bad_nickname current client_list: %s!", str(self.client_list))
+        self.logger.debug(
+            "get_client_list_with_bad_nickname current client_list: %s!",
+            str(self.client_list),
+        )
 
         if self.regex_object is None:
             self.logger.error("get_client_list_with_bad_nickname regex is invalid!")
@@ -171,25 +188,39 @@ class BadNickname(Thread):
 
         client_bad_nickname_list = []
         for client in self.client_list:
-            self.logger.debug("get_client_list_with_bad_nickname checking client: %s", str(client))
+            self.logger.debug(
+                "get_client_list_with_bad_nickname checking client: %s", str(client)
+            )
 
             if "cid" not in client.keys():
-                self.logger.error("get_client_list_with_bad_nickname client without cid: %s!", str(client))
+                self.logger.error(
+                    "get_client_list_with_bad_nickname client without cid: %s!",
+                    str(client),
+                )
                 continue
 
             if "client_nickname" not in client.keys():
-                self.logger.error("get_client_list_with_bad_nickname client without client_nickname: %s!", str(client))
+                self.logger.error(
+                    "get_client_list_with_bad_nickname client without client_nickname: %s!",
+                    str(client),
+                )
                 continue
 
-            if client.get("client_type") == '1':
+            if client.get("client_type") == "1":
                 self.logger.debug("Ignoring ServerQuery client: %s", str(client))
                 continue
 
             if SERVERGROUPS_TO_EXCLUDE is not None:
                 client_is_in_group = False
-                for client_servergroup_id in self.get_servergroups_by_client(client.get("client_database_id")):
+                for client_servergroup_id in self.get_servergroups_by_client(
+                    client.get("client_database_id")
+                ):
                     if client_servergroup_id in self.servergroup_ids_to_ignore:
-                        self.logger.debug("The client is in the servergroup sgid=%s, which should be ignored: %s", int(client_servergroup_id), str(client))
+                        self.logger.debug(
+                            "The client is in the servergroup sgid=%s, which should be ignored: %s",
+                            int(client_servergroup_id),
+                            str(client),
+                        )
                         client_is_in_group = True
                         break
 
@@ -197,13 +228,22 @@ class BadNickname(Thread):
                     continue
 
             if not self.regex_object.search(client.get("client_nickname").casefold()):
-                self.logger.debug("get_client_list_with_bad_nickname client has no bad nickname: %s!", str(client))
+                self.logger.debug(
+                    "get_client_list_with_bad_nickname client has no bad nickname: %s!",
+                    str(client),
+                )
                 continue
 
-            self.logger.debug("get_client_list_with_bad_nickname adding client to list: %s!", str(client))
+            self.logger.debug(
+                "get_client_list_with_bad_nickname adding client to list: %s!",
+                str(client),
+            )
             client_bad_nickname_list.append(client)
 
-        self.logger.debug("get_client_list_with_bad_nickname updated client_list: %s!", str(client_bad_nickname_list))
+        self.logger.debug(
+            "get_client_list_with_bad_nickname updated client_list: %s!",
+            str(client_bad_nickname_list),
+        )
 
         return client_bad_nickname_list
 
@@ -217,17 +257,28 @@ class BadNickname(Thread):
             return
 
         for client in bad_nickname_list:
-            self.logger.info("Kicking %s clients from the server!", int(len(bad_nickname_list)))
+            self.logger.info(
+                "Kicking %s clients from the server!", int(len(bad_nickname_list))
+            )
 
             if DRY_RUN:
-                self.logger.info("I would have kicked the following client from the server, when the dry-run would be disabled: %s", str(client))
+                self.logger.info(
+                    "I would have kicked the following client from the server, when the dry-run would be disabled: %s",
+                    str(client),
+                )
             else:
-                self.logger.info("Kicking the following client from the server: %s", str(client))
+                self.logger.info(
+                    "Kicking the following client from the server: %s", str(client)
+                )
 
                 try:
-                    self.ts3conn.clientkick(int(client.get("clid", '-1')), 5, KICK_REASON_MESSAGE)
+                    self.ts3conn.clientkick(
+                        int(client.get("clid", "-1")), 5, KICK_REASON_MESSAGE
+                    )
                 except TS3Exception:
-                    self.logger.exception("Error kicking client clid=%s!", int(client.get('clid', '-1')))
+                    self.logger.exception(
+                        "Error kicking client clid=%s!", int(client.get("clid", "-1"))
+                    )
 
     def loop_until_stopped(self):
         """
@@ -254,9 +305,15 @@ def send_version(sender=None, _msg=None):
     Sends the plugin version as textmessage to the `sender`.
     """
     try:
-        teamspeak_bot.send_msg_to_client(BOT.ts3conn, sender, f"This plugin is installed in the version `{str(PLUGIN_VERSION)}`.")
+        teamspeak_bot.send_msg_to_client(
+            BOT.ts3conn,
+            sender,
+            f"This plugin is installed in the version `{str(PLUGIN_VERSION)}`.",
+        )
     except TS3Exception:
-        BadNickname.logger.exception("Error while sending the plugin version as a message to the client!")
+        BadNickname.logger.exception(
+            "Error while sending the plugin version as a message to the client!"
+        )
 
 
 @command(f"{PLUGIN_COMMAND_NAME} start")
@@ -267,11 +324,16 @@ def start_plugin(_sender=None, _msg=None):
     global PLUGIN_INFO
     if PLUGIN_INFO is None:
         if len(KICK_REASON_MESSAGE) > 40:
-            BadNickname.logger.error("The `kick_message` has %s characters, but only 40 are supported! Aborted the plugin start.", int(len(KICK_REASON_MESSAGE)))
+            BadNickname.logger.error(
+                "The `kick_message` has %s characters, but only 40 are supported! Aborted the plugin start.",
+                int(len(KICK_REASON_MESSAGE)),
+            )
             return
 
         if DRY_RUN:
-            BadNickname.logger.info("Dry run is enabled - logging actions intead of actually performing them.")
+            BadNickname.logger.info(
+                "Dry run is enabled - logging actions intead of actually performing them."
+            )
 
         PLUGIN_INFO = BadNickname(PLUGIN_STOPPER, BOT.ts3conn)
         PLUGIN_STOPPER.clear()
@@ -287,6 +349,7 @@ def stop_plugin(_sender=None, _msg=None):
     PLUGIN_STOPPER.set()
     PLUGIN_INFO = None
 
+
 @command(f"{PLUGIN_COMMAND_NAME} restart")
 def restart_plugin(_sender=None, _msg=None):
     """
@@ -297,14 +360,15 @@ def restart_plugin(_sender=None, _msg=None):
 
 
 @setup_plugin
-def setup(ts3bot,
-            auto_start = AUTO_START,
-            enable_dry_run = DRY_RUN,
-            frequency = CHECK_FREQUENCY_SECONDS,
-            exclude_servergroups = SERVERGROUPS_TO_EXCLUDE,
-            name_pattern = BAD_NAME_PATTERN,
-            kick_message = KICK_REASON_MESSAGE
-    ):
+def setup(
+    ts3bot,
+    auto_start=AUTO_START,
+    enable_dry_run=DRY_RUN,
+    frequency=CHECK_FREQUENCY_SECONDS,
+    exclude_servergroups=SERVERGROUPS_TO_EXCLUDE,
+    name_pattern=BAD_NAME_PATTERN,
+    kick_message=KICK_REASON_MESSAGE,
+):
     """
     Sets up this plugin.
     """

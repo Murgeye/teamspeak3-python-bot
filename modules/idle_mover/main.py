@@ -17,13 +17,13 @@ import teamspeak_bot
 
 PLUGIN_VERSION = 0.1
 PLUGIN_COMMAND_NAME = "idlemover"
-PLUGIN_INFO: Union[None, 'IdleMover'] = None
+PLUGIN_INFO: Union[None, "IdleMover"] = None
 PLUGIN_STOPPER = threading.Event()
 BOT: teamspeak_bot.Ts3Bot
 
 # defaults for configureable options
 AUTO_START = True
-DRY_RUN = False # log instead of performing actual actions
+DRY_RUN = False  # log instead of performing actual actions
 CHECK_FREQUENCY_SECONDS = 30.0
 SERVERGROUPS_TO_EXCLUDE = None
 ENABLE_AUTO_MOVE_BACK = True
@@ -32,16 +32,18 @@ FALLBACK_ACTION = None
 IDLE_TIME_SECONDS = 600.0
 CHANNEL_NAME = "AFK"
 
+
 class IdleMover(Thread):
     """
     IdleMover class. Moves clients which are idle since more than `IDLE_TIME_SECONDS` seconds to the channel `CHANNEL_NAME`.
     """
+
     # configure logger
     class_name = __qualname__
     logger = logging.getLogger(class_name)
     logger.propagate = 0
     logger.setLevel(logging.INFO)
-    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
+    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode="a+")
     formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
@@ -85,7 +87,10 @@ class IdleMover(Thread):
             self.idle_list = []
             for client in self.ts3conn.clientlist(["times"]):
                 if int(client.get("client_type")) == 1:
-                    IdleMover.logger.debug("update_client_list ignoring ServerQuery client: %s", str(client))
+                    IdleMover.logger.debug(
+                        "update_client_list ignoring ServerQuery client: %s",
+                        str(client),
+                    )
                     continue
 
                 self.idle_list.append(client)
@@ -94,7 +99,6 @@ class IdleMover(Thread):
         except TS3Exception:
             IdleMover.logger.exception("Error getting client list with times!")
             self.idle_list = []
-
 
     def update_servergroup_ids_list(self):
         """
@@ -109,13 +113,14 @@ class IdleMover(Thread):
         try:
             servergroup_list = self.ts3conn.servergrouplist()
         except TS3QueryException:
-            IdleMover.logger.exception("Failed to get the list of available servergroups.")
+            IdleMover.logger.exception(
+                "Failed to get the list of available servergroups."
+            )
 
         self.servergroup_ids_to_ignore.clear()
         for servergroup in servergroup_list:
-            if servergroup.get("name") in SERVERGROUPS_TO_EXCLUDE.split(','):
+            if servergroup.get("name") in SERVERGROUPS_TO_EXCLUDE.split(","):
                 self.servergroup_ids_to_ignore.append(servergroup.get("sgid"))
-
 
     def get_servergroups_by_client(self, cldbid):
         """
@@ -126,18 +131,26 @@ class IdleMover(Thread):
         client_servergroup_ids = []
 
         try:
-            client_servergroups = self.ts3conn._parse_resp_to_list_of_dicts(self.ts3conn._send("servergroupsbyclientid", [f"cldbid={cldbid}"]))
+            client_servergroups = self.ts3conn._parse_resp_to_list_of_dicts(
+                self.ts3conn._send("servergroupsbyclientid", [f"cldbid={cldbid}"])
+            )
         except TS3QueryException:
-            IdleMover.logger.exception("Failed to get the list of assigned servergroups for the client cldbid=%s.", int(cldbid))
+            IdleMover.logger.exception(
+                "Failed to get the list of assigned servergroups for the client cldbid=%s.",
+                int(cldbid),
+            )
             return client_servergroup_ids
 
         for servergroup in client_servergroups:
             client_servergroup_ids.append(servergroup.get("sgid"))
 
-        IdleMover.logger.debug("client_database_id=%s has these servergroups: %s", int(cldbid), str(client_servergroup_ids))
+        IdleMover.logger.debug(
+            "client_database_id=%s has these servergroups: %s",
+            int(cldbid),
+            str(client_servergroup_ids),
+        )
 
         return client_servergroup_ids
-
 
     def get_idle_list(self):
         """
@@ -148,25 +161,35 @@ class IdleMover(Thread):
             IdleMover.logger.debug("get_idle_list idle_list is None!")
             return []
 
-        IdleMover.logger.debug("get_idle_list current awaylist: %s!", str(self.idle_list))
+        IdleMover.logger.debug(
+            "get_idle_list current awaylist: %s!", str(self.idle_list)
+        )
 
         client_idle_list = []
         for client in self.idle_list:
             IdleMover.logger.debug("get_idle_list checking client: %s", str(client))
 
             if "cid" not in client.keys():
-                IdleMover.logger.error("get_idle_list client without cid: %s!", str(client))
+                IdleMover.logger.error(
+                    "get_idle_list client without cid: %s!", str(client)
+                )
                 continue
 
-            if client.get("client_type") == '1':
+            if client.get("client_type") == "1":
                 IdleMover.logger.debug("Ignoring ServerQuery client: %s", str(client))
                 continue
 
             if SERVERGROUPS_TO_EXCLUDE is not None:
                 client_is_in_group = False
-                for client_servergroup_id in self.get_servergroups_by_client(client.get("client_database_id")):
+                for client_servergroup_id in self.get_servergroups_by_client(
+                    client.get("client_database_id")
+                ):
                     if client_servergroup_id in self.servergroup_ids_to_ignore:
-                        IdleMover.logger.debug("The client is in the servergroup sgid=%s, which should be ignored: %s", int(client_servergroup_id), str(client))
+                        IdleMover.logger.debug(
+                            "The client is in the servergroup sgid=%s, which should be ignored: %s",
+                            int(client_servergroup_id),
+                            str(client),
+                        )
                         client_is_in_group = True
                         break
 
@@ -174,21 +197,34 @@ class IdleMover(Thread):
                     continue
 
             if "client_idle_time" not in client.keys():
-                IdleMover.logger.error("get_idle_list client without client_idle_time: %s!", str(client))
+                IdleMover.logger.error(
+                    "get_idle_list client without client_idle_time: %s!", str(client)
+                )
                 continue
 
-            if int(client.get("cid", '-1')) == int(self.afk_channel):
-                IdleMover.logger.debug("get_idle_list client is already in the afk_channel: %s!", str(client))
+            if int(client.get("cid", "-1")) == int(self.afk_channel):
+                IdleMover.logger.debug(
+                    "get_idle_list client is already in the afk_channel: %s!",
+                    str(client),
+                )
                 continue
 
             if int(client.get("client_idle_time")) / 1000 <= float(IDLE_TIME_SECONDS):
-                IdleMover.logger.debug("get_idle_list client is less or equal then %s seconds idle: %s!", int(IDLE_TIME_SECONDS), str(client))
+                IdleMover.logger.debug(
+                    "get_idle_list client is less or equal then %s seconds idle: %s!",
+                    int(IDLE_TIME_SECONDS),
+                    str(client),
+                )
                 continue
 
-            IdleMover.logger.debug("get_idle_list adding client to list: %s!", str(client))
+            IdleMover.logger.debug(
+                "get_idle_list adding client to list: %s!", str(client)
+            )
             client_idle_list.append(client)
 
-        IdleMover.logger.debug("get_idle_list updated awaylist: %s!", str(client_idle_list))
+        IdleMover.logger.debug(
+            "get_idle_list updated awaylist: %s!", str(client_idle_list)
+        )
 
         return client_idle_list
 
@@ -206,25 +242,40 @@ class IdleMover(Thread):
             IdleMover.logger.debug("get_back_list checking client: %s", str(client))
 
             if "cid" not in client.keys():
-                IdleMover.logger.error("get_back_list client without cid: %s!", str(client))
+                IdleMover.logger.error(
+                    "get_back_list client without cid: %s!", str(client)
+                )
                 continue
 
             if "client_idle_time" not in client.keys():
-                IdleMover.logger.error("get_back_list client without client_idle_time: %s!", str(client))
+                IdleMover.logger.error(
+                    "get_back_list client without client_idle_time: %s!", str(client)
+                )
                 continue
 
-            if int(client.get("cid", '-1')) != int(self.afk_channel):
-                IdleMover.logger.debug("get_back_list client is not in the afk_channel anymore: %s!", str(client))
+            if int(client.get("cid", "-1")) != int(self.afk_channel):
+                IdleMover.logger.debug(
+                    "get_back_list client is not in the afk_channel anymore: %s!",
+                    str(client),
+                )
                 continue
 
             if int(client.get("client_idle_time")) / 1000 > float(IDLE_TIME_SECONDS):
-                IdleMover.logger.debug("get_back_list client is greater then %s seconds idle: %s!", int(IDLE_TIME_SECONDS), str(client))
+                IdleMover.logger.debug(
+                    "get_back_list client is greater then %s seconds idle: %s!",
+                    int(IDLE_TIME_SECONDS),
+                    str(client),
+                )
                 continue
 
-            IdleMover.logger.debug("get_back_list adding client to list: %s!", str(client))
+            IdleMover.logger.debug(
+                "get_back_list adding client to list: %s!", str(client)
+            )
             client_back_list.append(client)
 
-        IdleMover.logger.debug("get_back_list updated client list: %s!", str(client_back_list))
+        IdleMover.logger.debug(
+            "get_back_list updated client list: %s!", str(client_back_list)
+        )
         return client_back_list
 
     def get_channel_by_name(self, name="AFK"):
@@ -234,9 +285,11 @@ class IdleMover(Thread):
         :return: Channel id
         """
         try:
-            channel = self.ts3conn.channelfind(name)[0].get("cid", '-1')
+            channel = self.ts3conn.channelfind(name)[0].get("cid", "-1")
         except TS3Exception:
-            IdleMover.logger.exception("Error while finding a channel with the name `%s`.", str(name))
+            IdleMover.logger.exception(
+                "Error while finding a channel with the name `%s`.", str(name)
+            )
             raise
         return channel
 
@@ -255,16 +308,28 @@ class IdleMover(Thread):
             if DRY_RUN:
                 IdleMover.logger.info("I would have moved this client: %s", str(client))
             else:
-                IdleMover.logger.info("Moving the client clid=%s client_nickname=%s to afk!", int(client.get('clid', '-1')), str(client.get('client_nickname', '-1')))
+                IdleMover.logger.info(
+                    "Moving the client clid=%s client_nickname=%s to afk!",
+                    int(client.get("clid", "-1")),
+                    str(client.get("client_nickname", "-1")),
+                )
                 IdleMover.logger.debug("Client: %s", str(client))
 
                 try:
-                    self.ts3conn.clientmove(self.afk_channel, int(client.get("clid", '-1')))
-                    self.client_channels[client.get("clid", '-1')] = client.get("cid", '0')
+                    self.ts3conn.clientmove(
+                        self.afk_channel, int(client.get("clid", "-1"))
+                    )
+                    self.client_channels[client.get("clid", "-1")] = client.get(
+                        "cid", "0"
+                    )
                 except TS3Exception:
-                    IdleMover.logger.exception("Error moving client! clid=%s", int(client.get('clid', '-1')))
+                    IdleMover.logger.exception(
+                        "Error moving client! clid=%s", int(client.get("clid", "-1"))
+                    )
 
-            IdleMover.logger.debug("Moved List after move: %s", str(self.client_channels))
+            IdleMover.logger.debug(
+                "Moved List after move: %s", str(self.client_channels)
+            )
 
     def move_all_afk(self):
         """
@@ -290,7 +355,11 @@ class IdleMover(Thread):
             self.ts3conn.clientmove(self.get_channel_by_name(channel_name), client_id)
             del self.client_channels[str(client_id)]
         except KeyError:
-            IdleMover.logger.error("Error moving client! clid=%s not found in %s", int(client_id), str(self.client_channels))
+            IdleMover.logger.error(
+                "Error moving client! clid=%s not found in %s",
+                int(client_id),
+                str(self.client_channels),
+            )
         except TS3Exception:
             IdleMover.logger.exception("Error moving client! clid=%s", int(client_id))
 
@@ -305,47 +374,71 @@ class IdleMover(Thread):
 
         IdleMover.logger.debug("Moving clients back")
         IdleMover.logger.debug("Backlist is: %s", str(back_list))
-        IdleMover.logger.debug("Saved channel list keys are: %s\n", str(self.client_channels.keys()))
+        IdleMover.logger.debug(
+            "Saved channel list keys are: %s\n", str(self.client_channels.keys())
+        )
 
         try:
             channel_list = self.ts3conn.channellist()
         except TS3QueryException as query_exception:
-            IdleMover.logger.error("Failed to get the current channellist: %s", str(query_exception.message))
+            IdleMover.logger.error(
+                "Failed to get the current channellist: %s",
+                str(query_exception.message),
+            )
             return
 
         for client in back_list:
             if client.get("clid", -1) not in self.client_channels.keys():
                 continue
 
-            IdleMover.logger.info("Moving the client clid=%s client_nickname=%s back!", int(client.get('clid', -1)), str(client.get('client_nickname', -1)))
+            IdleMover.logger.info(
+                "Moving the client clid=%s client_nickname=%s back!",
+                int(client.get("clid", -1)),
+                str(client.get("client_nickname", -1)),
+            )
             IdleMover.logger.debug("Client: %s", str(client))
-            IdleMover.logger.debug("Saved channel list keys: %s", str(self.client_channels))
+            IdleMover.logger.debug(
+                "Saved channel list keys: %s", str(self.client_channels)
+            )
 
             channel_id = int(self.client_channels.get(client.get("clid", -1)))
-            client_id = int(client.get("clid", '-1'))
+            client_id = int(client.get("clid", "-1"))
 
             try:
-                channel_info = self.ts3conn._parse_resp_to_dict(self.ts3conn._send("channelinfo", [f"cid={channel_id}"]))
+                channel_info = self.ts3conn._parse_resp_to_dict(
+                    self.ts3conn._send("channelinfo", [f"cid={channel_id}"])
+                )
             except TS3QueryException as query_exception:
                 # Error: invalid channel ID (channel ID does not exist (anymore))
                 if int(query_exception.id) == 768:
-                    IdleMover.logger.error("Failed to get channelinfo as the channel does not exist anymore: %s", str(client))
+                    IdleMover.logger.error(
+                        "Failed to get channelinfo as the channel does not exist anymore: %s",
+                        str(client),
+                    )
                     continue
 
             channel_details = None
             for channel in channel_list:
-                if int(channel['cid']) == channel_id:
+                if int(channel["cid"]) == channel_id:
                     channel_details = channel
                     break
 
             if RESP_CHANNEL_SETTINGS and channel_details is not None:
-                if int(channel_info.get("channel_maxclients")) != -1 and int(channel_details.get("total_clients")) >= int(channel_info.get("channel_maxclients")):
-                    IdleMover.logger.warning("Failed to move back the following client as the channel has already the maximum of clients: %s", str(client))
+                if int(channel_info.get("channel_maxclients")) != -1 and int(
+                    channel_details.get("total_clients")
+                ) >= int(channel_info.get("channel_maxclients")):
+                    IdleMover.logger.warning(
+                        "Failed to move back the following client as the channel has already the maximum of clients: %s",
+                        str(client),
+                    )
                     self.fallback_action(client_id)
                     continue
 
                 if int(channel_info.get("channel_flag_password")):
-                    IdleMover.logger.warning("Failed to move back the following client as the channel has a password: %s", str(client))
+                    IdleMover.logger.warning(
+                        "Failed to move back the following client as the channel has a password: %s",
+                        str(client),
+                    )
                     self.fallback_action(client_id)
                     continue
 
@@ -356,18 +449,28 @@ class IdleMover(Thread):
             except TS3QueryException as query_exception:
                 # Error: invalid channel ID (channel ID does not exist (anymore))
                 if int(query_exception.id) == 768:
-                    IdleMover.logger.error("Failed to move back the following client as the old channel does not exist anymore: %s", str(client))
+                    IdleMover.logger.error(
+                        "Failed to move back the following client as the old channel does not exist anymore: %s",
+                        str(client),
+                    )
                 # Error: channel maxclient or maxfamily reached
                 if int(query_exception.id) in (777, 778):
-                    IdleMover.logger.error("Failed to move back the following client as the old channel has already the maximum of clients: %s", str(client))
+                    IdleMover.logger.error(
+                        "Failed to move back the following client as the old channel has already the maximum of clients: %s",
+                        str(client),
+                    )
                 # Error: invalid channel password
                 if int(query_exception.id) == 781:
-                    IdleMover.logger.error("Failed to move back the following client as the old channel has an unknown password: %s", str(client))
+                    IdleMover.logger.error(
+                        "Failed to move back the following client as the old channel has an unknown password: %s",
+                        str(client),
+                    )
                 else:
-                    IdleMover.logger.exception("Failed to move back the following client: %s", str(client))
+                    IdleMover.logger.exception(
+                        "Failed to move back the following client: %s", str(client)
+                    )
 
                 self.fallback_action(client_id)
-
 
     def auto_move_all(self):
         """
@@ -387,7 +490,10 @@ class IdleMover(Thread):
                 IdleMover.logger.error("Uncaught exception: %s", str(sys.exc_info()[0]))
                 IdleMover.logger.error(str(sys.exc_info()[1]))
                 IdleMover.logger.error(traceback.format_exc())
-                IdleMover.logger.error("Saved channel list keys are: %s\n", str(self.client_channels.keys()))
+                IdleMover.logger.error(
+                    "Saved channel list keys are: %s\n",
+                    str(self.client_channels.keys()),
+                )
 
         IdleMover.logger.warning("AFKMover stopped!")
         self.client_channels = {}
@@ -399,9 +505,15 @@ def send_version(sender=None, _msg=None):
     Sends the plugin version as textmessage to the `sender`.
     """
     try:
-        teamspeak_bot.send_msg_to_client(BOT.ts3conn, sender, f"This plugin is installed in the version `{str(PLUGIN_VERSION)}`.")
+        teamspeak_bot.send_msg_to_client(
+            BOT.ts3conn,
+            sender,
+            f"This plugin is installed in the version `{str(PLUGIN_VERSION)}`.",
+        )
     except TS3Exception:
-        IdleMover.logger.exception("Error while sending the plugin version as a message to the client!")
+        IdleMover.logger.exception(
+            "Error while sending the plugin version as a message to the client!"
+        )
 
 
 @command(f"{PLUGIN_COMMAND_NAME} start")
@@ -412,7 +524,9 @@ def start_plugin(_sender=None, _msg=None):
     global PLUGIN_INFO
     if PLUGIN_INFO is None:
         if DRY_RUN:
-            IdleMover.logger.info("Dry run is enabled - logging actions intead of actually performing them.")
+            IdleMover.logger.info(
+                "Dry run is enabled - logging actions intead of actually performing them."
+            )
 
         PLUGIN_INFO = IdleMover(PLUGIN_STOPPER, BOT.ts3conn)
         PLUGIN_STOPPER.clear()
@@ -427,6 +541,7 @@ def stop_plugin(_sender=None, _msg=None):
     global PLUGIN_INFO
     PLUGIN_STOPPER.set()
     PLUGIN_INFO = None
+
 
 @command(f"{PLUGIN_COMMAND_NAME} restart")
 def restart_plugin(_sender=None, _msg=None):
@@ -449,17 +564,18 @@ def client_left(event_data):
 
 
 @setup_plugin
-def setup(ts3bot,
-            auto_start = AUTO_START,
-            enable_dry_run = DRY_RUN,
-            frequency = CHECK_FREQUENCY_SECONDS,
-            exclude_servergroups = SERVERGROUPS_TO_EXCLUDE,
-            auto_move_back = ENABLE_AUTO_MOVE_BACK,
-            respect_channel_settings = RESP_CHANNEL_SETTINGS,
-            fallback_channel = FALLBACK_ACTION,
-            min_idle_time_seconds = IDLE_TIME_SECONDS,
-            channel = CHANNEL_NAME
-    ):
+def setup(
+    ts3bot,
+    auto_start=AUTO_START,
+    enable_dry_run=DRY_RUN,
+    frequency=CHECK_FREQUENCY_SECONDS,
+    exclude_servergroups=SERVERGROUPS_TO_EXCLUDE,
+    auto_move_back=ENABLE_AUTO_MOVE_BACK,
+    respect_channel_settings=RESP_CHANNEL_SETTINGS,
+    fallback_channel=FALLBACK_ACTION,
+    min_idle_time_seconds=IDLE_TIME_SECONDS,
+    channel=CHANNEL_NAME,
+):
     """
     Sets up this plugin.
     """

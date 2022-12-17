@@ -16,15 +16,16 @@ import teamspeak_bot
 
 PLUGIN_VERSION = 0.1
 PLUGIN_COMMAND_NAME = "plugintemplate"
-PLUGIN_INFO: Union[None, 'PluginTemplate'] = None
+PLUGIN_INFO: Union[None, "PluginTemplate"] = None
 PLUGIN_STOPPER = threading.Event()
 BOT: teamspeak_bot.Ts3Bot
 
 # defaults for configureable options
 AUTO_START = True
-DRY_RUN = False # log instead of performing actual actions
+DRY_RUN = False  # log instead of performing actual actions
 CHECK_FREQUENCY_SECONDS = 30.0
 SOME_OPTION = "someValue"
+
 
 class PluginTemplate(Thread):
     """
@@ -36,7 +37,7 @@ class PluginTemplate(Thread):
     logger = logging.getLogger(class_name)
     logger.propagate = 0
     logger.setLevel(logging.INFO)
-    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
+    file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode="a+")
     formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
@@ -56,7 +57,6 @@ class PluginTemplate(Thread):
         self.ts3conn = ts3conn
         self.client_list = None
 
-
     def update_client_list(self):
         """
         Update the list of currently connected clients.
@@ -68,39 +68,57 @@ class PluginTemplate(Thread):
             PluginTemplate.logger.exception("Error while getting client list!")
             self.client_list = []
 
-
     def send_message_to_all_clients(self):
         """
         Sends a "Hello World!" message to every connected client except ServerQuery clients.
         """
         if self.client_list is None:
-            PluginTemplate.logger.debug("client_list is None (empty). Looks like no real client is connected.")
+            PluginTemplate.logger.debug(
+                "client_list is None (empty). Looks like no real client is connected."
+            )
             return
 
         for client in self.client_list:
-            if 'clid' not in client:
-                PluginTemplate.logger.error("Error, because the following client has no clid: %s", str(client))
+            if "clid" not in client:
+                PluginTemplate.logger.error(
+                    "Error, because the following client has no clid: %s", str(client)
+                )
                 continue
 
-            if 'client_type' not in client:
-                PluginTemplate.logger.error("Error, because the following client has no client_type: %s", str(client))
+            if "client_type" not in client:
+                PluginTemplate.logger.error(
+                    "Error, because the following client has no client_type: %s",
+                    str(client),
+                )
                 continue
 
-            if int(client['client_type']) == 1:
-                PluginTemplate.logger.debug("Skipping the following client as it is a ServerQuery client: %s", str(client))
+            if int(client["client_type"]) == 1:
+                PluginTemplate.logger.debug(
+                    "Skipping the following client as it is a ServerQuery client: %s",
+                    str(client),
+                )
                 continue
 
             if DRY_RUN:
-                PluginTemplate.logger.info("I would have sent a textmessage to this client, when dry-run would be disabled: %s", str(client))
+                PluginTemplate.logger.info(
+                    "I would have sent a textmessage to this client, when dry-run would be disabled: %s",
+                    str(client),
+                )
             else:
-                PluginTemplate.logger.debug("Sending the following client a message: %s", str(client))
+                PluginTemplate.logger.debug(
+                    "Sending the following client a message: %s", str(client)
+                )
 
                 try:
-                    teamspeak_bot.send_msg_to_client(BOT.ts3conn, client['clid'], "Hello World!")
+                    teamspeak_bot.send_msg_to_client(
+                        BOT.ts3conn, client["clid"], "Hello World!"
+                    )
                 except AttributeError:
                     PluginTemplate.logger.exception("AttributeError: %s", str(client))
                 except TS3Exception:
-                    PluginTemplate.logger.exception("Error while sending a message to the client: %s", str(client))
+                    PluginTemplate.logger.exception(
+                        "Error while sending a message to the client: %s", str(client)
+                    )
 
     def loop_until_stopped(self):
         """
@@ -114,7 +132,9 @@ class PluginTemplate(Thread):
                 self.update_client_list()
                 self.send_message_to_all_clients()
             except BaseException:
-                PluginTemplate.logger.error("Uncaught exception: %s", str(sys.exc_info()[0]))
+                PluginTemplate.logger.error(
+                    "Uncaught exception: %s", str(sys.exc_info()[0])
+                )
                 PluginTemplate.logger.error(str(sys.exc_info()[1]))
                 PluginTemplate.logger.error(traceback.format_exc())
 
@@ -137,9 +157,15 @@ def send_version(sender=None, _msg=None):
     Sends the plugin version as textmessage to the `sender`.
     """
     try:
-        teamspeak_bot.send_msg_to_client(BOT.ts3conn, sender, f"This plugin is installed in the version `{str(PLUGIN_VERSION)}`.")
+        teamspeak_bot.send_msg_to_client(
+            BOT.ts3conn,
+            sender,
+            f"This plugin is installed in the version `{str(PLUGIN_VERSION)}`.",
+        )
     except TS3Exception:
-        PluginTemplate.logger.exception("Error while sending the plugin version as a message to the client!")
+        PluginTemplate.logger.exception(
+            "Error while sending the plugin version as a message to the client!"
+        )
 
 
 @command(f"{PLUGIN_COMMAND_NAME} start")
@@ -150,7 +176,9 @@ def start_plugin(_sender=None, _msg=None):
     global PLUGIN_INFO
     if PLUGIN_INFO is None:
         if DRY_RUN:
-            PluginTemplate.logger.info("Dry run is enabled - logging actions intead of actually performing them.")
+            PluginTemplate.logger.info(
+                "Dry run is enabled - logging actions intead of actually performing them."
+            )
 
         PLUGIN_INFO = PluginTemplate(PLUGIN_STOPPER, BOT.ts3conn)
         PLUGIN_STOPPER.clear()
@@ -190,7 +218,13 @@ def client_left_event(event_data):
 
 
 @setup_plugin
-def setup(ts3bot, auto_start = AUTO_START, enable_dry_run = DRY_RUN, frequency = CHECK_FREQUENCY_SECONDS, some_option = SOME_OPTION):
+def setup(
+    ts3bot,
+    auto_start=AUTO_START,
+    enable_dry_run=DRY_RUN,
+    frequency=CHECK_FREQUENCY_SECONDS,
+    some_option=SOME_OPTION,
+):
     """
     Sets up this plugin.
     """
