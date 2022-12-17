@@ -13,6 +13,7 @@ main.sh
 .selected_editor
 .ssh/*
 .vim/
+.vscode/
 config.ini
 .idea/
 modules/quotes.db
