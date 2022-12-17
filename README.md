@@ -16,13 +16,13 @@ All existing functionality is based on plugins.
 
 | Plugin | Readme |
 | ---:   | :--- |
-| Utils | [Open documentation](#utils) |
-| Quotes | [Open documentation](#quotes) |
-| AfkMover | [Open documentation](/modules/AfkMover/README.md) |
-| IdleMover | [Open documentation](/modules/IdleMover/README.md) |
-| KickInactiveClients | [Open documentation](/modules/KickInactiveClients/README.md) |
-| BadNickname | [Open documentation](/modules/BadNickname/README.md) |
-| TwitchLive | [Open documentation](/modules/TwitchLive/README.md) |
+| utils | [Open documentation](#utils) |
+| quotes | [Open documentation](#quotes) |
+| afk_mover | [Open documentation](/modules/afk_mover/README.md) |
+| idle_mover | [Open documentation](/modules/idle_mover/README.md) |
+| kick_inactive_clients | [Open documentation](/modules/kick_inactive_clients/README.md) |
+| bad_nickname | [Open documentation](/modules/bad_nickname/README.md) |
+| twitch_live | [Open documentation](/modules/twitch_live/README.md) |
 
 Also see the [configuration](#configuration) section for further details regarding configuration.
 

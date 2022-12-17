@@ -21,7 +21,7 @@ Enable this plugin by adding the following line under the `Plugins` section to y
 
 ```
 [Plugins]
-KickInactiveClients: KickInactiveClients.main
+KickInactiveClients: kick_inactive_clients.main
 ```
 
 ## Options
@@ -41,7 +41,7 @@ This plugin supports the following options:
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
 
 ```
-[KickInactiveClients]
+[kick_inactive_clients]
 frequency: 60.0
 exclude_servergroups: Server Admin,Bot
 min_idle_time_seconds: 3600

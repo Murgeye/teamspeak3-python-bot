@@ -1,13 +1,15 @@
-"""Quote module for the Teamspeak 3 Bot. Sends quotes to people joining the server."""
+# standard imports
 import codecs
 import random
 
-import ts3API.Events as Events
+# third-party imports
+from ts3API.Events import ClientEnteredEvent
 
-import Bot
-import Moduleloader
+# local imports
+import teamspeak_bot
+from module_loader import setup_plugin, event, command
 
-bot: Bot.Ts3Bot
+bot: teamspeak_bot.Ts3Bot
 # Server groups who should not receiver quotes upon joining the server
 dont_send = []
 
@@ -26,16 +28,16 @@ def random_line(afile):
     return line
 
 
-def add(q):
+def add(quote):
     """
     Add a new quote.
-    :param q: Quote to add.
+    :param quote: Quote to add.
     """
-    with codecs.open("quotes", "a+", "ISO-8859-1") as f:
-        f.write(q+"\n")
+    with codecs.open("quotes", "a+", "ISO-8859-1") as quotes_file:
+        quotes_file.write(f"{quote}\n")
 
 
-@Moduleloader.setup
+@setup_plugin
 def setup_quoter(ts3bot):
     """
     Setup the quoter. Define groups not to send quotes to.
@@ -44,34 +46,33 @@ def setup_quoter(ts3bot):
     global bot, dont_send
     bot = ts3bot
     ts3conn = bot.ts3conn
-    for g in ts3conn.servergrouplist():
-        if g.get('name', '') in ["Guest", "Admin Server Query"]:
-            dont_send.append(int(g.get('sgid', 0)))
+    for servergroup in ts3conn.servergrouplist():
+        if servergroup.get('name', '') in ["Guest", "Admin Server Query"]:
+            dont_send.append(int(servergroup.get('sgid', 0)))
 
 
-@Moduleloader.event(Events.ClientEnteredEvent,)
+@event(ClientEnteredEvent)
 def inform(evt):
     """
     Send out a quote to joining users.
     :param evt: ClientEnteredEvent
     """
-    for g in evt.client_servergroups.split(','):
-        if len(g) == 0 or int(g) in dont_send:
+    for servergroup in evt.client_servergroups.split(','):
+        if len(servergroup) == 0 or int(servergroup) in dont_send:
             return
-    with codecs.open("quotes", "r", "ISO-8859-1") as f:
+
+    with codecs.open("quotes", "r", "ISO-8859-1") as quotes_file:
         quote = ""
         while len(quote) == 0:
-            quote = random_line(f)
-        Bot.send_msg_to_client(bot.ts3conn, evt.client_id, quote)
+            quote = random_line(quotes_file)
+        teamspeak_bot.send_msg_to_client(bot.ts3conn, evt.client_id, quote)
 
 
-@Moduleloader.command('addquote',)
+@command('addquote')
 def add_quote(sender, msg):
     """
     Add a quote.
     """
     if len(msg) > len("!addQuote "):
         add(msg[len("!addQuote "):])
-        Bot.send_msg_to_client(bot.ts3conn, sender, "Quote '" + msg[len("!addQuote "):] +
-                               "' was added.")
-
+        teamspeak_bot.send_msg_to_client(bot.ts3conn, sender, f"Quote `{msg[len('!addQuote'):]}` was added.")

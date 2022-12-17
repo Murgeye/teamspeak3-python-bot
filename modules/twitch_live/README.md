@@ -23,7 +23,7 @@ Enable this plugin by adding the following line under the `Plugins` section to y
 
 ```
 [Plugins]
-TwitchLive: TwitchLive.main
+TwitchLive: twitch_live.main
 ```
 
 
@@ -43,7 +43,7 @@ This plugin supports the following options:
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
 
 ```
-[TwitchLive]
+[twitch_live]
 frequency: 60.0
 twitch_live_servergroup_name: Live@Twitch
 twitch_api_client_id: 1ec8e09a145fc972b5eed9d1deb51631
