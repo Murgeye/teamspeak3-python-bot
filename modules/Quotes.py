@@ -47,8 +47,8 @@ def setup_quoter(ts3bot):
     bot = ts3bot
     ts3conn = bot.ts3conn
     for servergroup in ts3conn.servergrouplist():
-        if servergroup.get('name', '') in ["Guest", "Admin Server Query"]:
-            dont_send.append(int(servergroup.get('sgid', 0)))
+        if servergroup.get("name", "") in ["Guest", "Admin Server Query"]:
+            dont_send.append(int(servergroup.get("sgid", 0)))
 
 
 @event(ClientEnteredEvent)
@@ -57,7 +57,7 @@ def inform(evt):
     Send out a quote to joining users.
     :param evt: ClientEnteredEvent
     """
-    for servergroup in evt.client_servergroups.split(','):
+    for servergroup in evt.client_servergroups.split(","):
         if len(servergroup) == 0 or int(servergroup) in dont_send:
             return
 
@@ -68,11 +68,13 @@ def inform(evt):
         teamspeak_bot.send_msg_to_client(bot.ts3conn, evt.client_id, quote)
 
 
-@command('addquote')
+@command("addquote")
 def add_quote(sender, msg):
     """
     Add a quote.
     """
     if len(msg) > len("!addQuote "):
-        add(msg[len("!addQuote "):])
-        teamspeak_bot.send_msg_to_client(bot.ts3conn, sender, f"Quote `{msg[len('!addQuote'):]}` was added.")
+        add(msg[len("!addQuote ") :])
+        teamspeak_bot.send_msg_to_client(
+            bot.ts3conn, sender, f"Quote `{msg[len('!addQuote'):]}` was added."
+        )

@@ -34,7 +34,7 @@ def restart_program():
     saving data) must be done before calling this function.
     """
     python = sys.executable
-    os.execl(python, python, * sys.argv)
+    os.execl(python, python, *sys.argv)
 
 
 def main():
@@ -62,7 +62,7 @@ def main():
         LOGGER = logging.getLogger(class_name)
         LOGGER.propagate = 0
         LOGGER.setLevel(logging.INFO)
-        file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode='a+')
+        file_handler = logging.FileHandler(f"logs/{class_name.lower()}.log", mode="a+")
         formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(message)s")
         file_handler.setFormatter(formatter)
         LOGGER.addHandler(file_handler)
@@ -72,6 +72,7 @@ def main():
     sys.excepthook = exception_handler
     config = teamspeak_bot.Ts3Bot.parse_config(LOGGER)
     BOT = teamspeak_bot.Ts3Bot.bot_from_config(config)
+
 
 if __name__ == "__main__":
     main()
