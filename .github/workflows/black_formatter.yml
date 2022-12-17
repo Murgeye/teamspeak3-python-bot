@@ -1,0 +1,18 @@
+name: Code Style
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  black_formatter:
+    name: Black Formatter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: psf/black@stable
+        with:
+          options: "--check --verbose"
