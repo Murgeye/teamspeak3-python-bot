@@ -86,7 +86,7 @@ class PluginTemplate(Thread):
                 PluginTemplate.logger.error("Error, because the following client has no client_type: %s", str(client))
                 continue
 
-            if client['client_type'] == 1:
+            if int(client['client_type']) == 1:
                 PluginTemplate.logger.debug("Skipping the following client as it is a ServerQuery client: %s", str(client))
                 continue
 
