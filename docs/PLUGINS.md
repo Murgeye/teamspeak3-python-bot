@@ -86,3 +86,31 @@ def inform_enter(event):
 ```
 
 You can register a function for multiple events by passing a list of event types to the decorator. To learn more about the events look at the ts3API.Events module.
+
+## PyLint (Code Analysis)
+
+This project uses [PyLint](https://www.pylint.org/) for analysing the code.
+
+Please ensure, that your code, which you develop does not lower the rating.
+
+Install PyLint:
+
+```
+pip install pylint
+```
+
+Run PyLint:
+
+```
+pylint --rcfile=pylintrc $(find . -type f -name "*.py")
+```
+
+The `pylintrc` defines the respective PyLint configuration.
+
+## Black Formatter (Code Style)
+
+This project uses the [Black](https://black.readthedocs.io/en/stable/) formatter for code-style.
+
+Please checkout the official documentation of Black: https://black.readthedocs.io/en/stable/getting_started.html
+
+The `pyproject.toml` defines the respective Black formatter configuration.
