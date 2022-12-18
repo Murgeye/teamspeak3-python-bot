@@ -38,7 +38,7 @@ Each plugin documentation provides further information about each command.
 
 ## Utils
 
-This plugin extends your bot with administrative features via your TeamSpeak server client.
+This plugin extends your bot with various commands.
 
 ### Available Commands
 
@@ -50,7 +50,7 @@ The following table shows all available commands for this plugin:
 | `!stop` | Stop the bot (you need to start it afterwards manually) |
 | `!restart`/`!reload` | Restart the bot to e.g. reload the configuration. |
 | `!help`/`!commands`/`!commandlist` | Returns the list of available bot commands. |
-| `!multimove "fromChannel" "toChannel"`/`!mm "fromChannel" "toChannel"` | Moves all users from `fromChannel` to `toChannel`. See `!multimove` for further possibilities. |
+| `!multimove "all|fromChannelA,fromChannelB,fromChannelC" "toChannelY"` | Moves all users from one or multiple channels to a specific target channel. See `!multimove` for further possibilities. |
 
 ### Configuration
 
@@ -82,11 +82,26 @@ Please keep in mind, that you need to reload the plugin afterwards. Either by re
 
 This plugin extends your bot with quotes, which get randomly sent to random clients.
 
-The following table shows all available commands for this plugin:
+### Available Commands
 
-| Command | Description |
+The following table shows all available arguments for the command `!addquote` of this plugin:
+
+| Argument | Description |
 | ---:   | :--- |
-| `!addquote quote` | Adds the new quote `quote` |
+| `<quote>` | Adds the new quote `<quote>`. |
+
+### Configuration
+
+Enable this plugin by adding the following line under the `Plugins` section to your `config.ini`:
+
+```
+[Plugins]
+Quotes: quotes
+```
+
+#### Options
+
+This plugin does not support any options.
 
 # Logging
 
@@ -103,8 +118,6 @@ total 64K
 -rw-r--r-- 1 tsbot users 16K Nov 28 00:50 kickinactiveclients.log
 -rw-r--r-- 1 tsbot users 837 Nov 28 00:46 moduleloader.log
 ```
-
-Using the environment variable `LOG_LEVEL`, you can change the log level to get either more or less logging output.
 
 # Writing plugins
 
