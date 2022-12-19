@@ -68,24 +68,24 @@ This way you ensure, that the bot automatically starts when your system boots an
 The following instructions were tested on Linux Debian 11 (Bullseye).
 
 1. Create a Linux user: `useradd tsbot`
-2. Install the `tsbot.defaults` file from this repository: `cp tsbot.defaults /etc/default/tsbot`
+2. Install the `teamspeak-bot.defaults` file from this repository: `cp teamspeak-bot.defaults /etc/default/teamspeak-bot`
 3. Ensure, that the permissions are correct:
-   - `sudo chown root:root /etc/default/tsbot`
-   - `sudo chmod 0644 /etc/default/tsbot`
-4. Adjust the defaults config file, if necessary: `vim /etc/default/tsbot`
-5. Install the `tsbot.service` file from this repository: `cp tsbot.service /etc/systemd/system/`
+   - `sudo chown root:root /etc/default/teamspeak-bot`
+   - `sudo chmod 0644 /etc/default/teamspeak-bot`
+4. Adjust the defaults config file, if necessary: `vim /etc/default/teamspeak-bot`
+5. Install the `teamspeak-bot.service` file from this repository: `cp teamspeak-bot.service /etc/systemd/system/`
 6. Ensure, that the permissions are correct:
-   - `sudo chown root:root /etc/systemd/system/tsbot.service`
-   - `sudo chmod 0777 /etc/systemd/system/tsbot.service`
+   - `sudo chown root:root /etc/systemd/system/teamspeak-bot.service`
+   - `sudo chmod 0777 /etc/systemd/system/teamspeak-bot.service`
 7. Adjust the following systemd unit options, if necessary:
    - `After`: Add your TeamSpeak server systemd unit, when it is running on the same server as systemd unit.
 8. Reload systemd: `sudo systemctl daemon-reload`
-9. Enable the systemd unit: `sudo systemctl enable tsbot.service`
-10. Start the systemd unit: `sudo systemctl start tsbot.service`
+9. Enable the systemd unit: `sudo systemctl enable teamspeak-bot.service`
+10. Start the systemd unit: `sudo systemctl start teamspeak-bot.service`
 
 Further commands:
 
-- Stop bot: `systemctl stop tsbot.service`
-- Restart bot: `systemctl restart tsbot.service`
+- Stop bot: `systemctl stop teamspeak-bot.service`
+- Restart bot: `systemctl restart teamspeak-bot.service`
 
 Next, checkout the [configuration](/docs/CONFIGURATION.md), if you haven't yet.

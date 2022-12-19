@@ -1,0 +1,18 @@
+[Unit]
+Description=TeamSpeak Bot
+Documentation=https://github.com/Sebi94nbg/teamspeak3-python-bot
+After=network.target
+
+[Service]
+EnvironmentFile=/etc/default/teamspeak-bot
+User=${SYSTEMD_UNIT_USER}
+Group=${SYSTEMD_UNIT_GROUP}
+WorkingDirectory=${PROJECT_ROOT_DIR}
+ExecStartPre=/bin/bash prepare_python_venv.sh venv
+ExecStart=${PYTHON_VENV_BIN} main.py
+Type=simple
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
