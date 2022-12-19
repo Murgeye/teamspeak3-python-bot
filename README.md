@@ -50,7 +50,7 @@ The following table shows all available commands for this plugin:
 | `!stop` | Stop the bot (you need to start it afterwards manually) |
 | `!restart`/`!reload` | Restart the bot to e.g. reload the configuration. |
 | `!help`/`!commands`/`!commandlist` | Returns the list of available bot commands. |
-| `!multimove "all|fromChannelA,fromChannelB,fromChannelC" "toChannelY"` | Moves all users from one or multiple channels to a specific target channel. See `!multimove` for further possibilities. |
+| `!multimove "fromChannel" "toChannel"` | Moves all users from all, one or multiple channels to a specific target channel. See `!multimove` for further possibilities. |
 
 ### Configuration
 
