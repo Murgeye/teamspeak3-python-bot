@@ -54,6 +54,11 @@ def main():
 
     threading.Thread.run = run
 
+    try:
+        os.makedirs(os.path.realpath("logs"))
+    except FileExistsError:
+        pass
+
     global BOT, LOGGER
     LOGGER = logging.getLogger("BOT")
 
