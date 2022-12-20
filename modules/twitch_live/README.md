@@ -86,5 +86,8 @@ This plugin requires the following permissions on your TeamSpeak server:
 
 | Permission | Explanation |
 | ---: | :--- |
-| `b_virtualserver_client_list` | Allows the bot to get all clients on your virtual server. |
-| `i_channel_subscribe_power` | Must be equal or higher than `i_channel_needed_subscribe_power` of channels, which the bot should be able to find / see users. |
+| `b_virtualserver_client_list` | Allow the bot to get a list of all connected clients on your virtual server. |
+| `i_channel_subscribe_power` | The bot must be able to subscribe channels, so that clients can be found in those channels. |
+| `i_group_member_add_power` | The bot will assign clients the specified servergroup, when the Twitch streamer is live. |
+| `i_group_member_remove_power` | The bot will unassign clients the specified servergroup, when the Twitch streamer is offline. |
+| `i_client_private_textmessage_power` | The bot will send in specific cases a private message to the client. If somebody wants to know the plugin version for example. |

@@ -53,8 +53,10 @@ def load_modules(bot, config):
                 str(plugin[0]),
                 str(plugin[1]),
             )
+            raise
         except KeyError:
             logger.exception("Error while loading plugin from modules: %s", str(plugin))
+            raise
 
     # Call all registered setup functions
     for setup_func in setups:
@@ -64,8 +66,9 @@ def load_modules(bot, config):
             if plugin_name.count(".") == 1:
                 # `SomeModule.main` => `SomeModule`
                 plugin_name = plugin_name.split(".")[0]
-        except BaseException:
+        except AttributeError:
             logger.exception("Error while setting up the module %s.", str(plugin_name))
+            raise
 
         if plugin_name in config:
             plugin_config = config.pop(plugin_name)

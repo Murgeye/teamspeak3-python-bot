@@ -59,6 +59,11 @@ This plugin requires the following permissions on your TeamSpeak server:
 
 | Permission | Explanation |
 | ---: | :--- |
-| `b_virtualserver_client_list` | Allows the bot to get all clients on your virtual server. |
-| `i_channel_subscribe_power` | Must be equal or higher than `i_channel_needed_subscribe_power` of channels, which the bot should be able to find / see users. |
-| `i_client_move_power` | Must be equal or higher than `i_client_needed_move_power` of clients/servergroups, which the bot should be able to move. |
+| `b_virtualserver_client_list` | Allow the bot to get a list of all connected clients on your virtual server. |
+| `i_channel_subscribe_power` | The bot must be able to subscribe channels, so that clients can be found in those channels. |
+| `b_virtualserver_servergroup_list` | Allow the bot to get the list of available servergroups on your virtual server. |
+| `b_virtualserver_channel_search` | Allow the bot to find a channel based on a name pattern. |
+| `b_virtualserver_channel_list` | Allow the bot to list all channels. |
+| `b_channel_info_view` | Allow the bot to view channel information. |
+| `i_client_move_power` | Allow the bot to move clients. |
+| `i_client_private_textmessage_power` | The bot will send in specific cases a private message to the client. If somebody wants to know the plugin version for example. |

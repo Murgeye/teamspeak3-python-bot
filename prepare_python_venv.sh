@@ -25,3 +25,5 @@ if [[ $? -ne 0 ]]; then
 fi
 
 echo "Python virtual env has been successfully set up."
+
+echo "You will find the application logs within the installation directory."

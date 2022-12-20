@@ -1,6 +1,7 @@
 # standard imports
 import configparser
 import logging
+import os
 import sys
 from distutils.util import strtobool
 
@@ -219,6 +220,11 @@ class Ts3Bot:
         self.use_system_hosts = bool(strtobool(sshloadsystemhostkeys))
         self.sshtimeout = sshtimeout
         self.sshtimeoutlimit = sshtimeoutlimit
+
+        try:
+            os.makedirs(os.path.dirname(os.path.realpath(self.host_key_file)))
+        except FileExistsError:
+            pass
 
         self.connect()
         self.setup_bot()
