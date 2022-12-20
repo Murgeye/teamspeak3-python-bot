@@ -68,20 +68,19 @@ This way you ensure, that the bot automatically starts when your system boots an
 The following instructions were tested on Linux Debian 11 (Bullseye).
 
 1. Create a Linux user: `useradd tsbot`
-2. Install the `teamspeak-bot.defaults` file from this repository: `cp teamspeak-bot.defaults /etc/default/teamspeak-bot`
+2. Install the `teamspeak-bot.service` file from this repository: `cp teamspeak-bot.service /etc/systemd/system/`
 3. Ensure, that the permissions are correct:
-   - `sudo chown root:root /etc/default/teamspeak-bot`
-   - `sudo chmod 0644 /etc/default/teamspeak-bot`
-4. Adjust the defaults config file, if necessary: `vim /etc/default/teamspeak-bot`
-5. Install the `teamspeak-bot.service` file from this repository: `cp teamspeak-bot.service /etc/systemd/system/`
-6. Ensure, that the permissions are correct:
    - `sudo chown root:root /etc/systemd/system/teamspeak-bot.service`
    - `sudo chmod 0777 /etc/systemd/system/teamspeak-bot.service`
-7. Adjust the following systemd unit options, if necessary:
+4. Adjust the following systemd unit options, if necessary:
+   - `User`: The user, under which your bot should run (see step 1).
+   - `Group`: The group, under which your bot should run (see step 1).
    - `After`: Add your TeamSpeak server systemd unit, when it is running on the same server as systemd unit.
-8. Reload systemd: `sudo systemctl daemon-reload`
-9. Enable the systemd unit: `sudo systemctl enable teamspeak-bot.service`
-10. Start the systemd unit: `sudo systemctl start teamspeak-bot.service`
+   - `WorkingDirectory`: The installation directory of your bot.
+   - `ExecStart`: The installation directory of the Python virtual environment.
+5. Reload systemd: `sudo systemctl daemon-reload`
+6. Enable the systemd unit: `sudo systemctl enable teamspeak-bot.service`
+7. Start the systemd unit: `sudo systemctl start teamspeak-bot.service`
 
 Further commands:
 
