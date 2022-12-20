@@ -6,6 +6,7 @@ afk.log
 *.log
 *.log.*
 *.pyc
+venv/
 *__pycache__/
 quotes
 main.sh
