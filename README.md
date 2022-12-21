@@ -1,10 +1,12 @@
-# TS3 Bot
+# TeamSpeak Bot
 
 [![Code Style](https://github.com/Sebi94nbg/teamspeak3-python-bot/actions/workflows/black_formatter.yml/badge.svg?branch=main)](https://github.com/Sebi94nbg/teamspeak3-python-bot/actions/workflows/black_formatter.yml?query=branch%3Amain)
 [![Python Lint](https://github.com/Sebi94nbg/teamspeak3-python-bot/actions/workflows/pylint.yml/badge.svg?branch=main)](https://github.com/Sebi94nbg/teamspeak3-python-bot/actions/workflows/pylint.yml?query=branch%3Amain)
 [![CodeQL](https://github.com/Sebi94nbg/teamspeak3-python-bot/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/Sebi94nbg/teamspeak3-python-bot/actions/workflows/codeql-analysis.yml?query=branch%3Amain)
 
-Simple TeamSpeak 3 bot based on the [ts3API](https://github.com/Murgeye/ts3API).
+Simple TeamSpeak bot based on the [ts3API](https://github.com/Murgeye/ts3API).
+
+Works with a TeamSpeak 3 (TS3) and TeamSpeak 5 (TS5; Beta) server.
 
 # Installation
 
