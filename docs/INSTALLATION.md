@@ -15,6 +15,8 @@ Software:
 - [Python 3](https://www.python.org/)
   - [venv](https://docs.python.org/3/library/venv.html) (usually an extra package)
   - [pip](https://pip.pypa.io/en/stable/installation/) (usually a part of Python)
+- [TeamSpeak 3 Server (TS3)](https://teamspeak.com/en/downloads/#server)
+- [TeamSpeak 5 Server (TS5)](https://github.com/TeamSpeak-Systems/ts-services) (Beta)
 
 # Installation
 
