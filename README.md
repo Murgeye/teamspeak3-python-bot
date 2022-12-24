@@ -30,6 +30,7 @@ All existing functionality is based on plugins.
 | bad_nickname | [Open documentation](/modules/bad_nickname/README.md) |
 | twitch_live | [Open documentation](/modules/twitch_live/README.md) |
 | private_channel_manager | [Open documentation](/modules/private_channel_manager/README.md) |
+| switch_supporter_channel_status | [Open documentation](/modules/switch_supporter_channel_status/README.md) |
 
 Also see the [configuration](#configuration) section for further details regarding configuration.
 
