@@ -31,6 +31,7 @@ All existing functionality is based on plugins.
 | twitch_live | [Open documentation](/modules/twitch_live/README.md) |
 | private_channel_manager | [Open documentation](/modules/private_channel_manager/README.md) |
 | switch_supporter_channel_status | [Open documentation](/modules/switch_supporter_channel_status/README.md) |
+| inform_team_about_newbie | [Open documentation](/modules/inform_team_about_newbie/README.md) |
 
 Also see the [configuration](#configuration) section for further details regarding configuration.
 
