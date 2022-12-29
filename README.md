@@ -29,6 +29,7 @@ All existing functionality is based on plugins.
 | kick_inactive_clients | [Open documentation](/modules/kick_inactive_clients/README.md) |
 | bad_nickname | [Open documentation](/modules/bad_nickname/README.md) |
 | twitch_live | [Open documentation](/modules/twitch_live/README.md) |
+| channel_manager | [Open documentation](/modules/channel_manager/README.md) |
 | private_channel_manager | [Open documentation](/modules/private_channel_manager/README.md) |
 | switch_supporter_channel_status | [Open documentation](/modules/switch_supporter_channel_status/README.md) |
 | inform_team_about_newbie | [Open documentation](/modules/inform_team_about_newbie/README.md) |
