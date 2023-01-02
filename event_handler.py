@@ -101,7 +101,7 @@ class EventHandler:
         Removes an observer from all event_types.
         :param obs: Observer to remove.
         """
-        for evt_type in self.observers.keys():
+        for evt_type in self.observers:
             self.remove_observer(obs, evt_type)
 
     # We really want to catch all exception here, to prevent one observer from crashing the bot

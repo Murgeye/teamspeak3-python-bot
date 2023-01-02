@@ -11,7 +11,7 @@ from module_loader import setup_plugin, command, group, exit_all
 import main
 
 __version__ = "0.5"
-bot: teamspeak_bot.Ts3Bot
+BOT: teamspeak_bot.Ts3Bot
 logger = logging.getLogger("bot")
 
 # defaults for configureable options
@@ -23,9 +23,9 @@ def setup(ts3bot, enable_dry_run=DRY_RUN):
     """
     Sets up this module.
     """
-    global bot, DRY_RUN
+    global BOT, DRY_RUN
 
-    bot = ts3bot
+    BOT = ts3bot
     DRY_RUN = enable_dry_run
 
     if DRY_RUN:
@@ -44,7 +44,7 @@ def send_version(sender, _msg):
     :param sender: Client id of sender that sent the command.
     """
     teamspeak_bot.send_msg_to_client(
-        bot.ts3conn, sender, f"The version of the `utils` plugin is `{__version__}`."
+        BOT.ts3conn, sender, f"The version of the `utils` plugin is `{__version__}`."
     )
 
 
@@ -65,7 +65,7 @@ def stop_bot(sender, _msg):
         return
 
     exit_all()
-    bot.ts3conn.quit()
+    BOT.ts3conn.quit()
     logger.info("Bot has been stopped by clid=%s!", int(sender))
 
 
@@ -84,7 +84,7 @@ def restart_bot(sender, _msg):
         return
 
     exit_all()
-    bot.ts3conn.quit()
+    BOT.ts3conn.quit()
     logger.info("Bot has been restarted by clid=%s!", int(sender))
     main.restart_program()
 
@@ -97,10 +97,10 @@ def get_command_list(sender, _msg):
     :param sender: Client id of sender that sent the command.
     """
     teamspeak_bot.send_msg_to_client(
-        bot.ts3conn, sender, "The following bot commands are available:"
+        BOT.ts3conn, sender, "The following bot commands are available:"
     )
     teamspeak_bot.send_msg_to_client(
-        bot.ts3conn, sender, str(list(bot.command_handler.handlers.keys()))
+        BOT.ts3conn, sender, str(list(BOT.command_handler.handlers.keys()))
     )
 
 
@@ -112,7 +112,7 @@ def multi_move(sender, msg):
     :param sender: Client id of sender that sent the command.
     :param msg: Sent command.
     """
-    ts3conn = bot.ts3conn
+    ts3conn = BOT.ts3conn
 
     # evaluate and check command arguments
     source_channels = []

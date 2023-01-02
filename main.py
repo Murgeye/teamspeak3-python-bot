@@ -49,7 +49,7 @@ def main():
             run_old(*args, **kwargs)
         except (KeyboardInterrupt, SystemExit, TS3ConnectionClosedException):
             raise
-        except:
+        except BaseException:
             sys.excepthook(*sys.exc_info())
 
     threading.Thread.run = run
