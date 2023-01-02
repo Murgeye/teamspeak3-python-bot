@@ -82,12 +82,6 @@ class ChannelManager(Thread):
                 str(self.managed_channels),
             )
 
-        self.clients_in_managed_channels = None
-        if len(self.managed_channels) > 0:
-            self.clients_in_managed_channels = (
-                self.update_list_of_clients_in_managed_channels()
-            )
-
         self.delete_channel_when_necessary()
 
     def get_channel_minimums(self):
@@ -184,32 +178,6 @@ class ChannelManager(Thread):
                     managed_channels_list.append(channel)
 
         return managed_channels_list
-
-    def update_list_of_clients_in_managed_channels(self):
-        """
-        Updates the list of clients, which are in the managed channels.
-        :return: List of clients in managed channels
-        """
-        try:
-            client_list = self.ts3conn.clientlist()
-        except TS3Exception:
-            ChannelManager.logger.exception("Could not get the current client list.")
-            raise
-
-        clients_in_managed_channels = []
-        for client in client_list:
-            if not any(
-                channel["cid"] == client.get("cid") for channel in self.managed_channels
-            ):
-                ChannelManager.logger.debug(
-                    "The following client is NOT in any of the managed channels: %s",
-                    str(client),
-                )
-                continue
-
-            clients_in_managed_channels.append(client)
-
-        return clients_in_managed_channels
 
     def get_channel_id_by_name_pattern(self, channel_name_pattern):
         """
