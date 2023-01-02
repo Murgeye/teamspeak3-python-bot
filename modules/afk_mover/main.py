@@ -159,7 +159,7 @@ class AfkMover(Thread):
             return
 
         for client in back_list:
-            if client.get("clid", -1) not in self.client_channels.keys():
+            if client.get("clid", -1) not in self.client_channels:
                 continue
 
             AfkMover.logger.info(

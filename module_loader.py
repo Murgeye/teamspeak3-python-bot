@@ -10,8 +10,8 @@ from event_handler import EventHandler
 setups = []
 exits = []
 plugin_modules = {}
-event_handler: "EventHandler"
-command_handler: "CommandHandler"
+EVENT_HANDLER: "EventHandler"
+COMMAND_HANDLER: "CommandHandler"
 
 # configure logger
 CLASS_NAME = "ModuleLoader"
@@ -35,10 +35,10 @@ def load_modules(bot, config):
     :param bot: Bot to pass to the setup function of the modules
     :param config: Main bot config with plugins section
     """
-    global event_handler, command_handler
+    global EVENT_HANDLER, COMMAND_HANDLER
     plugins = config.pop("Plugins")
-    event_handler = bot.event_handler
-    command_handler = bot.command_handler
+    EVENT_HANDLER = bot.event_handler
+    COMMAND_HANDLER = bot.command_handler
 
     for plugin in plugins.items():
         try:
@@ -102,7 +102,7 @@ def event(*event_types):
 
     def register_observer(function):
         for event_type in event_types:
-            event_handler.add_observer(function, event_type)
+            EVENT_HANDLER.add_observer(function, event_type)
         return function
 
     return register_observer
@@ -118,7 +118,7 @@ def command(*command_list):
 
     def register_command(function):
         for text_command in command_list:
-            command_handler.add_handler(function, text_command)
+            COMMAND_HANDLER.add_handler(function, text_command)
         return function
 
     return register_command

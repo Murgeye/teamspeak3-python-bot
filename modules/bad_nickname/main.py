@@ -296,7 +296,6 @@ class BadNickname(Thread):
                 self.logger.error(traceback.format_exc())
 
         self.logger.warning("Thread stopped!")
-        self.client_channels = {}
 
 
 @command(f"{PLUGIN_COMMAND_NAME} version")

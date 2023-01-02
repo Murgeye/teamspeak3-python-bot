@@ -1,10 +1,8 @@
 # standard imports
 import logging
 import threading
-import traceback
 from threading import Thread
 from typing import Union
-import sys
 import re
 
 # third-party imports
