@@ -11,7 +11,7 @@ Admin" permissions.
 
 # Available Commands
 
-The following table shows all available arguments for the command `!privatechannelmanager` of this plugin:
+The following table shows all available arguments for the command `!channelrequester` of this plugin:
 
 | Argument | Description |
 | ---: | :--- |
@@ -27,7 +27,7 @@ Enable this plugin by adding the following line under the `Plugins` section to y
 
 ```
 [Plugins]
-PrivateChannelManager: private_channel_manager.main
+ChannelRequester: channel_requester.main
 ```
 
 ## Options
@@ -53,7 +53,7 @@ This plugin supports the following channel options:
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
 
 ```
-[private_channel_manager]
+[channel_requester]
 exclude_servergroups: Guest,Bot
 
 support.main_channel_name: Support

@@ -16,8 +16,8 @@ from module_loader import setup_plugin, exit_plugin, command, event
 import teamspeak_bot
 
 PLUGIN_VERSION = 0.1
-PLUGIN_COMMAND_NAME = "privatechannelmanager"
-PLUGIN_INFO: Union[None, "PrivateChannelManager"] = None
+PLUGIN_COMMAND_NAME = "channelrequester"
+PLUGIN_INFO: Union[None, "ChannelRequester"] = None
 PLUGIN_STOPPER = threading.Event()
 BOT: teamspeak_bot.Ts3Bot
 
@@ -28,9 +28,9 @@ SERVERGROUPS_TO_EXCLUDE = None
 CHANNEL_SETTINGS = None
 
 
-class PrivateChannelManager(Thread):
+class ChannelRequester(Thread):
     """
-    PrivateChannelManager class. Creates a channel for a client and grants the client a specific channel group.
+    ChannelRequester class. Creates a channel, when a client requests one through a specific channel and grants the client a specific channel group.
     """
 
     # configure logger
@@ -47,8 +47,8 @@ class PrivateChannelManager(Thread):
 
     def __init__(self, stop_event, ts3conn):
         """
-        Create a new PrivateChannelManager object.
-        :param stop_event: Event to signalize the PrivateChannelManager to stop moving.
+        Create a new ChannelRequester object.
+        :param stop_event: Event to signalize the ChannelRequester to stop moving.
         :type stop_event: threading.Event
         :param ts3conn: Connection to use
         :type: TS3Connection
@@ -76,7 +76,7 @@ class PrivateChannelManager(Thread):
                 self.ts3conn._send("channelgrouplist")
             )
         except TS3Exception:
-            PrivateChannelManager.logger.exception(
+            ChannelRequester.logger.exception(
                 "Error while getting the list of available channel groups."
             )
             raise
@@ -84,7 +84,7 @@ class PrivateChannelManager(Thread):
         channel_group_id = None
         for channel_group in channel_group_list:
             if int(channel_group.get("type")) in (0, 2):
-                PrivateChannelManager.logger.debug(
+                ChannelRequester.logger.debug(
                     "Ignoring channel group of the type 0 (template) or 2 (query)."
                 )
                 continue
@@ -104,7 +104,7 @@ class PrivateChannelManager(Thread):
         servergroup_ids_to_ignore = []
 
         if SERVERGROUPS_TO_EXCLUDE is None:
-            PrivateChannelManager.logger.debug(
+            ChannelRequester.logger.debug(
                 "No servergroups to exclude defined. Nothing todo."
             )
             return servergroup_ids_to_ignore
@@ -112,7 +112,7 @@ class PrivateChannelManager(Thread):
         try:
             servergroup_list = self.ts3conn.servergrouplist()
         except TS3QueryException:
-            PrivateChannelManager.logger.exception(
+            ChannelRequester.logger.exception(
                 "Failed to get the list of available servergroups."
             )
 
@@ -131,7 +131,7 @@ class PrivateChannelManager(Thread):
         try:
             channel_id = self.ts3conn.channelfind(name)[0].get("cid", "-1")
         except TS3Exception:
-            PrivateChannelManager.logger.exception(
+            ChannelRequester.logger.exception(
                 "Error while finding a channel with the name `%s`.", str(name)
             )
             raise
@@ -151,7 +151,7 @@ class PrivateChannelManager(Thread):
             try:
                 channel_alias, channel_setting_name = key.split(".")
             except ValueError:
-                PrivateChannelManager.logger.exception(
+                ChannelRequester.logger.exception(
                     "Failed to get channel alias and setting name. Please ensure, that your plugin configuration is valid."
                 )
                 raise
@@ -175,7 +175,7 @@ class PrivateChannelManager(Thread):
                 channel_group_id = None
                 channel_group_id = self.get_channel_group_by_name(value)
                 if channel_group_id is None:
-                    PrivateChannelManager.logger.error(
+                    ChannelRequester.logger.error(
                         "Could not find any channel group with the name `%s`.",
                         str(value),
                     )
@@ -185,7 +185,7 @@ class PrivateChannelManager(Thread):
 
         channel_configs.append(deepcopy(channel_properties_dict))
 
-        PrivateChannelManager.logger.info(
+        ChannelRequester.logger.info(
             "Active channel configurations: %s", str(channel_configs)
         )
 
@@ -204,7 +204,7 @@ class PrivateChannelManager(Thread):
                 self.ts3conn._send("servergroupsbyclientid", [f"cldbid={cldbid}"])
             )
         except TS3QueryException:
-            PrivateChannelManager.logger.exception(
+            ChannelRequester.logger.exception(
                 "Failed to get the list of assigned servergroups for the client cldbid=%s.",
                 int(cldbid),
             )
@@ -213,7 +213,7 @@ class PrivateChannelManager(Thread):
         for servergroup in client_servergroups:
             client_servergroup_ids.append(servergroup.get("sgid"))
 
-        PrivateChannelManager.logger.debug(
+        ChannelRequester.logger.debug(
             "client_database_id=%s has these servergroups: %s",
             int(cldbid),
             str(client_servergroup_ids),
@@ -226,24 +226,22 @@ class PrivateChannelManager(Thread):
         Creates a channel and grants a specific client channel admin permissions.
         """
         if client is None:
-            PrivateChannelManager.logger.debug(
-                "No client has been provided. Nothing todo!"
-            )
+            ChannelRequester.logger.debug("No client has been provided. Nothing todo!")
             return
 
-        PrivateChannelManager.logger.debug(
+        ChannelRequester.logger.debug(
             "Received an event for this client: %s", str(client)
         )
 
         try:
             client_info = self.ts3conn.clientinfo(client.clid)
         except AttributeError:
-            PrivateChannelManager.logger.exception(
+            ChannelRequester.logger.exception(
                 "The client has no clid: %s.", str(client)
             )
             raise
         except TS3Exception:
-            PrivateChannelManager.logger.exception(
+            ChannelRequester.logger.exception(
                 "Failed to get the client info of clid=%s.", int(client.clid)
             )
             raise
@@ -252,7 +250,7 @@ class PrivateChannelManager(Thread):
             int(channel_config["main_channel_cid"]) == int(client.target_channel_id)
             for channel_config in self.channel_configs
         ):
-            PrivateChannelManager.logger.debug(
+            ChannelRequester.logger.debug(
                 "The client did not join any channel, which creates new channels."
             )
             return
@@ -262,7 +260,7 @@ class PrivateChannelManager(Thread):
                 client.client_dbid
             ):
                 if client_servergroup_id in self.servergroup_ids_to_ignore:
-                    PrivateChannelManager.logger.debug(
+                    ChannelRequester.logger.debug(
                         "The client is in the servergroup sgid=%s, which should be ignored: %s",
                         int(client_servergroup_id),
                         str(client),
@@ -275,7 +273,7 @@ class PrivateChannelManager(Thread):
                 main_channel_name = channel_config.pop("main_channel_name")
                 main_channel_cid = channel_config.pop("main_channel_cid")
             except KeyError:
-                PrivateChannelManager.logger.exception(
+                ChannelRequester.logger.exception(
                     "Could not retrieve the required information from the channel configuration."
                 )
                 continue
@@ -287,7 +285,7 @@ class PrivateChannelManager(Thread):
                 channel_group_id = None
                 channel_group_id = self.get_channel_group_by_name(default_channel_group)
                 if channel_group_id is None:
-                    PrivateChannelManager.logger.error(
+                    ChannelRequester.logger.error(
                         "Could not find any channel group with the name `%s`.",
                         str(default_channel_group),
                     )
@@ -297,7 +295,7 @@ class PrivateChannelManager(Thread):
                 channel_settings = channel_config
                 break
 
-        PrivateChannelManager.logger.info(
+        ChannelRequester.logger.info(
             "client_nickname=%s requested an own channel under the channel `%s`.",
             str(client_info.get("client_nickname")),
             str(main_channel_name),
@@ -319,12 +317,12 @@ class PrivateChannelManager(Thread):
             channel_properties.append(f"{key}={value}")
 
         if DRY_RUN:
-            PrivateChannelManager.logger.info(
+            ChannelRequester.logger.info(
                 "I would have created the following channel, when dry-run would be disabled: %s",
                 str(channel_properties),
             )
         else:
-            PrivateChannelManager.logger.info(
+            ChannelRequester.logger.info(
                 "Creating the following channel: %s",
                 str(channel_properties),
             )
@@ -333,7 +331,7 @@ class PrivateChannelManager(Thread):
                     self.ts3conn._send("channelcreate", channel_properties)
                 )
             except TS3QueryException:
-                PrivateChannelManager.logger.exception("Failed to create the channel.")
+                ChannelRequester.logger.exception("Failed to create the channel.")
                 raise
 
             try:
@@ -341,7 +339,7 @@ class PrivateChannelManager(Thread):
                     int(recently_created_channel.get("cid")), int(client.clid)
                 )
             except TS3QueryException:
-                PrivateChannelManager.logger.exception(
+                ChannelRequester.logger.exception(
                     "Failed to move the client into his private channel: %s",
                     str(client),
                 )
@@ -357,7 +355,7 @@ class PrivateChannelManager(Thread):
                     ],
                 )
             except TS3QueryException:
-                PrivateChannelManager.logger.exception(
+                ChannelRequester.logger.exception(
                     "Failed to grant the client the respective channel group."
                 )
                 raise
@@ -372,7 +370,7 @@ class PrivateChannelManager(Thread):
                     ],
                 )
             except TS3QueryException:
-                PrivateChannelManager.logger.exception(
+                ChannelRequester.logger.exception(
                     "Failed to make the channel temporary."
                 )
                 raise
@@ -384,7 +382,7 @@ def client_joined(event_data):
     Client joined the server or a channel or somebody moved the client into a different channel.
     """
     if PLUGIN_INFO is not None:
-        PrivateChannelManager.create_channel(self=PLUGIN_INFO, client=event_data)
+        ChannelRequester.create_channel(self=PLUGIN_INFO, client=event_data)
 
 
 @command(f"{PLUGIN_COMMAND_NAME} version")
@@ -399,7 +397,7 @@ def send_version(sender=None, _msg=None):
             f"This plugin is installed in the version `{str(PLUGIN_VERSION)}`.",
         )
     except TS3Exception:
-        PrivateChannelManager.logger.exception(
+        ChannelRequester.logger.exception(
             "Error while sending the plugin version as a message to the client!"
         )
 
@@ -407,16 +405,16 @@ def send_version(sender=None, _msg=None):
 @command(f"{PLUGIN_COMMAND_NAME} start")
 def start_plugin(_sender=None, _msg=None):
     """
-    Start the PrivateChannelManager by clearing the PLUGIN_STOPPER signal and starting the mover.
+    Start the ChannelRequester by clearing the PLUGIN_STOPPER signal and starting the mover.
     """
     global PLUGIN_INFO
     if PLUGIN_INFO is None:
         if DRY_RUN:
-            PrivateChannelManager.logger.info(
+            ChannelRequester.logger.info(
                 "Dry run is enabled - logging actions intead of actually performing them."
             )
 
-        PLUGIN_INFO = PrivateChannelManager(PLUGIN_STOPPER, BOT.ts3conn)
+        PLUGIN_INFO = ChannelRequester(PLUGIN_STOPPER, BOT.ts3conn)
         PLUGIN_STOPPER.clear()
         PLUGIN_INFO.start()
 
@@ -424,7 +422,7 @@ def start_plugin(_sender=None, _msg=None):
 @command(f"{PLUGIN_COMMAND_NAME} stop")
 def stop_plugin(_sender=None, _msg=None):
     """
-    Stop the PrivateChannelManager by setting the PLUGIN_STOPPER signal and undefining the mover.
+    Stop the ChannelRequester by setting the PLUGIN_STOPPER signal and undefining the mover.
     """
     global PLUGIN_INFO
     PLUGIN_STOPPER.set()
