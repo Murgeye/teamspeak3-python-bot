@@ -199,14 +199,35 @@ class IdleMover(Thread):
         for client in self.idle_list:
             IdleMover.logger.debug("get_idle_list checking client: %s", str(client))
 
+            if client.get("client_type") == "1":
+                IdleMover.logger.debug("Ignoring ServerQuery client: %s", str(client))
+                continue
+
+            if "client_idle_time" not in client.keys():
+                IdleMover.logger.error(
+                    "get_idle_list client without client_idle_time: %s!", str(client)
+                )
+                continue
+
+            if int(client.get("client_idle_time")) / 1000 <= float(IDLE_TIME_SECONDS):
+                IdleMover.logger.debug(
+                    "get_idle_list client is less or equal then %s seconds idle: %s!",
+                    int(IDLE_TIME_SECONDS),
+                    str(client),
+                )
+                continue
+
             if "cid" not in client.keys():
                 IdleMover.logger.error(
                     "get_idle_list client without cid: %s!", str(client)
                 )
                 continue
 
-            if client.get("client_type") == "1":
-                IdleMover.logger.debug("Ignoring ServerQuery client: %s", str(client))
+            if int(client.get("cid", "-1")) == int(self.afk_channel):
+                IdleMover.logger.debug(
+                    "get_idle_list client is already in the afk_channel: %s!",
+                    str(client),
+                )
                 continue
 
             if CHANNELS_TO_EXCLUDE is not None:
@@ -233,27 +254,6 @@ class IdleMover(Thread):
 
                 if client_is_in_group:
                     continue
-
-            if "client_idle_time" not in client.keys():
-                IdleMover.logger.error(
-                    "get_idle_list client without client_idle_time: %s!", str(client)
-                )
-                continue
-
-            if int(client.get("cid", "-1")) == int(self.afk_channel):
-                IdleMover.logger.debug(
-                    "get_idle_list client is already in the afk_channel: %s!",
-                    str(client),
-                )
-                continue
-
-            if int(client.get("client_idle_time")) / 1000 <= float(IDLE_TIME_SECONDS):
-                IdleMover.logger.debug(
-                    "get_idle_list client is less or equal then %s seconds idle: %s!",
-                    int(IDLE_TIME_SECONDS),
-                    str(client),
-                )
-                continue
 
             IdleMover.logger.debug(
                 "get_idle_list adding client to list: %s!", str(client)
