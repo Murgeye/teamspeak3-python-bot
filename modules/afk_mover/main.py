@@ -340,13 +340,29 @@ class AfkMover(Thread):
         for client in self.afk_list:
             AfkMover.logger.debug(str(self.afk_list))
 
+            if client.get("client_type") == "1":
+                AfkMover.logger.debug("Ignoring ServerQuery client: %s", str(client))
+                continue
+
+            if "client_away" not in client.keys():
+                AfkMover.logger.debug(
+                    "The client has no `client_away` property: %s", str(client)
+                )
+                continue
+
+            if client.get("client_away", "0") == "0":
+                AfkMover.logger.debug("The client is not away: %s", str(client))
+                continue
+
             if "cid" not in client.keys():
                 AfkMover.logger.error("Client without cid!")
                 AfkMover.logger.error(str(client))
                 continue
 
-            if client.get("client_type") == "1":
-                AfkMover.logger.debug("Ignoring ServerQuery client: %s", str(client))
+            if int(client.get("cid", "-1")) == int(self.afk_channel):
+                AfkMover.logger.debug(
+                    "The client is already in the `afk_channel`: %s", str(client)
+                )
                 continue
 
             if CHANNELS_TO_EXCLUDE is not None:
@@ -374,23 +390,8 @@ class AfkMover(Thread):
                 if client_is_in_group:
                     continue
 
-            if "client_away" not in client.keys():
-                AfkMover.logger.debug(
-                    "The client has no `client_away` property: %s", str(client)
-                )
-                continue
-
-            if client.get("client_away", "0") == "0":
-                AfkMover.logger.debug("The client is not away: %s", str(client))
-                continue
-
-            if int(client.get("cid", "-1")) == int(self.afk_channel):
-                AfkMover.logger.debug(
-                    "The client is already in the `afk_channel`: %s", str(client)
-                )
-                continue
-
             awaylist.append(client)
+
         return awaylist
 
     def move_to_afk(self, client_list):
