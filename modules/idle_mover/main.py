@@ -16,7 +16,7 @@ from ts3API.utilities import TS3Exception
 from module_loader import setup_plugin, exit_plugin, command, event
 import teamspeak_bot
 
-PLUGIN_VERSION = 0.1
+PLUGIN_VERSION = 0.2
 PLUGIN_COMMAND_NAME = "idlemover"
 PLUGIN_INFO: Union[None, "IdleMover"] = None
 PLUGIN_STOPPER = threading.Event()
