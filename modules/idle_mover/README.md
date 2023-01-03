@@ -33,6 +33,7 @@ This plugin supports the following options:
 | `auto_start` | `True` | Either if the plugin should automatically start when the Bot starts and it's configured or not. |
 | `enable_dry_run` | `False` | Set to `True`, if you want to test the plugin without executing the actual tasks. Instead it logs what it would have done. |
 | `frequency` | `30.0` | The frequency in seconds how often (and fast) the plugin should react (e.g. somebody is idle, every 30 seconds the bot would notice this and do something). |
+| `exclude_channels` | `None` | Provide a comma seperated list of channel names, where clients should be ignored by the bot. |
 | `exclude_servergroups` | `None` | Provide a comma seperated list of servergroup names, which should never get moved by the bot. |
 | `auto_move_back` | `True` | Either if clients, which are no longer idle should be moved back to their original channel or not. |
 | `min_idle_time_seconds` | `600` | The minimum time in seconds a client must be idle to get moved to the channel `channel`. |
@@ -45,6 +46,7 @@ If you need to change some of these default options, simply add them to your `co
 ```
 [idle_mover]
 frequency: 60.0
+exclude_channels: Netflix,Poke me,Meeting
 exclude_servergroups: Server Admin,Bot
 min_idle_time_seconds: 300
 channel: Away
@@ -61,6 +63,7 @@ This plugin requires the following permissions on your TeamSpeak server:
 | ---: | :--- |
 | `b_virtualserver_client_list` | Allow the bot to get a list of all connected clients on your virtual server. |
 | `i_channel_subscribe_power` | The bot must be able to subscribe channels, so that clients can be found in those channels. |
+| `b_virtualserver_channel_list` | Allow the bot to get the list of available channels on your virtual server. |
 | `b_virtualserver_servergroup_list` | Allow the bot to get the list of available servergroups on your virtual server. |
 | `b_virtualserver_channel_search` | Allow the bot to find a channel based on a name pattern. |
 | `b_virtualserver_channel_list` | Allow the bot to list all channels. |
