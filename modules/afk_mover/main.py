@@ -5,6 +5,7 @@ import traceback
 from threading import Thread
 from typing import Union
 import sys
+import re
 
 # third-party imports
 from ts3API.Events import ClientLeftEvent
@@ -15,7 +16,7 @@ from ts3API.utilities import TS3Exception
 from module_loader import setup_plugin, exit_plugin, command, event
 import teamspeak_bot
 
-PLUGIN_VERSION = 0.1
+PLUGIN_VERSION = 0.2
 PLUGIN_COMMAND_NAME = "afkmover"
 PLUGIN_INFO: Union[None, "AfkMover"] = None
 PLUGIN_STOPPER = threading.Event()
@@ -25,6 +26,7 @@ BOT: teamspeak_bot.Ts3Bot
 AUTO_START = True
 DRY_RUN = False  # log instead of performing actual actions
 CHECK_FREQUENCY_SECONDS = 30.0
+CHANNELS_TO_EXCLUDE = None
 SERVERGROUPS_TO_EXCLUDE = None
 ENABLE_AUTO_MOVE_BACK = True
 RESP_CHANNEL_SETTINGS = True
@@ -62,6 +64,10 @@ class AfkMover(Thread):
         self.ts3conn = ts3conn
         self.afk_channel = self.get_channel_by_name(CHANNEL_NAME)
         self.client_channels = {}
+
+        self.channel_ids_to_ignore = []
+        self.channel_ids_to_ignore = self.update_channel_ids_list()
+
         self.update_servergroup_ids_list()
         self.afk_list = None
         if self.afk_channel is None:
@@ -243,6 +249,30 @@ class AfkMover(Thread):
 
                 self.fallback_action(client_id)
 
+    def update_channel_ids_list(self):
+        """
+        Updates the list of channel IDs, which should be ignored.
+        """
+        channel_ids_to_ignore = []
+
+        if CHANNELS_TO_EXCLUDE is None:
+            AfkMover.logger.debug("No channels to exclude defined. Nothing todo.")
+            return channel_ids_to_ignore
+
+        try:
+            channel_list = self.ts3conn.channellist()
+        except TS3QueryException:
+            AfkMover.logger.exception("Failed to get the list of available channels.")
+
+        for channel in channel_list:
+            if any(
+                re.search(channel_name_pattern, channel.get("channel_name"))
+                for channel_name_pattern in CHANNELS_TO_EXCLUDE.split(",")
+            ):
+                channel_ids_to_ignore.append(channel.get("cid"))
+
+        return channel_ids_to_ignore
+
     def update_servergroup_ids_list(self):
         """
         Updates the list of servergroup IDs, which should be ignored.
@@ -310,14 +340,38 @@ class AfkMover(Thread):
         for client in self.afk_list:
             AfkMover.logger.debug(str(self.afk_list))
 
+            if client.get("client_type") == "1":
+                AfkMover.logger.debug("Ignoring ServerQuery client: %s", str(client))
+                continue
+
+            if "client_away" not in client.keys():
+                AfkMover.logger.debug(
+                    "The client has no `client_away` property: %s", str(client)
+                )
+                continue
+
+            if client.get("client_away", "0") == "0":
+                AfkMover.logger.debug("The client is not away: %s", str(client))
+                continue
+
             if "cid" not in client.keys():
                 AfkMover.logger.error("Client without cid!")
                 AfkMover.logger.error(str(client))
                 continue
 
-            if client.get("client_type") == "1":
-                AfkMover.logger.debug("Ignoring ServerQuery client: %s", str(client))
+            if int(client.get("cid", "-1")) == int(self.afk_channel):
+                AfkMover.logger.debug(
+                    "The client is already in the `afk_channel`: %s", str(client)
+                )
                 continue
+
+            if CHANNELS_TO_EXCLUDE is not None:
+                if client.get("cid") in self.channel_ids_to_ignore:
+                    AfkMover.logger.debug(
+                        "The client is in a channel, which should be ignored: %s",
+                        str(client),
+                    )
+                    continue
 
             if SERVERGROUPS_TO_EXCLUDE is not None:
                 client_is_in_group = False
@@ -336,23 +390,8 @@ class AfkMover(Thread):
                 if client_is_in_group:
                     continue
 
-            if "client_away" not in client.keys():
-                AfkMover.logger.debug(
-                    "The client has no `client_away` property: %s", str(client)
-                )
-                continue
-
-            if client.get("client_away", "0") == "0":
-                AfkMover.logger.debug("The client is not away: %s", str(client))
-                continue
-
-            if int(client.get("cid", "-1")) == int(self.afk_channel):
-                AfkMover.logger.debug(
-                    "The client is already in the `afk_channel`: %s", str(client)
-                )
-                continue
-
             awaylist.append(client)
+
         return awaylist
 
     def move_to_afk(self, client_list):
@@ -506,6 +545,7 @@ def setup(
     auto_start=AUTO_START,
     enable_dry_run=DRY_RUN,
     frequency=CHECK_FREQUENCY_SECONDS,
+    exclude_channels=CHANNELS_TO_EXCLUDE,
     exclude_servergroups=SERVERGROUPS_TO_EXCLUDE,
     auto_move_back=ENABLE_AUTO_MOVE_BACK,
     respect_channel_settings=RESP_CHANNEL_SETTINGS,
@@ -515,12 +555,13 @@ def setup(
     """
     Sets up this plugin.
     """
-    global BOT, AUTO_START, DRY_RUN, CHECK_FREQUENCY_SECONDS, SERVERGROUPS_TO_EXCLUDE, ENABLE_AUTO_MOVE_BACK, RESP_CHANNEL_SETTINGS, FALLBACK_ACTION, CHANNEL_NAME
+    global BOT, AUTO_START, DRY_RUN, CHECK_FREQUENCY_SECONDS, CHANNELS_TO_EXCLUDE, SERVERGROUPS_TO_EXCLUDE, ENABLE_AUTO_MOVE_BACK, RESP_CHANNEL_SETTINGS, FALLBACK_ACTION, CHANNEL_NAME
 
     BOT = ts3bot
     AUTO_START = auto_start
     DRY_RUN = enable_dry_run
     CHECK_FREQUENCY_SECONDS = frequency
+    CHANNELS_TO_EXCLUDE = exclude_channels
     SERVERGROUPS_TO_EXCLUDE = exclude_servergroups
     ENABLE_AUTO_MOVE_BACK = auto_move_back
     RESP_CHANNEL_SETTINGS = respect_channel_settings
