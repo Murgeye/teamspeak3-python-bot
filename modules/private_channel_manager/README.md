@@ -1,6 +1,12 @@
 # About
 
-This plugin extends your bot with the feature to automatically create channels for users, which want their own channel with a respective group (e.g. Channel Admin).
+This plugin extends your bot with the feature to automatically create channels for users, which request an own channel.
+Depending on your personal configuration, these channels will be automatically cleaned up (deleted) again once they are
+empty - either immediately or after a specific amount of seconds.
+
+Configure for example a "Support Lobby", where clients will get an own channel, when they join the lobby. Or define a
+"Create Private Channel" channel and every client, which joins this channel will get an own channel with e.g. "Channel
+Admin" permissions.
 
 
 # Available Commands
@@ -26,24 +32,36 @@ PrivateChannelManager: private_channel_manager.main
 
 ## Options
 
-This plugin supports the following options:
+This plugin supports the following general options:
 
 | Option | Default | Description |
 | ---: | :---: | :--- |
 | `auto_start` | `True` | Either if the plugin should automatically start when the Bot starts and it's configured or not. |
 | `enable_dry_run` | `False` | Set to `True`, if you want to test the plugin without executing the actual tasks. Instead it logs what it would have done. |
 | `exclude_servergroups` | `None` | Provide a comma seperated list of servergroup names, which should never get an own channel by the bot. |
-| `channel_name` | `Create own private channel` | The channel name, which a client must join to request an own channel. The name can be a pattern. |
-| `channel_group_name` | `Channel Admin` | The channel group name, which a client should get assigned in his own channel. |
-| `channel_deletion_delay_seconds` | `0` | Time in seconds before this channel will be auto deleted when empty. `0` means immediately. |
+
+This plugin supports the following channel options:
+
+> **_NOTE:_** `<alias>` can be anything - it's only used to differentiate between multiple channel configurations. Supported characters for the `alias`: `a-z`, `A-Z`, `0-9_`
+
+| Option | Default | Description |
+| ---: | :---: | :--- |
+| `<alias>.main_channel_name` | `None` | The channel name, which a client must join to request an own channel. The name can be a pattern. |
+| `<alias>.channel_group_name` | `Channel Admin` | The channel group name, which a client should get assigned in his own channel. |
+| `<alias>.<channel_property>` | `None` | Optionally set any officially available channel property like `channel_description` or `channel_maxclients`. |
 
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
 
 ```
 [private_channel_manager]
 exclude_servergroups: Guest,Bot
-channel_name: Create Private Channel
-channel_deletion_delay_seconds: 300
+
+support.main_channel_name: Support
+support.channel_group_name: Guest
+support.channel_maxclients: 2
+
+private_channels.main_channel_name: Create Private Channel
+private_channels.channel_delete_delay: 300
 ```
 
 Please keep in mind, that you need to reload the plugin afterwards. Either by restarting the entire bot or by using a plugin command, if it has one.

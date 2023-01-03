@@ -3,13 +3,13 @@ import logging
 import threading
 from threading import Thread
 from typing import Union
+from copy import deepcopy
 import re
 
 # third-party imports
 from ts3API.Events import ClientEnteredEvent, ClientMovedEvent, ClientMovedSelfEvent
 from ts3API.TS3Connection import TS3QueryException
 from ts3API.utilities import TS3Exception
-from ts3API.TS3QueryExceptionType import TS3QueryExceptionType
 
 # local imports
 from module_loader import setup_plugin, exit_plugin, command, event
@@ -25,9 +25,7 @@ BOT: teamspeak_bot.Ts3Bot
 AUTO_START = True
 DRY_RUN = False  # log instead of performing actual actions
 SERVERGROUPS_TO_EXCLUDE = None
-CHANNEL_NAME = "Create own private channel"
-CHANNEL_GROUP_NAME = "Channel Admin"
-CHANNEL_DELETION_DELAY_SECONDS = 0
+CHANNEL_SETTINGS = None
 
 
 class PrivateChannelManager(Thread):
@@ -58,38 +56,14 @@ class PrivateChannelManager(Thread):
         Thread.__init__(self)
         self.stopped = stop_event
         self.ts3conn = ts3conn
-        self.update_servergroup_ids_list()
 
-        self.creation_channel_id = None
-        self.creation_channel_id = self.get_channel_by_name(CHANNEL_NAME)
-        if self.creation_channel_id is None:
-            PrivateChannelManager.logger.error(
-                "Could not find any channel with the name `%s`.", str(CHANNEL_NAME)
-            )
+        self.servergroup_ids_to_ignore = []
+        self.servergroup_ids_to_ignore = self.update_servergroup_ids_list()
 
-        self.channel_group_id = None
-        self.channel_group_id = self.get_channel_group_by_name(CHANNEL_GROUP_NAME)
-        if self.channel_group_id is None:
-            PrivateChannelManager.logger.error(
-                "Could not find any channel group with the name `%s`.",
-                str(CHANNEL_GROUP_NAME),
-            )
-
-    def get_channel_by_name(self, name="Create your own channel"):
-        """
-        Get the channel id of the channel specified by name.
-        :param name: Channel name
-        :return: Channel id
-        """
-        try:
-            channel_id = self.ts3conn.channelfind(name)[0].get("cid", "-1")
-        except TS3Exception:
-            PrivateChannelManager.logger.exception(
-                "Error while finding a channel with the name `%s`.", str(name)
-            )
-            raise
-
-        return channel_id
+        self.channel_configs = []
+        self.channel_configs = self.parse_channel_settings(CHANNEL_SETTINGS)
+        if len(self.channel_configs) == 0:
+            raise ValueError("This plugin requires at least one channel configuration")
 
     def get_channel_group_by_name(self, name="Channel Admin"):
         """
@@ -127,13 +101,13 @@ class PrivateChannelManager(Thread):
         """
         Updates the list of servergroup IDs, which should be ignored.
         """
-        self.servergroup_ids_to_ignore = []
+        servergroup_ids_to_ignore = []
 
         if SERVERGROUPS_TO_EXCLUDE is None:
             PrivateChannelManager.logger.debug(
                 "No servergroups to exclude defined. Nothing todo."
             )
-            return
+            return servergroup_ids_to_ignore
 
         try:
             servergroup_list = self.ts3conn.servergrouplist()
@@ -142,10 +116,80 @@ class PrivateChannelManager(Thread):
                 "Failed to get the list of available servergroups."
             )
 
-        self.servergroup_ids_to_ignore.clear()
         for servergroup in servergroup_list:
             if servergroup.get("name") in SERVERGROUPS_TO_EXCLUDE.split(","):
-                self.servergroup_ids_to_ignore.append(servergroup.get("sgid"))
+                servergroup_ids_to_ignore.append(servergroup.get("sgid"))
+
+        return servergroup_ids_to_ignore
+
+    def get_channel_by_name(self, name="Create your own channel"):
+        """
+        Get the channel id of the channel specified by name.
+        :param name: Channel name
+        :return: Channel id
+        """
+        try:
+            channel_id = self.ts3conn.channelfind(name)[0].get("cid", "-1")
+        except TS3Exception:
+            PrivateChannelManager.logger.exception(
+                "Error while finding a channel with the name `%s`.", str(name)
+            )
+            raise
+
+        return channel_id
+
+    def parse_channel_settings(self, channel_settings):
+        """
+        Parses the channel settings.
+        :params: channel_settings: Channel settings
+        """
+        old_channel_alias = None
+        channel_properties_dict = {}
+        channel_configs = []
+
+        for key, value in channel_settings.items():
+            try:
+                channel_alias, channel_setting_name = key.split(".")
+            except ValueError:
+                PrivateChannelManager.logger.exception(
+                    "Failed to get channel alias and setting name. Please ensure, that your plugin configuration is valid."
+                )
+                raise
+
+            if old_channel_alias is None:
+                old_channel_alias = channel_alias
+
+            if channel_alias != old_channel_alias and len(channel_properties_dict) > 0:
+                old_channel_alias = channel_alias
+                channel_configs.append(deepcopy(channel_properties_dict))
+                channel_properties_dict.clear()
+
+            channel_properties_dict[channel_setting_name] = value
+
+            if channel_setting_name == "main_channel_name":
+                channel_properties_dict["main_channel_cid"] = self.get_channel_by_name(
+                    value
+                )
+
+            if channel_setting_name == "channel_group_name":
+                channel_group_id = None
+                channel_group_id = self.get_channel_group_by_name(value)
+                if channel_group_id is None:
+                    PrivateChannelManager.logger.error(
+                        "Could not find any channel group with the name `%s`.",
+                        str(value),
+                    )
+                    raise ValueError
+
+                channel_properties_dict["channel_group_id"] = int(channel_group_id)
+
+        channel_configs.append(deepcopy(channel_properties_dict))
+
+        PrivateChannelManager.logger.info(
+            "Active channel configurations: %s", str(channel_configs)
+        )
+
+        return channel_configs
 
     def get_servergroups_by_client(self, cldbid):
         """
@@ -204,9 +248,12 @@ class PrivateChannelManager(Thread):
             )
             raise
 
-        if int(client.target_channel_id) is not int(self.creation_channel_id):
+        if not any(
+            int(channel_config["main_channel_cid"]) == int(client.target_channel_id)
+            for channel_config in self.channel_configs
+        ):
             PrivateChannelManager.logger.debug(
-                "The client did not join the channel, which creates new channels."
+                "The client did not join any channel, which creates new channels."
             )
             return
 
@@ -222,17 +269,54 @@ class PrivateChannelManager(Thread):
                     )
                     return
 
+        channel_configs = deepcopy(self.channel_configs)
+        for channel_config in channel_configs:
+            try:
+                main_channel_name = channel_config.pop("main_channel_name")
+                main_channel_cid = channel_config.pop("main_channel_cid")
+            except KeyError:
+                PrivateChannelManager.logger.exception(
+                    "Could not retrieve the required information from the channel configuration."
+                )
+                continue
+
+            try:
+                channel_group_id = channel_config.pop("channel_group_id")
+            except KeyError:
+                default_channel_group = "Channel Admin"
+                channel_group_id = None
+                channel_group_id = self.get_channel_group_by_name(default_channel_group)
+                if channel_group_id is None:
+                    PrivateChannelManager.logger.error(
+                        "Could not find any channel group with the name `%s`.",
+                        str(default_channel_group),
+                    )
+                    return
+
+            if int(main_channel_cid) == int(client.target_channel_id):
+                channel_settings = channel_config
+                break
+
         PrivateChannelManager.logger.info(
-            "client_nickname=%s requested an own channel.",
+            "client_nickname=%s requested an own channel under the channel `%s`.",
             str(client_info.get("client_nickname")),
+            str(main_channel_name),
         )
 
         channel_properties = []
         channel_properties.append("channel_flag_semi_permanent=1")
-        channel_properties.append(f"cpid={int(self.creation_channel_id)}")
+        channel_properties.append(f"cpid={int(main_channel_cid)}")
         channel_properties.append(
             f"channel_name=Private channel from {client_info.get('client_nickname')}"
         )
+
+        channel_delete_delay = 0
+        for key, value in channel_settings.items():
+            if key == "channel_delete_delay":
+                channel_delete_delay = value
+                continue
+
+            channel_properties.append(f"{key}={value}")
 
         if DRY_RUN:
             PrivateChannelManager.logger.info(
@@ -267,7 +351,7 @@ class PrivateChannelManager(Thread):
                 self.ts3conn._send(
                     "setclientchannelgroup",
                     [
-                        f"cgid={int(self.channel_group_id)}",
+                        f"cgid={int(channel_group_id)}",
                         f"cid={int(recently_created_channel.get('cid'))}",
                         f"cldbid={int(client_info.get('client_database_id'))}",
                     ],
@@ -284,7 +368,7 @@ class PrivateChannelManager(Thread):
                     [
                         f"cid={int(recently_created_channel.get('cid'))}",
                         "channel_flag_semi_permanent=0",
-                        f"channel_delete_delay={int(CHANNEL_DELETION_DELAY_SECONDS)}",
+                        f"channel_delete_delay={int(channel_delete_delay)}",
                     ],
                 )
             except TS3QueryException:
@@ -362,22 +446,18 @@ def setup(
     auto_start=AUTO_START,
     enable_dry_run=DRY_RUN,
     exclude_servergroups=SERVERGROUPS_TO_EXCLUDE,
-    channel_name=CHANNEL_NAME,
-    channel_group_name=CHANNEL_GROUP_NAME,
-    channel_deletion_delay_seconds=CHANNEL_DELETION_DELAY_SECONDS,
+    **channel_settings,
 ):
     """
     Sets up this plugin.
     """
-    global BOT, AUTO_START, DRY_RUN, SERVERGROUPS_TO_EXCLUDE, CHANNEL_NAME, CHANNEL_GROUP_NAME, CHANNEL_DELETION_DELAY_SECONDS
+    global BOT, AUTO_START, DRY_RUN, SERVERGROUPS_TO_EXCLUDE, CHANNEL_SETTINGS
 
     BOT = ts3bot
     AUTO_START = auto_start
     DRY_RUN = enable_dry_run
     SERVERGROUPS_TO_EXCLUDE = exclude_servergroups
-    CHANNEL_NAME = channel_name
-    CHANNEL_GROUP_NAME = channel_group_name
-    CHANNEL_DELETION_DELAY_SECONDS = channel_deletion_delay_seconds
+    CHANNEL_SETTINGS = channel_settings
 
     if AUTO_START:
         start_plugin()
