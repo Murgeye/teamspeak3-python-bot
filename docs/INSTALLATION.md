@@ -21,7 +21,7 @@ Software:
 # Installation
 
 1. Install the software requirements from above (e.g. `sudo apt install git python3 python3-venv`)
-2. Clone this repository using Git: `git clone https://github.com/Murgeye/teamspeak3-python-bot.git`
+2. Clone this repository using Git: `git clone https://github.com/Sebi94nbg/teamspeak3-python-bot.git`
 3. Switch into the project directory: `cd teamspeak3-python-bot/`
 4. Update the Git submodules: `git submodule update --init --recursive`
 5. Create your own config file: `cp config.example.ini config.ini`
