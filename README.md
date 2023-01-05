@@ -16,6 +16,10 @@ Works with a TeamSpeak 3 (TS3) and TeamSpeak 5 (TS5; Beta) server.
 
 [Open Configuration README](/docs/CONFIGURATION.md)
 
+# Update
+
+[Open Update README](/docs/UPDATE.md)
+
 # Available Plugins
 
 All existing functionality is based on plugins.
