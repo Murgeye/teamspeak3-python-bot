@@ -77,9 +77,9 @@ class InformTeamAboutNewbie(Thread):
 
         self.team_servergroups = []
         for team_servergroup_name in TEAM_SERVERGROUP_NAMES.split(","):
-            self.team_servergroups.append(
-                self.get_servergroup_by_name(team_servergroup_name)
-            )
+            servergroup = self.get_servergroup_by_name(team_servergroup_name)
+            if servergroup is not None:
+                self.team_servergroups.append(servergroup)
 
         if len(self.team_servergroups) == 0:
             InformTeamAboutNewbie.logger.error(
