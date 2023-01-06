@@ -9,6 +9,7 @@ import sys
 from urllib import request, error
 import json
 from datetime import datetime, timedelta
+import re
 
 # third-party imports
 from ts3API.TS3Connection import TS3QueryException
@@ -201,7 +202,17 @@ class TwitchLive(Thread):
             "Getting Twitch streamer user ID from `%s`.", str(client_description)
         )
 
-        twitch_login = client_description.replace("https://www.twitch.tv/", "")
+        twitch_login = client_description.replace("https://www.twitch.tv/", "").strip()
+
+        twitch_streamer_user_id = None
+
+        if re.search(r"\s", twitch_login):
+            TwitchLive.logger.debug(
+                "The client description contains at least one whitespace, which is not possible and allowed for Twitch logins: %s",
+                str(twitch_login),
+            )
+            return twitch_streamer_user_id
+
         TwitchLive.logger.debug(
             "Getting Twitch streamer user ID for `login` `%s`.", str(twitch_login)
         )
@@ -213,8 +224,6 @@ class TwitchLive(Thread):
             "Authorization", f"Bearer {self.twitch_api_access_token}"
         )
         api_request.add_header("Client-Id", str(self.twitch_api_client_id))
-
-        twitch_streamer_user_id = None
 
         try:
             with request.urlopen(api_request) as api_response:
