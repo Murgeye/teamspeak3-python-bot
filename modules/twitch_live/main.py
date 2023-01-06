@@ -20,7 +20,7 @@ from module_loader import setup_plugin, exit_plugin, command
 import teamspeak_bot
 import client_info
 
-PLUGIN_VERSION = 0.1
+PLUGIN_VERSION = 0.2
 PLUGIN_COMMAND_NAME = "twitchlive"
 PLUGIN_INFO: Union[None, "TwitchLive"] = None
 PLUGIN_STOPPER = threading.Event()
