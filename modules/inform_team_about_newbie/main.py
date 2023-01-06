@@ -86,6 +86,11 @@ class InformTeamAboutNewbie(Thread):
                 "Could not find any team servergroup with the following names: %s",
                 str(TEAM_SERVERGROUP_NAMES),
             )
+        else:
+            InformTeamAboutNewbie.logger.info(
+                "Found the following team servergroups: %s",
+                str(self.team_servergroups),
+            )
 
         self.newbie_poke_message = NEWBIE_POKE_MESSAGE
         self.team_poke_message = TEAM_POKE_MESSAGE
