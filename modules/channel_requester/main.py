@@ -221,6 +221,30 @@ class ChannelRequester(Thread):
 
         return client_servergroup_ids
 
+    def find_channels_by_prefix(self, channel_name_prefix=None):
+        """
+        Finds channels with a specific prefix.
+        :param: channel_name_prefix: The prefix of the channel name, which you want to search for.
+        :return: List of channels
+        :type: list[dict]
+        """
+        managed_channels_list = []
+
+        if channel_name_prefix is None:
+            return managed_channels_list
+
+        try:
+            all_channels = self.ts3conn.channellist()
+        except TS3Exception:
+            ChannelRequester.logger.exception("Could not get the current channel list.")
+            raise
+
+        for channel in all_channels:
+            if channel.get("channel_name").startswith(channel_name_prefix):
+                managed_channels_list.append(channel)
+
+        return managed_channels_list
+
     def create_channel(self, client=None):
         """
         Creates a channel and grants a specific client channel admin permissions.
@@ -280,6 +304,7 @@ class ChannelRequester(Thread):
 
             try:
                 channel_group_id = channel_config.pop("channel_group_id")
+                channel_name = channel_config.pop("channel_name")
             except KeyError:
                 default_channel_group = "Channel Admin"
                 channel_group_id = None
@@ -290,6 +315,8 @@ class ChannelRequester(Thread):
                         str(default_channel_group),
                     )
                     return
+
+                channel_name = None
 
             if int(main_channel_cid) == int(client.target_channel_id):
                 channel_settings = channel_config
@@ -304,9 +331,56 @@ class ChannelRequester(Thread):
         channel_properties = []
         channel_properties.append("channel_flag_semi_permanent=1")
         channel_properties.append(f"cpid={int(main_channel_cid)}")
-        channel_properties.append(
-            f"channel_name=Private channel from {client_info.get('client_nickname')}"
-        )
+
+        if channel_name is not None:
+            if re.search("%i", channel_name):
+                channels_with_prefix = self.find_channels_by_prefix(
+                    channel_name.replace("%i", "")
+                )
+
+                i = 1
+                next_channel_name_number = None
+                previous_channel_id = None
+                for channel_info in channels_with_prefix:
+                    channel_name_number = int(
+                        channel_info["channel_name"]
+                        .replace(channel_name.replace("%i", "").strip(), "")
+                        .strip()
+                    )
+
+                    if channel_name_number != i:
+                        next_channel_name_number = i
+                        previous_channel = [
+                            channel_info
+                            for channel_info in channels_with_prefix
+                            if channel_info["channel_name"]
+                            == channel_name.replace("%i", str(i - 1))
+                        ]
+                        previous_channel_id = int(previous_channel[0].get("cid"))
+                        break
+
+                    i += 1
+
+                if next_channel_name_number is None:
+                    next_channel_name_number = i
+
+                channel_name = channel_name.replace("%i", str(next_channel_name_number))
+
+                if previous_channel_id is not None:
+                    channel_properties.append(
+                        f"channel_order={int(previous_channel_id)}"
+                    )
+
+            if re.search("%u", channel_name):
+                channel_name = channel_name.replace(
+                    "%u", client_info.get("client_nickname")
+                )
+
+            channel_properties.append(f"channel_name={channel_name}")
+        else:
+            channel_properties.append(
+                f"channel_name={client_info.get('client_nickname')}"
+            )
 
         channel_delete_delay = 0
         channel_permissions = []

@@ -47,6 +47,7 @@ This plugin supports the following channel options:
 | Option | Default | Description |
 | ---: | :---: | :--- |
 | `<alias>.main_channel_name` | `None` | The channel name, which a client must join to request an own channel. The name can be a pattern. |
+| `<alias>.channel_name` | `%u` | How the requested channel should be initially named. A channel name must be unique! Supported variables: `%i` (counting integer number: 1, 2, 3, ...), `%u` (the clients nickname) |
 | `<alias>.channel_group_name` | `Channel Admin` | The channel group name, which a client should get assigned in his own channel. |
 | `<alias>.<channel_property>` | `None` | Optionally set any officially available channel property like `channel_description` or `channel_maxclients`. |
 | `<alias>.<channel_permission_name>` | `None` | Optionally set any officially available channel permission name like `i_channel_needed_join_power` or `i_ft_needed_file_browse_power`. |
@@ -57,11 +58,13 @@ If you need to change some of these default options, simply add them to your `co
 [channel_requester]
 exclude_servergroups: Guest,Bot
 
-support.main_channel_name: Support
+support.main_channel_name: Support Lobby
+support.channel_name: Support %i
 support.channel_group_name: Guest
 support.channel_maxclients: 2
 
 private_channels.main_channel_name: Create Private Channel
+private_channels..channel_name: Kingdom of %u
 private_channels.channel_delete_delay: 300
 private_channels.i_ft_needed_file_browse_power: 75
 ```
