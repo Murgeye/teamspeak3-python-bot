@@ -13,7 +13,7 @@ from ts3API.utilities import TS3Exception
 from module_loader import setup_plugin, exit_plugin, command, event
 import teamspeak_bot
 
-PLUGIN_VERSION = 0.1
+PLUGIN_VERSION = 0.2
 PLUGIN_COMMAND_NAME = "informteamaboutnewbie"
 PLUGIN_INFO: Union[None, "InformTeamAboutNewbie"] = None
 PLUGIN_STOPPER = threading.Event()
@@ -77,14 +77,19 @@ class InformTeamAboutNewbie(Thread):
 
         self.team_servergroups = []
         for team_servergroup_name in TEAM_SERVERGROUP_NAMES.split(","):
-            self.team_servergroups.append(
-                self.get_servergroup_by_name(team_servergroup_name)
-            )
+            servergroup = self.get_servergroup_by_name(team_servergroup_name)
+            if servergroup is not None:
+                self.team_servergroups.append(servergroup)
 
         if len(self.team_servergroups) == 0:
             InformTeamAboutNewbie.logger.error(
                 "Could not find any team servergroup with the following names: %s",
                 str(TEAM_SERVERGROUP_NAMES),
+            )
+        else:
+            InformTeamAboutNewbie.logger.info(
+                "Found the following team servergroups: %s",
+                str(self.team_servergroups),
             )
 
         self.newbie_poke_message = NEWBIE_POKE_MESSAGE
@@ -96,14 +101,25 @@ class InformTeamAboutNewbie(Thread):
         :param name: Servergroup name
         :return: Servergroup
         """
-        servergroup = None
         try:
-            servergroup = self.ts3conn.find_servergroup_by_name(str(name))
+            servergroups = self.ts3conn.servergrouplist()
         except TS3Exception:
             InformTeamAboutNewbie.logger.exception(
                 "Could not find any servergroup with the following name: %s", str(name)
             )
             raise
+
+        servergroup = None
+        for group in servergroups:
+            if int(group.get("type")) == 0:
+                InformTeamAboutNewbie.logger.debug(
+                    "Ignoring servergroup template: %s", str(group)
+                )
+                continue
+
+            if group.get("name") == name:
+                servergroup = group
+                break
 
         return servergroup
 
