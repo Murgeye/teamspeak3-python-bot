@@ -101,14 +101,25 @@ class InformTeamAboutNewbie(Thread):
         :param name: Servergroup name
         :return: Servergroup
         """
-        servergroup = None
         try:
-            servergroup = self.ts3conn.find_servergroup_by_name(str(name))
+            servergroups = self.ts3conn.servergrouplist()
         except TS3Exception:
             InformTeamAboutNewbie.logger.exception(
                 "Could not find any servergroup with the following name: %s", str(name)
             )
             raise
+
+        servergroup = None
+        for group in servergroups:
+            if int(group.get("type")) == 0:
+                InformTeamAboutNewbie.logger.debug(
+                    "Ignoring servergroup template: %s", str(group)
+                )
+                continue
+
+            if group.get("name") == name:
+                servergroup = group
+                break
 
         return servergroup
 
