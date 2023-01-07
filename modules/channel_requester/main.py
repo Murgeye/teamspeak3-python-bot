@@ -15,7 +15,7 @@ from ts3API.utilities import TS3Exception
 from module_loader import setup_plugin, exit_plugin, command, event
 import teamspeak_bot
 
-PLUGIN_VERSION = 0.3
+PLUGIN_VERSION = 0.4
 PLUGIN_COMMAND_NAME = "channelrequester"
 PLUGIN_INFO: Union[None, "ChannelRequester"] = None
 PLUGIN_STOPPER = threading.Event()
@@ -309,17 +309,22 @@ class ChannelRequester(Thread):
         )
 
         channel_delete_delay = 0
+        channel_permissions = []
         for key, value in channel_settings.items():
             if key == "channel_delete_delay":
                 channel_delete_delay = value
                 continue
 
-            channel_properties.append(f"{key}={value}")
+            if key.startswith("channel_"):
+                channel_properties.append(f"{key}={value}")
+            else:
+                channel_permissions.append({f"{key}": value})
 
         if DRY_RUN:
             ChannelRequester.logger.info(
-                "I would have created the following channel, when dry-run would be disabled: %s",
+                "I would have created the following channel, when dry-run would be disabled: %s, %s",
                 str(channel_properties),
+                str(channel_permissions),
             )
         else:
             ChannelRequester.logger.info(
@@ -333,6 +338,32 @@ class ChannelRequester(Thread):
             except TS3QueryException:
                 ChannelRequester.logger.exception("Failed to create the channel.")
                 raise
+
+            if len(channel_permissions) > 0:
+                ChannelRequester.logger.info(
+                    "Setting the following channel permissions on the channel `%s`: %s",
+                    int(recently_created_channel.get("cid")),
+                    str(channel_permissions),
+                )
+
+                for permission in channel_permissions:
+                    for permsid, permvalue in permission.items():
+                        try:
+                            self.ts3conn._send(
+                                "channeladdperm",
+                                [
+                                    f"cid={int(recently_created_channel.get('cid'))}",
+                                    f"permsid={permsid}",
+                                    f"permvalue={permvalue}",
+                                ],
+                            )
+                        except TS3QueryException:
+                            ChannelRequester.logger.exception(
+                                "Failed to set the channel permission `%s` for the cid=%s.",
+                                str(permsid),
+                                int(recently_created_channel.get("cid")),
+                            )
+                            raise
 
             try:
                 self.ts3conn.clientmove(
