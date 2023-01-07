@@ -48,6 +48,7 @@ This plugin supports the following channel options:
 | `<alias>.name_prefix` | `None` | Sets the prefix of the channel name. Example: `Talk` will become `Talk 1`, `Talk 2`, etc.. |
 | `<alias>.minimum` | `1` | Defines how many of this channel you always want to have, even when no client is in it. Must be `1` or greater. |
 | `<alias>.<channel_property>` | `None` | Optionally set any officially available channel property like `channel_description` or `channel_maxclients`. |
+| `<alias>.<channel_permission_name>` | `None` | Optionally set any officially available channel permission name like `i_channel_needed_join_power` or `i_ft_needed_file_browse_power`. |
 
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
 
@@ -60,6 +61,7 @@ bf2042_squad.parent_channel_name: cspacer15
 bf2042_squad.name_prefix: Battlefield 2042 Squad
 bf2042_squad.channel_description: Let's play BF2042!
 bf2042_squad.channel_maxclients: 4
+bf2042_squad.i_ft_needed_file_browse_power: 75
 
 pubg_duo.parent_channel_name: PUBG
 pubg_duo.name_prefix: Duo

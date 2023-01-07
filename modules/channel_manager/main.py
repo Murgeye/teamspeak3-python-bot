@@ -20,7 +20,7 @@ from ts3API.utilities import TS3Exception
 from module_loader import setup_plugin, exit_plugin, command, event
 import teamspeak_bot
 
-PLUGIN_VERSION = 0.1
+PLUGIN_VERSION = 0.2
 PLUGIN_COMMAND_NAME = "channelmanager"
 PLUGIN_INFO: Union[None, "ChannelManager"] = None
 PLUGIN_STOPPER = threading.Event()
@@ -253,8 +253,12 @@ class ChannelManager(Thread):
             channel_properties.append(f"cpid={parent_channel_id}")
             channel_properties.append("channel_flag_semi_permanent=1")
 
+            channel_permissions = []
             for key, value in channel_config.items():
-                channel_properties.append(f"{key}={value}")
+                if key.startswith("channel_"):
+                    channel_properties.append(f"{key}={value}")
+                else:
+                    channel_permissions.append({f"{key}": value})
 
             i = 1
             while i <= amount_of_channels_to_create:
@@ -273,8 +277,9 @@ class ChannelManager(Thread):
 
                 if DRY_RUN:
                     ChannelManager.logger.info(
-                        "I would have created the following channel, when dry-run would be disabled: %s",
+                        "I would have created the following channel, when dry-run would be disabled: %s, %s",
                         str(channel_properties),
+                        str(channel_permissions),
                     )
                 else:
                     ChannelManager.logger.info(
@@ -282,7 +287,9 @@ class ChannelManager(Thread):
                         str(channel_properties),
                     )
                     try:
-                        self.ts3conn._send("channelcreate", channel_properties)
+                        recently_created_channel = self.ts3conn._parse_resp_to_dict(
+                            self.ts3conn._send("channelcreate", channel_properties)
+                        )
                     except TS3Exception as query_exception:
                         # channel name is already in use
                         if query_exception.id == 771:
@@ -296,6 +303,32 @@ class ChannelManager(Thread):
                             "Error while creating channel: %s", str(channel_properties)
                         )
                         raise
+
+                    if len(channel_permissions) > 0:
+                        ChannelManager.logger.info(
+                            "Setting the following channel permissions on the channel `%s`: %s",
+                            int(recently_created_channel.get("cid")),
+                            str(channel_permissions),
+                        )
+
+                        for permission in channel_permissions:
+                            for permsid, permvalue in permission.items():
+                                try:
+                                    self.ts3conn._send(
+                                        "channeladdperm",
+                                        [
+                                            f"cid={int(recently_created_channel.get('cid'))}",
+                                            f"permsid={permsid}",
+                                            f"permvalue={permvalue}",
+                                        ],
+                                    )
+                                except TS3Exception:
+                                    ChannelManager.logger.exception(
+                                        "Failed to set the channel permission `%s` for the cid=%s.",
+                                        str(permsid),
+                                        int(recently_created_channel.get("cid")),
+                                    )
+                                    raise
 
     def create_channel_when_necessary(self):
         """
@@ -394,13 +427,18 @@ class ChannelManager(Thread):
 
             channel_properties.append(f"channel_order={previous_channel_id}")
 
+            channel_permissions = []
             for key, value in channel_config.items():
-                channel_properties.append(f"{key}={value}")
+                if key.startswith("channel_"):
+                    channel_properties.append(f"{key}={value}")
+                else:
+                    channel_permissions.append({f"{key}": value})
 
             if DRY_RUN:
                 ChannelManager.logger.info(
-                    "I would have created the following channel, when dry-run would be disabled: %s",
+                    "I would have created the following channel, when dry-run would be disabled: %s, %s",
                     str(channel_properties),
+                    str(channel_permissions),
                 )
             else:
                 ChannelManager.logger.info(
@@ -409,12 +447,40 @@ class ChannelManager(Thread):
                 )
 
                 try:
-                    self.ts3conn._send("channelcreate", channel_properties)
+                    recently_created_channel = self.ts3conn._parse_resp_to_dict(
+                        self.ts3conn._send("channelcreate", channel_properties)
+                    )
                 except TS3Exception:
                     ChannelManager.logger.exception(
                         "Error while creating channel: %s", str(channel_properties)
                     )
                     raise
+
+                if len(channel_permissions) > 0:
+                    ChannelManager.logger.info(
+                        "Setting the following channel permissions on the channel `%s`: %s",
+                        int(recently_created_channel.get("cid")),
+                        str(channel_permissions),
+                    )
+
+                    for permission in channel_permissions:
+                        for permsid, permvalue in permission.items():
+                            try:
+                                self.ts3conn._send(
+                                    "channeladdperm",
+                                    [
+                                        f"cid={int(recently_created_channel.get('cid'))}",
+                                        f"permsid={permsid}",
+                                        f"permvalue={permvalue}",
+                                    ],
+                                )
+                            except TS3Exception:
+                                ChannelManager.logger.exception(
+                                    "Failed to set the channel permission `%s` for the cid=%s.",
+                                    str(permsid),
+                                    int(recently_created_channel.get("cid")),
+                                )
+                                raise
 
     def get_channel_stats(self):
         """
