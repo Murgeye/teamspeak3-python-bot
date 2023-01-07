@@ -15,7 +15,7 @@ from ts3API.utilities import TS3Exception
 from module_loader import setup_plugin, exit_plugin, command, event
 import teamspeak_bot
 
-PLUGIN_VERSION = 0.2
+PLUGIN_VERSION = 0.3
 PLUGIN_COMMAND_NAME = "channelrequester"
 PLUGIN_INFO: Union[None, "ChannelRequester"] = None
 PLUGIN_STOPPER = threading.Event()
@@ -257,7 +257,7 @@ class ChannelRequester(Thread):
 
         if SERVERGROUPS_TO_EXCLUDE is not None:
             for client_servergroup_id in self.get_servergroups_by_client(
-                client.client_dbid
+                int(client_info.get("client_database_id"))
             ):
                 if client_servergroup_id in self.servergroup_ids_to_ignore:
                     ChannelRequester.logger.debug(
