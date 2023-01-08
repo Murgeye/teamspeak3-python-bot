@@ -34,6 +34,7 @@ This plugin supports the following options:
 | `enable_dry_run` | `False` | Set to `True`, if you want to test the plugin without executing the actual tasks. Instead it logs what it would have done. |
 | `newbie_servergroup_name` | `Guest` | The servergroup name, which newbies have. |
 | `support_channel_name` | `None` | Optionally define the name of your support channel, where newbies should be automatically moved into, when they join your server. |
+| `move_delay_seconds` | `None` | Optionally delay moving the client to the `support_channel_name` by a specific amount of seconds. Useful when you have for example a welcome bot, which the client should listen first. |
 | `team_servergroup_names` | `Moderator` | A comma-seperated list of servergroup names of your team, which should be poked when a newbie joined the server. |
 | `newbie_poke_message` | `Hello %u! A team member will welcome you in a moment.` | The poke message, which will be sent to the newbie. Supported variables: `%u` (the clients nickname, which receives the poke message) (Max. poke message length is 100 characters.) |
 | `team_poke_message` | `Hello %u! The following newbie joined: %n` | The poke message, which will be sent to all team clients. Supported variables: `%c` (count of team members, which will be poked), `%n` (the newbies nickname), `%u` (the clients nickname, which receives the poke message) (Max. poke message length is 100 characters.) |
@@ -44,6 +45,7 @@ If you need to change some of these default options, simply add them to your `co
 [inform_team_about_newbie]
 newbie_servergroup_name: Newbie
 support_channel_name: Support
+move_delay_seconds: 32
 team_servergroup_names: Moderator,Supporter
 team_poke_message: The following newbie is waiting for an introduction: %n
 ```
