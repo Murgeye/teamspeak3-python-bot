@@ -5,6 +5,7 @@ from threading import Thread
 from typing import Union
 
 import re
+import asyncio
 
 # third-party imports
 from ts3API.Events import ClientEnteredEvent
@@ -15,7 +16,7 @@ from ts3API.utilities import TS3Exception
 from module_loader import setup_plugin, exit_plugin, command, event
 import teamspeak_bot
 
-PLUGIN_VERSION = 0.3
+PLUGIN_VERSION = 0.4
 PLUGIN_COMMAND_NAME = "informteamaboutnewbie"
 PLUGIN_INFO: Union[None, "InformTeamAboutNewbie"] = None
 PLUGIN_STOPPER = threading.Event()
@@ -26,6 +27,7 @@ AUTO_START = True
 DRY_RUN = False  # log instead of performing actual actions
 NEWBIE_SERVERGROUP_NAME = "Guest"
 SUPPORT_CHANNEL_NAME = None
+MOVE_DELAY_SECONDS = None
 TEAM_SERVERGROUP_NAMES = "Moderator"
 NEWBIE_POKE_MESSAGE = "Hello %u! A team member will welcome you in a moment."
 TEAM_POKE_MESSAGE = "Hello %u! The following newbie joined: %n"
@@ -76,6 +78,17 @@ class InformTeamAboutNewbie(Thread):
                     "Could not find any channel with the following name: %s",
                     str(SUPPORT_CHANNEL_NAME),
                 )
+
+        self.move_delay_seconds = None
+        if MOVE_DELAY_SECONDS is not None:
+            try:
+                self.move_delay_seconds = int(MOVE_DELAY_SECONDS)
+            except ValueError:
+                InformTeamAboutNewbie.logger.error(
+                    "The given move delay is not a valid number: %s",
+                    str(MOVE_DELAY_SECONDS),
+                )
+                raise
 
         self.team_servergroups = []
         for team_servergroup_name in TEAM_SERVERGROUP_NAMES.split(","):
@@ -171,7 +184,7 @@ class InformTeamAboutNewbie(Thread):
 
         return client_servergroup_ids
 
-    def move_newbie_to_support(self, newbie_client):
+    async def move_newbie_to_support(self, newbie_client):
         """
         Moves the newbie client to the support channel.
         :params: newbie_client: The client info of the newbie.
@@ -189,11 +202,23 @@ class InformTeamAboutNewbie(Thread):
                 str(newbie_client.client_name),
             )
 
+            if self.move_delay_seconds is not None:
+                await asyncio.sleep(self.move_delay_seconds)
+
             try:
                 self.ts3conn.clientmove(
                     int(self.support_channel.get("cid")), int(newbie_client.client_id)
                 )
-            except TS3QueryException:
+            except TS3QueryException as query_exception:
+                # invalid clientID
+                if int(query_exception.id) == 512:
+                    InformTeamAboutNewbie.logger.debug(
+                        "The newbie client_database_id=%s, client_nickname=%s could not be moved to the supporter channel as he left the server in the meantime.",
+                        int(newbie_client.client_dbid),
+                        str(newbie_client.client_name),
+                    )
+                    return
+
                 InformTeamAboutNewbie.logger.exception(
                     "Failed to move the client_database_id=%s, client_nickname=%s to the supporter channel.",
                     int(newbie_client.client_dbid),
@@ -359,12 +384,12 @@ class InformTeamAboutNewbie(Thread):
             str(client.client_name),
         )
 
-        if self.support_channel is not None:
-            self.move_newbie_to_support(newbie_client=client)
-
         self.poke_team(newbie_client=client)
 
         self.poke_newbie(newbie_client=client)
+
+        if self.support_channel is not None:
+            asyncio.run(self.move_newbie_to_support(newbie_client=client))
 
 
 @event(ClientEnteredEvent)
@@ -436,6 +461,7 @@ def setup(
     enable_dry_run=DRY_RUN,
     newbie_servergroup_name=NEWBIE_SERVERGROUP_NAME,
     support_channel_name=SUPPORT_CHANNEL_NAME,
+    move_delay_seconds=MOVE_DELAY_SECONDS,
     team_servergroup_names=TEAM_SERVERGROUP_NAMES,
     newbie_poke_message=NEWBIE_POKE_MESSAGE,
     team_poke_message=TEAM_POKE_MESSAGE,
@@ -443,13 +469,14 @@ def setup(
     """
     Sets up this plugin.
     """
-    global BOT, AUTO_START, DRY_RUN, NEWBIE_SERVERGROUP_NAME, SUPPORT_CHANNEL_NAME, TEAM_SERVERGROUP_NAMES, NEWBIE_POKE_MESSAGE, TEAM_POKE_MESSAGE
+    global BOT, AUTO_START, DRY_RUN, NEWBIE_SERVERGROUP_NAME, SUPPORT_CHANNEL_NAME, MOVE_DELAY_SECONDS, TEAM_SERVERGROUP_NAMES, NEWBIE_POKE_MESSAGE, TEAM_POKE_MESSAGE
 
     BOT = ts3bot
     AUTO_START = auto_start
     DRY_RUN = enable_dry_run
     NEWBIE_SERVERGROUP_NAME = newbie_servergroup_name
     SUPPORT_CHANNEL_NAME = support_channel_name
+    MOVE_DELAY_SECONDS = move_delay_seconds
     TEAM_SERVERGROUP_NAMES = team_servergroup_names
 
     if len(newbie_poke_message) > 100:
