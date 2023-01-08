@@ -1,1 +1,5 @@
 ts3API[ssh]
+
+# Only for fixing this Pylint error: ModuleNotFoundError: No module named 'typing_extensions'
+# See https://github.com/Sebi94nbg/teamspeak3-python-bot/actions/runs/3864557425/jobs/6587510172
+typing_extensions==4.4.0
