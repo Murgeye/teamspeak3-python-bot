@@ -4,6 +4,8 @@ import threading
 from threading import Thread
 from typing import Union
 
+import re
+
 # third-party imports
 from ts3API.Events import ClientEnteredEvent
 from ts3API.TS3Connection import TS3QueryException
@@ -13,7 +15,7 @@ from ts3API.utilities import TS3Exception
 from module_loader import setup_plugin, exit_plugin, command, event
 import teamspeak_bot
 
-PLUGIN_VERSION = 0.2
+PLUGIN_VERSION = 0.3
 PLUGIN_COMMAND_NAME = "informteamaboutnewbie"
 PLUGIN_INFO: Union[None, "InformTeamAboutNewbie"] = None
 PLUGIN_STOPPER = threading.Event()
@@ -25,8 +27,8 @@ DRY_RUN = False  # log instead of performing actual actions
 NEWBIE_SERVERGROUP_NAME = "Guest"
 SUPPORT_CHANNEL_NAME = None
 TEAM_SERVERGROUP_NAMES = "Moderator"
-NEWBIE_POKE_MESSAGE = "A team member will welcome you in a moment."
-TEAM_POKE_MESSAGE = "A newbie joined!"
+NEWBIE_POKE_MESSAGE = "Hello %u! A team member will welcome you in a moment."
+TEAM_POKE_MESSAGE = "Hello %u! The following newbie joined: %n"
 
 
 class InformTeamAboutNewbie(Thread):
@@ -169,27 +171,33 @@ class InformTeamAboutNewbie(Thread):
 
         return client_servergroup_ids
 
-    def move_newbie_to_support(self, client_id):
+    def move_newbie_to_support(self, newbie_client):
         """
         Moves the newbie client to the support channel.
+        :params: newbie_client: The client info of the newbie.
         """
         if DRY_RUN:
             InformTeamAboutNewbie.logger.info(
-                "If dry-run would be disabled, I would have moved the following client to the supporter channel: clid=%s",
-                int(client_id),
+                "If dry-run would be disabled, I would have moved the following client to the supporter channel: client_database_id=%s, client_nickname=%s",
+                int(newbie_client.client_dbid),
+                str(newbie_client.client_name),
             )
         else:
             InformTeamAboutNewbie.logger.debug(
-                "Moving the following client to the supporter channel: clid=%s",
-                int(client_id),
+                "Moving the following client to the supporter channel: client_database_id=%s, client_nickname=%s",
+                int(newbie_client.client_dbid),
+                str(newbie_client.client_name),
             )
 
             try:
-                self.ts3conn.clientmove(self.support_channel.get("cid"), client_id)
+                self.ts3conn.clientmove(
+                    int(self.support_channel.get("cid")), int(newbie_client.client_id)
+                )
             except TS3QueryException:
                 InformTeamAboutNewbie.logger.exception(
-                    "Failed to move the clid=%s to the supporter channel.",
-                    int(client_id),
+                    "Failed to move the client_database_id=%s, client_nickname=%s to the supporter channel.",
+                    int(newbie_client.client_dbid),
+                    str(newbie_client.client_name),
                 )
                 raise
 
@@ -224,9 +232,10 @@ class InformTeamAboutNewbie(Thread):
 
         return client_database_ids
 
-    def poke_team(self):
+    def poke_team(self, newbie_client):
         """
         Pokes the team, when a newbie joined the server.
+        :params: newbie_client: The client info of the newbie.
         """
         try:
             client_list = self.ts3conn.clientlist()
@@ -247,49 +256,77 @@ class InformTeamAboutNewbie(Thread):
                 )
                 continue
 
-            team_member_client_ids.append(client.get("clid"))
+            team_member_client_ids.append(client)
 
-        for client_id in team_member_client_ids:
+        poke_message = self.team_poke_message
+
+        if re.search("%c", poke_message):
+            poke_message = poke_message.replace(
+                "%c", str(int(len(team_member_client_ids)))
+            )
+
+        if re.search("%n", poke_message):
+            poke_message = poke_message.replace("%n", str(newbie_client.client_name))
+
+        for client in team_member_client_ids:
+            if re.search("%u", poke_message):
+                poke_message = poke_message.replace(
+                    "%u", str(client.get("client_nickname"))
+                )
+
             if DRY_RUN:
                 InformTeamAboutNewbie.logger.info(
-                    "If dry-run would be disabled, I would have poked the following client about a newbie: clid=%s",
-                    int(client_id),
+                    "If dry-run would be disabled, I would have poked the following client about a newbie: client_database_id=%s, client_nickname=%s",
+                    int(client.get("client_database_id")),
+                    str(client.get("client_nickname")),
                 )
             else:
                 InformTeamAboutNewbie.logger.debug(
-                    "Poking the following client about a newbie: clid=%s",
-                    int(client_id),
+                    "Poking the following client about a newbie: client_database_id=%s, client_nickname=%s",
+                    int(client.get("client_database_id")),
+                    str(client.get("client_nickname")),
                 )
 
                 try:
-                    self.ts3conn.clientpoke(client_id, str(self.team_poke_message))
+                    self.ts3conn.clientpoke(client.get("clid"), str(poke_message))
                 except TS3QueryException:
                     InformTeamAboutNewbie.logger.exception(
-                        "Failed to poke the clid=%s.", int(client_id)
+                        "Failed to poke the client_database_id=%s, client_nickname=%s.",
+                        int(client.get("client_database_id")),
+                        str(client.get("client_nickname")),
                     )
                     raise
 
-    def poke_newbie(self, client_id):
+    def poke_newbie(self, newbie_client):
         """
         Pokes the newbie, that the team is informed.
-        :params: client_id: The client ID of the newbie.
+        :params: newbie_client: The client info of the newbie.
         """
+        poke_message = self.newbie_poke_message
+
+        if re.search("%u", poke_message):
+            poke_message = poke_message.replace("%u", str(newbie_client.client_name))
+
         if DRY_RUN:
             InformTeamAboutNewbie.logger.info(
-                "If dry-run would be disabled, I would have poked the following newbie, that the team is informed: clid=%s",
-                int(client_id),
+                "If dry-run would be disabled, I would have poked the following newbie, that the team is informed: client_database_id=%s, client_nickname=%s",
+                int(newbie_client.client_dbid),
+                str(newbie_client.client_name),
             )
         else:
-            InformTeamAboutNewbie.logger.debug(
-                "Poking the following newbie, that the team is informed: clid=%s",
-                int(client_id),
+            InformTeamAboutNewbie.logger.info(
+                "Poking the following newbie, that the team is informed: client_database_id=%s, client_nickname=%s",
+                int(newbie_client.client_dbid),
+                str(newbie_client.client_name),
             )
 
             try:
-                self.ts3conn.clientpoke(client_id, str(self.newbie_poke_message))
+                self.ts3conn.clientpoke(newbie_client.client_id, str(poke_message))
             except TS3QueryException:
                 InformTeamAboutNewbie.logger.exception(
-                    "Failed to poke the clid=%s.", int(client_id)
+                    "Failed to poke the newbie: client_database_id=%s, client_nickname=%s",
+                    int(newbie_client.client_dbid),
+                    str(newbie_client.client_name),
                 )
                 raise
 
@@ -323,11 +360,11 @@ class InformTeamAboutNewbie(Thread):
         )
 
         if self.support_channel is not None:
-            self.move_newbie_to_support(client.client_id)
+            self.move_newbie_to_support(newbie_client=client)
 
-        self.poke_team()
+        self.poke_team(newbie_client=client)
 
-        self.poke_newbie(client.client_id)
+        self.poke_newbie(newbie_client=client)
 
 
 @event(ClientEnteredEvent)

@@ -35,8 +35,8 @@ This plugin supports the following options:
 | `newbie_servergroup_name` | `Guest` | The servergroup name, which newbies have. |
 | `support_channel_name` | `None` | Optionally define the name of your support channel, where newbies should be automatically moved into, when they join your server. |
 | `team_servergroup_names` | `Moderator` | A comma-seperated list of servergroup names of your team, which should be poked when a newbie joined the server. |
-| `newbie_poke_message` | `A team member will welcome you in a moment.` | The poke message, which will be sent to the newbie. (Max. poke message length is 100 characters.) |
-| `team_poke_message` | `A newbie joined!` | The poke message, which will be sent to all team clients. (Max. poke message length is 100 characters.) |
+| `newbie_poke_message` | `Hello %u! A team member will welcome you in a moment.` | The poke message, which will be sent to the newbie. Supported variables: `%u` (the clients nickname, which receives the poke message) (Max. poke message length is 100 characters.) |
+| `team_poke_message` | `Hello %u! The following newbie joined: %n` | The poke message, which will be sent to all team clients. Supported variables: `%c` (count of team members, which will be poked), `%n` (the newbies nickname), `%u` (the clients nickname, which receives the poke message) (Max. poke message length is 100 characters.) |
 
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
 
@@ -45,7 +45,7 @@ If you need to change some of these default options, simply add them to your `co
 newbie_servergroup_name: Newbie
 support_channel_name: Support
 team_servergroup_names: Moderator,Supporter
-team_poke_message: A newbie is waiting for an introduction!
+team_poke_message: The following newbie is waiting for an introduction: %n
 ```
 
 Please keep in mind, that you need to reload the plugin afterwards. Either by restarting the entire bot or by using a plugin command, if it has one.
