@@ -64,6 +64,7 @@ This plugin requires the following permissions on your TeamSpeak server:
 | `b_virtualserver_servergroup_list` | Allow the bot to get the list of available servergroups on your virtual server. |
 | `b_virtualserver_servergroup_client_list` | Allow the bot to get the member list of a specific servergroup. |
 | `b_virtualserver_client_list` | Allow the bot to get a list of all connected clients on your virtual server. |
+| `b_client_info_view` | Allow the bot to execute `clientinfo` to get further client information. |
 | `i_channel_subscribe_power` | The bot must be able to subscribe channels, so that clients can be found in those channels. |
 | `b_channel_info_view` | Allow the bot to view channel information. |
 | `i_channel_modify_power` | Allow the bot to modify your supporter channel. |

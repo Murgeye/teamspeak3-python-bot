@@ -19,7 +19,7 @@ from ts3API.utilities import TS3Exception
 from module_loader import setup_plugin, exit_plugin, command, event
 import teamspeak_bot
 
-PLUGIN_VERSION = 0.1
+PLUGIN_VERSION = 0.2
 PLUGIN_COMMAND_NAME = "switchsupporterchannelstatus"
 PLUGIN_INFO: Union[None, "SwitchSupporterChannelStatus"] = None
 PLUGIN_STOPPER = threading.Event()
@@ -96,7 +96,9 @@ class SwitchSupporterChannelStatus(Thread):
 
         self.afk_clients = []
 
-        self.open_or_close_supporter_channel()
+        self.available_supporter_clients = []
+
+        self.check_all_connected_clients()
 
     def get_channel_by_name(self, name="Support Lobby"):
         """
@@ -169,9 +171,9 @@ class SwitchSupporterChannelStatus(Thread):
 
         return client_database_ids
 
-    def open_or_close_supporter_channel(self):
+    def check_all_connected_clients(self):
         """
-        Opens or closes a specific channel, when clients of specific servergroups are online or offline.
+        Checks all connected clients and opens/closes the supporter channel respectively.
         """
         try:
             client_list = self.ts3conn.clientlist()
@@ -181,38 +183,58 @@ class SwitchSupporterChannelStatus(Thread):
             )
             raise
 
-        connected_clients = []
         for connected_client in client_list:
-            if int(connected_client.get("client_type")) == 1:
-                SwitchSupporterChannelStatus.logger.debug(
-                    "Ignoring ServerQuery client: %s", connected_client
-                )
-                continue
+            self.update_available_supporter_client_list(connected_client.get("clid"))
 
-            connected_clients.append(connected_client)
+        self.open_or_close_supporter_channel()
 
-        available_supporter_client_counter = 0
-        for connected_client in connected_clients:
-            if (
-                connected_client.get("client_database_id")
-                not in self.client_database_ids_to_check
-            ):
-                SwitchSupporterChannelStatus.logger.debug(
-                    "Skipping client, which is not member of any servergroup, which I should check: %s",
-                    connected_client,
-                )
-                continue
+    def update_available_supporter_client_list(self, client_id):
+        """
+        Updates the available supporter client list in order to decide how many supporters are available or not.
+        :param: client_id: A client ID (clid)
+        """
+        try:
+            client_info = self.ts3conn.clientinfo(int(client_id))
+        except TS3QueryException:
+            SwitchSupporterChannelStatus.logger.exception(
+                "Failed to get the client list."
+            )
+            raise
 
-            if self.afk_channel_id is not None:
-                if int(connected_client.get("cid")) == int(self.afk_channel_id):
-                    SwitchSupporterChannelStatus.logger.debug(
-                        "Skipping client, which is in the AFK channel: %s",
-                        connected_client,
-                    )
-                    continue
+        if int(client_info.get("client_type")) == 1:
+            SwitchSupporterChannelStatus.logger.debug(
+                "Ignoring ServerQuery client: client_database_id=%s, client_nickname=%s",
+                client_info.get("client_database_id"),
+                client_info.get("client_nickname"),
+            )
+            return
 
-            available_supporter_client_counter += 1
+        if (
+            client_info.get("client_database_id")
+            not in self.client_database_ids_to_check
+        ):
+            if int(client_id) in self.available_supporter_clients:
+                self.available_supporter_clients.remove(int(client_id))
 
+            SwitchSupporterChannelStatus.logger.debug(
+                "Skipping client, which is not member of any servergroup, which I should check: client_database_id=%s, client_nickname=%s",
+                client_info.get("client_database_id"),
+                client_info.get("client_nickname"),
+            )
+            return
+
+        if int(client_id) not in self.available_supporter_clients:
+            self.available_supporter_clients.append(int(client_id))
+
+        if self.afk_channel_id is not None:
+            if int(client_info.get("cid")) == int(self.afk_channel_id):
+                if int(client_id) in self.available_supporter_clients:
+                    self.available_supporter_clients.remove(int(client_id))
+
+    def open_or_close_supporter_channel(self):
+        """
+        Opens or closes a specific channel, when clients of specific servergroups are online or offline.
+        """
         try:
             channel_info = self.ts3conn._parse_resp_to_list_of_dicts(
                 self.ts3conn._send(
@@ -233,7 +255,7 @@ class SwitchSupporterChannelStatus(Thread):
         channel_properties = []
         channel_properties.append(f"cid={int(self.supporter_channel_id)}")
 
-        if available_supporter_client_counter >= int(MINIMUM_ONLINE_CLIENTS):
+        if len(self.available_supporter_clients) >= int(MINIMUM_ONLINE_CLIENTS):
             channel_properties.append("channel_maxclients=-1")
             channel_properties.append(f"channel_name={original_channel_name} [OPEN]")
             switch_channel_action = "open"
@@ -259,6 +281,11 @@ class SwitchSupporterChannelStatus(Thread):
                 "Channel is already closed. Nothing todo."
             )
             return
+
+        SwitchSupporterChannelStatus.logger.info(
+            "Currently available supporters (client_database_ids): %s",
+            str(self.available_supporter_clients),
+        )
 
         if DRY_RUN:
             SwitchSupporterChannelStatus.logger.info(
@@ -293,12 +320,34 @@ class SwitchSupporterChannelStatus(Thread):
                 raise
 
 
-@event(ClientEnteredEvent, ClientLeftEvent)
-def client_joined_or_left_server():
+@event(ClientEnteredEvent)
+def client_joined_server(event_data):
     """
-    Client joined or left the server.
+    Client joined the server.
     """
     if PLUGIN_INFO is not None:
+        if int(event_data.target_channel_id) == int(PLUGIN_INFO.afk_channel_id):
+            if int(event_data.client_id) not in PLUGIN_INFO.afk_clients:
+                PLUGIN_INFO.afk_clients.append(int(event_data.client_id))
+
+        SwitchSupporterChannelStatus.update_available_supporter_client_list(
+            self=PLUGIN_INFO, client_id=event_data.client_id
+        )
+        SwitchSupporterChannelStatus.open_or_close_supporter_channel(self=PLUGIN_INFO)
+
+
+@event(ClientLeftEvent)
+def client_left_server(event_data):
+    """
+    Client left the server.
+    """
+    if PLUGIN_INFO is not None:
+        if int(event_data.client_id) in PLUGIN_INFO.afk_clients:
+            PLUGIN_INFO.afk_clients.remove(int(event_data.client_id))
+
+        if int(event_data.client_id) in PLUGIN_INFO.available_supporter_clients:
+            PLUGIN_INFO.available_supporter_clients.remove(int(event_data.client_id))
+
         SwitchSupporterChannelStatus.open_or_close_supporter_channel(self=PLUGIN_INFO)
 
 
@@ -309,18 +358,16 @@ def client_moved_channel(event_data):
     """
     if PLUGIN_INFO is not None:
         if int(event_data.target_channel_id) == int(PLUGIN_INFO.afk_channel_id):
-            PLUGIN_INFO.afk_clients.append(int(event_data.client_id))
-
-            SwitchSupporterChannelStatus.open_or_close_supporter_channel(
-                self=PLUGIN_INFO
-            )
+            if int(event_data.client_id) not in PLUGIN_INFO.afk_clients:
+                PLUGIN_INFO.afk_clients.append(int(event_data.client_id))
         else:
             if int(event_data.client_id) in PLUGIN_INFO.afk_clients:
                 PLUGIN_INFO.afk_clients.remove(int(event_data.client_id))
 
-                SwitchSupporterChannelStatus.open_or_close_supporter_channel(
-                    self=PLUGIN_INFO
-                )
+        SwitchSupporterChannelStatus.update_available_supporter_client_list(
+            self=PLUGIN_INFO, client_id=event_data.client_id
+        )
+        SwitchSupporterChannelStatus.open_or_close_supporter_channel(self=PLUGIN_INFO)
 
 
 @command(f"{PLUGIN_COMMAND_NAME} version")
