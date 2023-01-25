@@ -51,7 +51,7 @@ pip3 install -r requirements.txt
 Then, simply start the bot:
 
 ```shell
-./main
+./main.py
 ```
 
 You will not see any output, but when you check the `logs/` directory, you should see some log files. The bot should be also connected to your TeamSpeak server. Right now, it's just not doing anything as no plugin is configured yet.
@@ -61,7 +61,7 @@ You can stop the bot by aborting the above command using the key combination `Ct
 If you want to run it like this, simply run the following command to put the process into the background:
 
 ```shell
-./main &
+./main.py &
 ```
 
 ## Advanced (recommended)
