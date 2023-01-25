@@ -25,9 +25,8 @@ Software:
 3. Switch into the project directory: `cd teamspeak3-python-bot/`
 4. List available versions: `git tag`
 5. Switch to the latest version: `git checkout <version>`
-6. Update the Git submodules: `git submodule update --init --recursive`
-7. Create your own config file: `cp config.example.ini config.ini`
-8. Adjust the config file: `vim config.ini` (see [configuration](/docs/CONFIGURATION.md#configuration) for further information)
+6. Create your own config file: `cp config.example.ini config.ini`
+7. Adjust the config file: `vim config.ini` (see [configuration](/docs/CONFIGURATION.md#configuration) for further information)
 
 Instead of setting up the above Python virtual env, you can also skip the steps 4 and 5 and instead install the dependencies globally. However, this is not recommended as you could run other Python projects on the same system, which require then a different version of specific dependencies.
 
@@ -52,7 +51,7 @@ pip3 install -r requirements.txt
 Then, simply start the bot:
 
 ```shell
-./main
+./main.py
 ```
 
 You will not see any output, but when you check the `logs/` directory, you should see some log files. The bot should be also connected to your TeamSpeak server. Right now, it's just not doing anything as no plugin is configured yet.
@@ -62,7 +61,7 @@ You can stop the bot by aborting the above command using the key combination `Ct
 If you want to run it like this, simply run the following command to put the process into the background:
 
 ```shell
-./main &
+./main.py &
 ```
 
 ## Advanced (recommended)

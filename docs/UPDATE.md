@@ -17,11 +17,10 @@ There might be some breaking changes, which will affect your installation. Pleas
 5. Switch to the respective newer version: `git checkout <version>`
 6. Confirm, that you are on the respective new version: `git branch` (marked with a star in front of the line)
 7. If necessary, apply the necessary changes for the breaking changes from the release notes
-8. Ensure, that you have the respective Git submodules installed: `git submodule update --init --recursive`
-9. Ensure, that you have the respective Python requirements installed:
+8. Ensure, that you have the respective Python requirements installed:
    - The systemd unit does this automatically. This is only needed, when you run the bot different.
    - Activate the Python virtual environment: `source venv/bin/activate`
    - Install the requirements: `pip3 install -r requirements.txt`
-10. Restart the bot: `sudo systemctl restart teamspeak-bot.service` 
+9. Restart the bot: `sudo systemctl restart teamspeak-bot.service` 
 
 That's it. Your bot should be updated now and connected to your TeamSpeak server again.
