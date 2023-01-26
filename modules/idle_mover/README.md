@@ -41,6 +41,15 @@ This plugin supports the following options:
 | `fallback_channel` | `None` | Either to move a client, which could not be moved to the old channel due to an error (e.g. channel does not exist anymore or is full) to a different channel (provide the channel name pattern here) or leave him in the `channel` (set to `None`). |
 | `channel` | `AFK` | The name of your AFK channel, where clients should be moved to while they are idle. |
 
+This plugin supports the following channel options:
+
+> **_NOTE:_** `<alias>` can be anything - it's only used to differentiate between multiple channel configurations. Supported characters for the `alias`: `a-z`, `A-Z`, `0-9_`
+
+| Option | Default | Description |
+| ---: | :---: | :--- |
+| `<alias>.channel_name` | `None` | The channel name, where you want to override the global `min_idle_time_seconds`. The name can be a pattern. |
+| `<alias>.min_idle_time_seconds` | `None` | The minimum time in seconds a client must be idle to get moved to the channel `channel`. |
+
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
 
 ```
@@ -50,6 +59,12 @@ exclude_channels: Netflix,Poke me,Meeting
 exclude_servergroups: Server Admin,Bot
 min_idle_time_seconds: 300
 channel: Away
+
+lobby.channel_name: Lobby
+lobby.min_idle_time_seconds: 120
+
+pubg.channel_name: PUBG
+pubg.min_idle_time_seconds: 2700
 ```
 
 Please keep in mind, that you need to reload the plugin afterwards. Either by restarting the entire bot or by using a plugin command, if it has one.

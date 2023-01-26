@@ -6,6 +6,7 @@ from threading import Thread
 from typing import Union
 import sys
 import re
+from copy import deepcopy
 
 # third-party imports
 from ts3API.Events import ClientLeftEvent
@@ -33,6 +34,7 @@ RESP_CHANNEL_SETTINGS = True
 FALLBACK_ACTION = None
 IDLE_TIME_SECONDS = 600.0
 CHANNEL_NAME = "AFK"
+CHANNEL_SETTINGS = None
 
 
 class IdleMover(Thread):
@@ -73,6 +75,9 @@ class IdleMover(Thread):
         self.idle_list = None
         if self.afk_channel is None:
             IdleMover.logger.error("Could not get afk channel")
+
+        self.channel_configs = []
+        self.channel_configs = self.parse_channel_settings(CHANNEL_SETTINGS)
 
     def run(self):
         """
@@ -152,6 +157,54 @@ class IdleMover(Thread):
             if servergroup.get("name") in SERVERGROUPS_TO_EXCLUDE.split(","):
                 self.servergroup_ids_to_ignore.append(servergroup.get("sgid"))
 
+    def parse_channel_settings(self, channel_settings):
+        """
+        Parses the channel settings.
+        :params: channel_settings: Channel settings
+        """
+        old_channel_alias = None
+        channel_properties_dict = {}
+        channel_configs = []
+
+        if len(channel_settings) == 0:
+            return channel_configs
+
+        for key, value in channel_settings.items():
+            try:
+                channel_alias, channel_setting_name = key.split(".")
+            except ValueError:
+                IdleMover.logger.exception(
+                    "Failed to get channel alias and setting name. Please ensure, that your plugin configuration is valid."
+                )
+                raise
+
+            if old_channel_alias is None:
+                old_channel_alias = channel_alias
+
+            if channel_alias != old_channel_alias and len(channel_properties_dict) > 0:
+                old_channel_alias = channel_alias
+                channel_configs.append(deepcopy(channel_properties_dict))
+                channel_properties_dict.clear()
+
+            channel_properties_dict[channel_setting_name] = value
+
+            if channel_setting_name == "channel_name":
+                channel_properties_dict["channel_id"] = self.get_channel_by_name(value)
+
+        channel_configs.append(deepcopy(channel_properties_dict))
+
+        for config in channel_configs:
+            if not all(
+                key in config for key in ("channel_name", "min_idle_time_seconds")
+            ):
+                raise ValueError(
+                    f"The channel config `{str(config['channel_name'])}` is invalid. Both options must be defined: channel_name, min_idle_time_seconds"
+                )
+
+        IdleMover.logger.info("Active channel configurations: %s", str(channel_configs))
+
+        return channel_configs
+
     def get_servergroups_by_client(self, cldbid):
         """
         Returns the list of servergroup IDs, which the client is assigned to.
@@ -199,21 +252,9 @@ class IdleMover(Thread):
         for client in self.idle_list:
             IdleMover.logger.debug("get_idle_list checking client: %s", str(client))
 
-            if client.get("client_type") == "1":
-                IdleMover.logger.debug("Ignoring ServerQuery client: %s", str(client))
-                continue
-
             if "client_idle_time" not in client.keys():
                 IdleMover.logger.error(
                     "get_idle_list client without client_idle_time: %s!", str(client)
-                )
-                continue
-
-            if int(client.get("client_idle_time")) / 1000 <= float(IDLE_TIME_SECONDS):
-                IdleMover.logger.debug(
-                    "get_idle_list client is less or equal then %s seconds idle: %s!",
-                    int(IDLE_TIME_SECONDS),
-                    str(client),
                 )
                 continue
 
@@ -254,6 +295,30 @@ class IdleMover(Thread):
 
                 if client_is_in_group:
                     continue
+
+            try:
+                channel_config = [
+                    conf
+                    for conf in self.channel_configs
+                    if int(conf["channel_id"]) == int(client.get("cid"))
+                ][0]
+            except IndexError:
+                channel_config = None
+
+            if channel_config is None:
+                min_idle_time_seconds = float(IDLE_TIME_SECONDS)
+            else:
+                min_idle_time_seconds = float(channel_config["min_idle_time_seconds"])
+
+            if int(client.get("client_idle_time")) / 1000 <= float(
+                min_idle_time_seconds
+            ):
+                IdleMover.logger.debug(
+                    "get_idle_list client is less or equal then %s seconds idle: %s!",
+                    int(IDLE_TIME_SECONDS),
+                    str(client),
+                )
+                continue
 
             IdleMover.logger.debug(
                 "get_idle_list adding client to list: %s!", str(client)
@@ -298,7 +363,24 @@ class IdleMover(Thread):
                 )
                 continue
 
-            if int(client.get("client_idle_time")) / 1000 > float(IDLE_TIME_SECONDS):
+            channel_id = int(self.client_channels.get(client.get("clid", -1)))
+            try:
+                channel_config = [
+                    conf
+                    for conf in self.channel_configs
+                    if int(conf["channel_id"]) == int(channel_id)
+                ][0]
+            except IndexError:
+                channel_config = None
+
+            if channel_config is None:
+                min_idle_time_seconds = float(IDLE_TIME_SECONDS)
+            else:
+                min_idle_time_seconds = float(channel_config["min_idle_time_seconds"])
+
+            if int(client.get("client_idle_time")) / 1000 > float(
+                min_idle_time_seconds
+            ):
                 IdleMover.logger.debug(
                     "get_back_list client is greater then %s seconds idle: %s!",
                     int(IDLE_TIME_SECONDS),
@@ -614,11 +696,12 @@ def setup(
     fallback_channel=FALLBACK_ACTION,
     min_idle_time_seconds=IDLE_TIME_SECONDS,
     channel=CHANNEL_NAME,
+    **channel_settings,
 ):
     """
     Sets up this plugin.
     """
-    global BOT, AUTO_START, DRY_RUN, CHECK_FREQUENCY_SECONDS, CHANNELS_TO_EXCLUDE, SERVERGROUPS_TO_EXCLUDE, ENABLE_AUTO_MOVE_BACK, RESP_CHANNEL_SETTINGS, FALLBACK_ACTION, IDLE_TIME_SECONDS, CHANNEL_NAME
+    global BOT, AUTO_START, DRY_RUN, CHECK_FREQUENCY_SECONDS, CHANNELS_TO_EXCLUDE, SERVERGROUPS_TO_EXCLUDE, ENABLE_AUTO_MOVE_BACK, RESP_CHANNEL_SETTINGS, FALLBACK_ACTION, IDLE_TIME_SECONDS, CHANNEL_NAME, CHANNEL_SETTINGS
 
     BOT = ts3bot
     AUTO_START = auto_start
@@ -631,6 +714,7 @@ def setup(
     FALLBACK_ACTION = fallback_channel
     IDLE_TIME_SECONDS = min_idle_time_seconds
     CHANNEL_NAME = channel
+    CHANNEL_SETTINGS = channel_settings
 
     if AUTO_START:
         start_plugin()
