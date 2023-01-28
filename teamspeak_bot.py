@@ -172,6 +172,7 @@ class Ts3Bot:
 
     def __init__(
         self,
+        *_,
         host,
         port,
         serverid,
@@ -187,7 +188,6 @@ class Ts3Bot:
         sshloadsystemhostkeys="False",
         sshtimeout=None,
         sshtimeoutlimit=3,
-        *_,
         **__,
     ):
         """
