@@ -62,6 +62,7 @@ class ClientInfo:
         return self._channel_id
 
     @property
+    # pylint: disable=invalid-name
     def ip(self):
         """Return IP address"""
         return self._ip
