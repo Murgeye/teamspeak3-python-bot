@@ -14,7 +14,7 @@ from ts3API.Events import (
     ClientKickedEvent,
     ClientBannedEvent,
 )
-from ts3API.utilities import TS3Exception
+from ts3API.utilities import TS3Exception, TS3QueryException
 
 # local imports
 from module_loader import setup_plugin, exit_plugin, command, event
@@ -290,7 +290,7 @@ class ChannelManager(Thread):
                         recently_created_channel = self.ts3conn._parse_resp_to_dict(
                             self.ts3conn._send("channelcreate", channel_properties)
                         )
-                    except TS3Exception as query_exception:
+                    except TS3QueryException as query_exception:
                         # channel name is already in use
                         if query_exception.id == 771:
                             ChannelManager.logger.debug(
@@ -573,7 +573,7 @@ class ChannelManager(Thread):
                             "channeldelete",
                             [f"cid={int(channel_to_delete.get('cid'))}"],
                         )
-                    except TS3Exception as query_exception:
+                    except TS3QueryException as query_exception:
                         # invalid channelID -> might be caused by a race-condition
                         if query_exception.id == 768:
                             continue
