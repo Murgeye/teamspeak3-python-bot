@@ -73,8 +73,8 @@ class EventHandler:
         :rtype: list[function]
         """
         obs = set()
-        for t in type(evt).mro():
-            obs.update(self.observers.get(t, set()))
+        for event_type in type(evt).mro():
+            obs.update(self.observers.get(event_type, set()))
         return obs
 
     def add_observer(self, obs, evt_type):
