@@ -592,7 +592,7 @@ class ChannelManager(Thread):
     ClientKickedEvent,
     ClientBannedEvent,
 )
-def client_event(event_data):
+def client_event(_event_data):
     """
     A client entered or left a channel, moved or were moved to a different channel or were kicked / banned from the channel / server.
     """
