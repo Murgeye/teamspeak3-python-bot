@@ -3,7 +3,6 @@ import configparser
 import logging
 import os
 import sys
-from distutils.util import strtobool
 
 # third-party imports
 import ts3API.TS3Connection
@@ -11,6 +10,7 @@ from ts3API.TS3Connection import TS3QueryException
 from ts3API.TS3QueryExceptionType import TS3QueryExceptionType
 
 # local imports
+from helpers import strtobool
 import command_handler
 import event_handler
 import module_loader
