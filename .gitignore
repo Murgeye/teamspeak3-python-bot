@@ -8,7 +8,6 @@ afk.log
 *.pyc
 venv/
 *__pycache__/
-quotes
 main.sh
 .viminfo
 .selected_editor
@@ -17,7 +16,6 @@ main.sh
 .vscode/
 config.ini
 .idea/
-modules/quotes.db
 tags
 test.py
 tests.py

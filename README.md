@@ -27,7 +27,6 @@ All existing functionality is based on plugins.
 | Plugin | Readme |
 | ---:   | :--- |
 | utils | [Open documentation](#utils) |
-| quotes | [Open documentation](#quotes) |
 | afk_mover | [Open documentation](/modules/afk_mover/README.md) |
 | idle_mover | [Open documentation](/modules/idle_mover/README.md) |
 | kick_inactive_clients | [Open documentation](/modules/kick_inactive_clients/README.md) |
@@ -88,31 +87,6 @@ enable_dry_run: True
 ```
 
 Please keep in mind, that you need to reload the plugin afterwards. Either by restarting the entire bot or by using a plugin command, if it has one.
-
-## Quotes
-
-This plugin extends your bot with quotes, which get randomly sent to random clients.
-
-### Available Commands
-
-The following table shows all available arguments for the command `!addquote` of this plugin:
-
-| Argument | Description |
-| ---:   | :--- |
-| `<quote>` | Adds the new quote `<quote>`. |
-
-### Configuration
-
-Enable this plugin by adding the following line under the `Plugins` section to your `config.ini`:
-
-```
-[Plugins]
-Quotes: quotes
-```
-
-#### Options
-
-This plugin does not support any options.
 
 # Logging
 
