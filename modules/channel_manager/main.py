@@ -14,7 +14,8 @@ from ts3API.Events import (
     ClientKickedEvent,
     ClientBannedEvent,
 )
-from ts3API.utilities import TS3Exception, TS3QueryException
+from ts3API.utilities import TS3Exception
+from ts3API.TS3Connection import TS3QueryException
 
 # local imports
 from module_loader import setup_plugin, exit_plugin, command, event
@@ -131,6 +132,17 @@ class ChannelManager(Thread):
                 channel_configs.append(deepcopy(channel_properties_dict))
                 channel_properties_dict.clear()
 
+            if channel_setting_name == "parent_channel_name":
+                try:
+                    parent_channel_id = self.get_channel_id_by_name_pattern(value)
+                except TS3Exception:
+                    ChannelManager.logger.exception(
+                        "Could not find any channel with the name pattern `%s`.",
+                        str(value),
+                    )
+
+                channel_properties_dict["parent_channel_id"] = int(parent_channel_id)
+
             channel_properties_dict[channel_setting_name] = value
 
         channel_configs.append(deepcopy(channel_properties_dict))
@@ -209,25 +221,17 @@ class ChannelManager(Thread):
             ChannelManager.logger.debug(channel_config)
 
             try:
-                parent_channel_name = channel_config.pop("parent_channel_name")
+                # parent_channel_name is not required here, but needs to be removed from the
+                # config list to avoid an unknown parameter during channel creation.
+                channel_config.pop("parent_channel_name")
+                parent_channel_id = channel_config.pop("parent_channel_id")
                 name_prefix = channel_config.pop("name_prefix")
                 # minium is not required here, but needs to be removed from the config list
                 # to avoid an unknown parameter during channel creation.
-                channel_config.pop("minimum")
+                channel_config.pop("minimum", 1)
             except KeyError:
                 ChannelManager.logger.exception(
                     "Could not retrieve a required key from the channel configuration."
-                )
-                continue
-
-            try:
-                parent_channel_id = self.get_channel_id_by_name_pattern(
-                    parent_channel_name
-                )
-            except TS3Exception:
-                ChannelManager.logger.exception(
-                    "Could not find any channel with the name pattern `%s`.",
-                    str(parent_channel_name),
                 )
                 continue
 
@@ -330,9 +334,10 @@ class ChannelManager(Thread):
                                     )
                                     raise
 
-    def create_channel_when_necessary(self):
+    def create_channel_when_necessary(self, client_event):
         """
         Creates a new channel, when necessary.
+        :param client_event: The client event data
         """
         self.managed_channels = self.find_channels_by_prefix()
 
@@ -341,11 +346,14 @@ class ChannelManager(Thread):
         channel_configs = deepcopy(self.channel_configs)
         for channel_config in channel_configs:
             try:
-                parent_channel_name = channel_config.pop("parent_channel_name")
+                # parent_channel_name is not required here, but needs to be removed from the
+                # config list to avoid an unknown parameter during channel creation.
+                channel_config.pop("parent_channel_name")
+                parent_channel_id = channel_config.pop("parent_channel_id")
                 name_prefix = channel_config.pop("name_prefix")
                 # minium is not required here, but needs to be removed from the config list
                 # to avoid an unknown parameter during channel creation.
-                channel_config.pop("minimum")
+                channel_config.pop("minimum", 1)
             except KeyError:
                 ChannelManager.logger.exception(
                     "Could not retrieve the name prefix from the channel configuration."
@@ -358,129 +366,191 @@ class ChannelManager(Thread):
                 if channel.get("channel_name").startswith(name_prefix):
                     channel_stats[name_prefix].append(channel)
 
+        try:
+            channel_info = self.ts3conn._parse_resp_to_dict(
+                self.ts3conn._send(
+                    "channelinfo", [f"cid={int(client_event.target_channel_id)}"]
+                )
+            )
+        except TS3QueryException as query_exception:
+            # Error: invalid channel ID (channel ID does not exist (anymore))
+            if int(query_exception.id) == 768:
+                ChannelManager.logger.error(
+                    "Failed to get channelinfo as the channel does not exist anymore: %s",
+                    int(client_event.target_channel_id),
+                )
+                return
+
+        affected_channel = {}
         for channel_name_prefix, channels in channel_stats.items():
+            if channel_info.get("channel_name").startswith(channel_name_prefix):
+                affected_channel["channel_name_prefix"] = channel_name_prefix
+                affected_channel["channels"] = channels
+                break
+
+        if len(affected_channel) == 0:
             ChannelManager.logger.debug(
-                "Checking the existing channels for the channel configuration `%s`.",
-                str(channel_name_prefix),
+                "The client did not join any managed channel. Nothing todo."
+            )
+            return
+
+        ChannelManager.logger.debug(
+            "Checking the existing channels for the channel configuration `%s`.",
+            str(affected_channel["channel_name_prefix"]),
+        )
+
+        if any(
+            int(channel["total_clients"]) == 0
+            for channel in affected_channel["channels"]
+        ):
+            ChannelManager.logger.debug(
+                "There exists at least one channel with the prefix `%s`, which has zero clients in it. No further channels required.",
+                str(affected_channel["channel_name_prefix"]),
+            )
+            return
+
+        try:
+            channel_config = deepcopy(
+                [
+                    channel_config
+                    for channel_config in self.channel_configs
+                    if channel_config["name_prefix"]
+                    == affected_channel["channel_name_prefix"]
+                ][0]
+            )
+        except IndexError:
+            ChannelManager.logger.error(
+                "Could not find any channel configuration with the name prefix '%s'.",
+                str(affected_channel["channel_name_prefix"]),
+            )
+            return
+
+        try:
+            # parent_channel_name is not required here, but needs to be removed from the
+            # config list to avoid an unknown parameter during channel creation.
+            channel_config.pop("parent_channel_name")
+            parent_channel_id = channel_config.pop("parent_channel_id")
+            name_prefix = channel_config.pop("name_prefix")
+            # minium is not required here, but needs to be removed from the config list
+            # to avoid an unknown parameter during channel creation.
+            channel_config.pop("minimum", 1)
+        except KeyError:
+            ChannelManager.logger.exception(
+                "Could not retrieve a required key from the channel configuration."
+            )
+            raise
+
+        channel_properties = []
+        channel_properties.append(f"cpid={parent_channel_id}")
+        channel_properties.append("channel_flag_semi_permanent=1")
+
+        existing_channel_numbers = []
+        for channel in affected_channel["channels"]:
+            existing_channel_numbers.append(
+                int(
+                    channel["channel_name"]
+                    .replace(affected_channel["channel_name_prefix"], "")
+                    .strip()
+                )
             )
 
-            if any(int(channel["total_clients"]) == 0 for channel in channels):
-                ChannelManager.logger.debug(
-                    "There exists at least one channel with the prefix `%s`, which has zero clients in it. No further channels required.",
-                    str(channel_name_prefix),
-                )
-                continue
+        iterator_existing_channel_numbers = iter(existing_channel_numbers)
+
+        channel_number = None
+        last_channel_number = None
+        i = 0
+        while channel_number is None:
+            i += 1
 
             try:
-                parent_channel_id = self.get_channel_id_by_name_pattern(
-                    parent_channel_name
-                )
-            except TS3Exception:
-                ChannelManager.logger.exception(
-                    "Could not find any channel with the name pattern `%s`.",
-                    str(parent_channel_name),
-                )
-                continue
+                last_channel_number = next(iterator_existing_channel_numbers)
+            except StopIteration:
+                previous_channel_number = last_channel_number
+                channel_number = last_channel_number + 1
+                break
 
-            channel_properties = []
-            channel_properties.append(f"cpid={parent_channel_id}")
-            channel_properties.append("channel_flag_semi_permanent=1")
+            if int(i) != int(last_channel_number):
+                previous_channel_number = i - 1
+                channel_number = i
 
-            existing_channel_numbers = []
-            for channel in channels:
-                existing_channel_numbers.append(
-                    int(
-                        channel["channel_name"].replace(channel_name_prefix, "").strip()
-                    )
-                )
+        channel_properties.append(
+            f"channel_name={affected_channel['channel_name_prefix']} {channel_number}"
+        )
 
-            iterator_existing_channel_numbers = iter(existing_channel_numbers)
+        for channel in affected_channel["channels"]:
+            if (
+                channel["channel_name"]
+                == f"{affected_channel['channel_name_prefix']} {previous_channel_number}"
+            ):
+                previous_channel_id = channel["cid"]
+                break
 
-            channel_number = None
-            last_channel_number = None
-            i = 0
-            while channel_number is None:
-                i += 1
+        channel_properties.append(f"channel_order={previous_channel_id}")
 
-                try:
-                    last_channel_number = next(iterator_existing_channel_numbers)
-                except StopIteration:
-                    previous_channel_number = last_channel_number
-                    channel_number = last_channel_number + 1
-                    break
+        channel_permissions = []
+        for key, value in channel_config.items():
+            if key.startswith("channel_"):
+                channel_properties.append(f"{key}={value}")
+            else:
+                channel_permissions.append({f"{key}": value})
 
-                if int(i) != int(last_channel_number):
-                    previous_channel_number = i - 1
-                    channel_number = i
-
-            channel_properties.append(
-                f"channel_name={channel_name_prefix} {channel_number}"
+        if DRY_RUN:
+            ChannelManager.logger.info(
+                "I would have created the following channel, when dry-run would be disabled: %s, %s",
+                str(channel_properties),
+                str(channel_permissions),
+            )
+        else:
+            ChannelManager.logger.info(
+                "Creating the following channel: %s",
+                str(channel_properties),
             )
 
-            for channel in channels:
-                if (
-                    channel["channel_name"]
-                    == f"{channel_name_prefix} {previous_channel_number}"
-                ):
-                    previous_channel_id = channel["cid"]
-                    break
+            try:
+                recently_created_channel = self.ts3conn._parse_resp_to_dict(
+                    self.ts3conn._send("channelcreate", channel_properties)
+                )
+            except TS3QueryException as query_exception:
+                # channel name is already in use
+                # Usually caused by a race-condition when e.g. multiple clients join at the same time
+                # the same empty channel, which triggers the creation of the next channel creation.
+                if int(query_exception.id) == 771:
+                    ChannelManager.logger.debug(
+                        "Failed to create the following channel as it already exists (usually caused by a race-condition): %s",
+                        str(channel_properties),
+                    )
+                    return
 
-            channel_properties.append(f"channel_order={previous_channel_id}")
+                ChannelManager.logger.exception(
+                    "Error while creating channel: %s", str(channel_properties)
+                )
+                raise
 
-            channel_permissions = []
-            for key, value in channel_config.items():
-                if key.startswith("channel_"):
-                    channel_properties.append(f"{key}={value}")
-                else:
-                    channel_permissions.append({f"{key}": value})
-
-            if DRY_RUN:
+            if len(channel_permissions) > 0:
                 ChannelManager.logger.info(
-                    "I would have created the following channel, when dry-run would be disabled: %s, %s",
-                    str(channel_properties),
+                    "Setting the following channel permissions on the channel `%s`: %s",
+                    int(recently_created_channel.get("cid")),
                     str(channel_permissions),
                 )
-            else:
-                ChannelManager.logger.info(
-                    "Creating the following channel: %s",
-                    str(channel_properties),
-                )
 
-                try:
-                    recently_created_channel = self.ts3conn._parse_resp_to_dict(
-                        self.ts3conn._send("channelcreate", channel_properties)
-                    )
-                except TS3Exception:
-                    ChannelManager.logger.exception(
-                        "Error while creating channel: %s", str(channel_properties)
-                    )
-                    raise
-
-                if len(channel_permissions) > 0:
-                    ChannelManager.logger.info(
-                        "Setting the following channel permissions on the channel `%s`: %s",
-                        int(recently_created_channel.get("cid")),
-                        str(channel_permissions),
-                    )
-
-                    for permission in channel_permissions:
-                        for permsid, permvalue in permission.items():
-                            try:
-                                self.ts3conn._send(
-                                    "channeladdperm",
-                                    [
-                                        f"cid={int(recently_created_channel.get('cid'))}",
-                                        f"permsid={permsid}",
-                                        f"permvalue={permvalue}",
-                                    ],
-                                )
-                            except TS3Exception:
-                                ChannelManager.logger.exception(
-                                    "Failed to set the channel permission `%s` for the cid=%s.",
-                                    str(permsid),
-                                    int(recently_created_channel.get("cid")),
-                                )
-                                raise
+                for permission in channel_permissions:
+                    for permsid, permvalue in permission.items():
+                        try:
+                            self.ts3conn._send(
+                                "channeladdperm",
+                                [
+                                    f"cid={int(recently_created_channel.get('cid'))}",
+                                    f"permsid={permsid}",
+                                    f"permvalue={permvalue}",
+                                ],
+                            )
+                        except TS3Exception:
+                            ChannelManager.logger.exception(
+                                "Failed to set the channel permission `%s` for the cid=%s.",
+                                str(permsid),
+                                int(recently_created_channel.get("cid")),
+                            )
+                            raise
 
     def get_channel_stats(self):
         """
@@ -589,15 +659,27 @@ class ChannelManager(Thread):
     ClientLeftEvent,
     ClientMovedEvent,
     ClientMovedSelfEvent,
+)
+def client_entered_left_moved_event(event_data):
+    """
+    A client entered or left a channel, moved or were moved to a different channel.
+    """
+    if PLUGIN_INFO is not None:
+        ChannelManager.create_channel_when_necessary(
+            self=PLUGIN_INFO, client_event=event_data
+        )
+        ChannelManager.delete_channel_when_necessary(self=PLUGIN_INFO)
+
+
+@event(
     ClientKickedEvent,
     ClientBannedEvent,
 )
-def client_event(_event_data):
+def client_kicked_banned_event(_event_data):
     """
-    A client entered or left a channel, moved or were moved to a different channel or were kicked / banned from the channel / server.
+    A client were kicked / banned from the channel / server.
     """
     if PLUGIN_INFO is not None:
-        ChannelManager.create_channel_when_necessary(self=PLUGIN_INFO)
         ChannelManager.delete_channel_when_necessary(self=PLUGIN_INFO)
 
 
