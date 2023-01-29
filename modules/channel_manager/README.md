@@ -61,15 +61,18 @@ bf2042_squad.parent_channel_name: cspacer15
 bf2042_squad.name_prefix: Battlefield 2042 Squad
 bf2042_squad.channel_description: Let's play BF2042!
 bf2042_squad.channel_maxclients: 4
+bf2042_squad.i_icon_id: 1568885232
 bf2042_squad.i_ft_needed_file_browse_power: 75
 
 pubg_duo.parent_channel_name: PUBG
 pubg_duo.name_prefix: Duo
 pubg_duo.channel_maxclients: 2
+pubg_duo.i_icon_id: 2916663205
 
 pubg_squad.parent_channel_name: PUBG
 pubg_squad.name_prefix: Squad
 pubg_squad.channel_maxclients: 4
+pubg_squad.i_icon_id: 2916663205
 ```
 
 Please keep in mind, that you need to reload the plugin afterwards. Either by restarting the entire bot or by using a plugin command, if it has one.
