@@ -20,7 +20,7 @@ from ts3API.utilities import TS3Exception, TS3QueryException
 from module_loader import setup_plugin, exit_plugin, command, event
 import teamspeak_bot
 
-PLUGIN_VERSION = 0.2
+PLUGIN_VERSION = 0.3
 PLUGIN_COMMAND_NAME = "channelmanager"
 PLUGIN_INFO: Union[None, "ChannelManager"] = None
 PLUGIN_STOPPER = threading.Event()
