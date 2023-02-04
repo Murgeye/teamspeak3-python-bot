@@ -94,15 +94,27 @@ class CommandHandler:
         handlers = self.handlers.get(command)
 
         if handlers is None:
-            teamspeak_bot.send_msg_to_client(
-                self.ts3conn,
-                sender,
-                f"Sorry, but I could not find your command `{command}`.",
-            )
-            teamspeak_bot.send_msg_to_client(
-                self.ts3conn, sender, "Use `!help` to get a list of available commands."
-            )
-            logger.info("`clid=%s` sent an unknown command: %s", int(sender), str(msg))
+            try:
+                command = f"{msg.split(None, 2)[0][1:]} {msg.split(None, 2)[1]}"
+                handlers = self.handlers.get(command)
+            except IndexError:
+                handlers = None
+
+            if handlers is None:
+                teamspeak_bot.send_msg_to_client(
+                    self.ts3conn,
+                    sender,
+                    f"Sorry, but I could not find your command `{command}`.",
+                )
+                teamspeak_bot.send_msg_to_client(
+                    self.ts3conn,
+                    sender,
+                    "Use `!help` to get a list of available commands.",
+                )
+                logger.info(
+                    "`clid=%s` sent an unknown command: %s", int(sender), str(msg)
+                )
+                return
 
         has_permissions = False
         for handler in handlers:
