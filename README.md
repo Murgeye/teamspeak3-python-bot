@@ -37,6 +37,7 @@ All existing functionality is based on plugins.
 | switch_supporter_channel_status | [Open documentation](/modules/switch_supporter_channel_status/README.md) |
 | inform_team_about_newbie | [Open documentation](/modules/inform_team_about_newbie/README.md) |
 | poke_client_on_channel_join | [Open documentation](/modules/poke_client_on_channel_join/README.md) |
+| chat_gpt | [Open documentation](/modules/chat_gpt/README.md) |
 
 Also see the [configuration](#configuration) section for further details regarding configuration.
 
