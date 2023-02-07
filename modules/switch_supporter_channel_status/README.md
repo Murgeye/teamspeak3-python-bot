@@ -38,7 +38,7 @@ This plugin supports the following options:
 | `supporter_channel_name` | `Support Lobby` | The name of the supporter channel, which should be opened or closed. |
 | `servergroups_to_check` | `N/A` | Define a comma seperated list of servergroup name patterns, which should be checked for online clients. |
 | `minimum_online_clients` | `1` | Define the minimum amount of online clients from the above servergroups to open the support channel. |
-| `afk_channel_name` | `N/A` | Define the name of your AFK channel to exclude supporter clients, which are away. |
+| `afk_channel_names` | `N/A` | Define one or more channel names to exclude supporter clients, which are away. |
 
 If you need to change some of these default options, simply add them to your `config.ini` under the respective `ModuleName` section:
 
@@ -47,7 +47,7 @@ If you need to change some of these default options, simply add them to your `co
 supporter_channel_name: Support
 servergroups_to_check: Moderator,Supporter
 minimum_online_clients: 3
-afk_channel_name: Away
+afk_channel_names: Away,Netflix and chill,Chill Zone
 ```
 
 Please keep in mind, that you need to reload the plugin afterwards. Either by restarting the entire bot or by using a plugin command, if it has one.
