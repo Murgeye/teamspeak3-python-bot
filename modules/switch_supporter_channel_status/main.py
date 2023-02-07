@@ -19,7 +19,7 @@ from ts3API.utilities import TS3Exception
 from module_loader import setup_plugin, exit_plugin, command, event
 import teamspeak_bot
 
-PLUGIN_VERSION = 0.2
+PLUGIN_VERSION = 0.3
 PLUGIN_COMMAND_NAME = "switchsupporterchannelstatus"
 PLUGIN_INFO: Union[None, "SwitchSupporterChannelStatus"] = None
 PLUGIN_STOPPER = threading.Event()
@@ -31,7 +31,7 @@ DRY_RUN = False  # log instead of performing actual actions
 SUPPORTER_CHANNEL_NAME = "Support Lobby"
 SERVERGROUPS_TO_CHECK = None
 MINIMUM_ONLINE_CLIENTS = 1
-AFK_CHANNEL_NAME = None
+AFK_CHANNEL_NAMES = None
 
 
 class SwitchSupporterChannelStatus(Thread):
@@ -71,14 +71,18 @@ class SwitchSupporterChannelStatus(Thread):
                 str(SUPPORTER_CHANNEL_NAME),
             )
 
-        self.afk_channel_id = None
-        if AFK_CHANNEL_NAME is not None:
-            self.afk_channel_id = self.get_channel_by_name(AFK_CHANNEL_NAME)
-            if self.afk_channel_id is None:
-                SwitchSupporterChannelStatus.logger.error(
-                    "Could not find any channel with the name `%s`.",
-                    str(AFK_CHANNEL_NAME),
-                )
+        self.afk_channel_ids = []
+        if AFK_CHANNEL_NAMES is not None:
+            for channel_name in AFK_CHANNEL_NAMES.split(","):
+                try:
+                    self.afk_channel_ids.append(
+                        int(self.get_channel_by_name(channel_name))
+                    )
+                except TS3Exception:
+                    SwitchSupporterChannelStatus.logger.error(
+                        "Could not find any channel with the name `%s`.",
+                        str(channel_name),
+                    )
 
         self.servergroup_ids_to_check = None
         self.servergroup_ids_to_check = self.update_servergroup_ids_to_check()
@@ -226,8 +230,8 @@ class SwitchSupporterChannelStatus(Thread):
         if int(client_id) not in self.available_supporter_clients:
             self.available_supporter_clients.append(int(client_id))
 
-        if self.afk_channel_id is not None:
-            if int(client_info.get("cid")) == int(self.afk_channel_id):
+        if len(self.afk_channel_ids) > 0:
+            if int(client_info.get("cid")) in self.afk_channel_ids:
                 if int(client_id) in self.available_supporter_clients:
                     self.available_supporter_clients.remove(int(client_id))
 
@@ -326,7 +330,7 @@ def client_joined_server(event_data):
     Client joined the server.
     """
     if PLUGIN_INFO is not None:
-        if int(event_data.target_channel_id) == int(PLUGIN_INFO.afk_channel_id):
+        if int(event_data.target_channel_id) in PLUGIN_INFO.afk_channel_ids:
             if int(event_data.client_id) not in PLUGIN_INFO.afk_clients:
                 PLUGIN_INFO.afk_clients.append(int(event_data.client_id))
 
@@ -357,7 +361,7 @@ def client_moved_channel(event_data):
     Client moved into a different channel or was moved to a different channel by someone.
     """
     if PLUGIN_INFO is not None:
-        if int(event_data.target_channel_id) == int(PLUGIN_INFO.afk_channel_id):
+        if int(event_data.target_channel_id) in PLUGIN_INFO.afk_channel_ids:
             if int(event_data.client_id) not in PLUGIN_INFO.afk_clients:
                 PLUGIN_INFO.afk_clients.append(int(event_data.client_id))
         else:
@@ -431,12 +435,12 @@ def setup(
     supporter_channel_name=SUPPORTER_CHANNEL_NAME,
     servergroups_to_check=SERVERGROUPS_TO_CHECK,
     minimum_online_clients=MINIMUM_ONLINE_CLIENTS,
-    afk_channel_name=AFK_CHANNEL_NAME,
+    afk_channel_names=AFK_CHANNEL_NAMES,
 ):
     """
     Sets up this plugin.
     """
-    global BOT, AUTO_START, DRY_RUN, SUPPORTER_CHANNEL_NAME, SERVERGROUPS_TO_CHECK, MINIMUM_ONLINE_CLIENTS, AFK_CHANNEL_NAME
+    global BOT, AUTO_START, DRY_RUN, SUPPORTER_CHANNEL_NAME, SERVERGROUPS_TO_CHECK, MINIMUM_ONLINE_CLIENTS, AFK_CHANNEL_NAMES
 
     BOT = ts3bot
     AUTO_START = auto_start
@@ -444,7 +448,7 @@ def setup(
     SUPPORTER_CHANNEL_NAME = supporter_channel_name
     SERVERGROUPS_TO_CHECK = servergroups_to_check
     MINIMUM_ONLINE_CLIENTS = minimum_online_clients
-    AFK_CHANNEL_NAME = afk_channel_name
+    AFK_CHANNEL_NAMES = afk_channel_names
 
     if AUTO_START:
         start_plugin()
