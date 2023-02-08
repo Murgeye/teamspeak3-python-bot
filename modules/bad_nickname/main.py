@@ -6,6 +6,7 @@ from threading import Thread
 from typing import Union
 import sys
 
+from copy import deepcopy
 import re
 
 # third-party imports
@@ -16,7 +17,7 @@ from ts3API.utilities import TS3Exception
 from module_loader import setup_plugin, exit_plugin, command
 import teamspeak_bot
 
-PLUGIN_VERSION = 0.1
+PLUGIN_VERSION = 0.2
 PLUGIN_COMMAND_NAME = "badnickname"
 PLUGIN_INFO: Union[None, "BadNickname"] = None
 PLUGIN_STOPPER = threading.Event()
@@ -27,8 +28,8 @@ AUTO_START = True
 DRY_RUN = False  # log instead of performing actual actions
 CHECK_FREQUENCY_SECONDS = 60.0 * 5  # 300 seconds => 5 minutes
 SERVERGROUPS_TO_EXCLUDE = None
-BAD_NAME_PATTERN = "[a|4]dm[i|1]n"
 KICK_REASON_MESSAGE = "Your client nickname is not allowed!"
+BAD_NAME_PATTERNS = None
 
 
 class BadNickname(Thread):
@@ -62,11 +63,12 @@ class BadNickname(Thread):
         self.update_servergroup_ids_list()
         self.client_list = None
         self.bad_nickname_client_list = None
-        self.regex_object = self.compile_regex_pattern(BAD_NAME_PATTERN)
 
-        if self.regex_object is None:
-            self.logger.error(
-                "Could not compile your given regex: `%s`.", str(BAD_NAME_PATTERN)
+        self.bad_name_patterns = []
+        self.bad_name_patterns = self.parse_bad_name_patterns(BAD_NAME_PATTERNS)
+        if len(self.bad_name_patterns) == 0:
+            raise ValueError(
+                "This plugin requires at least one bad name pattern configuration."
             )
 
     def run(self):
@@ -78,6 +80,58 @@ class BadNickname(Thread):
             self.loop_until_stopped()
         except BaseException:
             self.logger.exception("Exception occured in run:")
+
+    def parse_bad_name_patterns(self, bad_name_patterns):
+        """
+        Parses the bad name patterns.
+        :params: bad_name_patterns: Bad name patterns
+        """
+        old_bad_name_pattern_alias = None
+        bad_name_pattern_dict = {}
+        bad_name_patterns_list = []
+
+        for key, bad_name_pattern in bad_name_patterns.items():
+            try:
+                bad_name_pattern_alias, bade_name_pattern_option = key.split(".")
+            except ValueError:
+                BadNickname.logger.exception(
+                    "Failed to get bad name pattern alias and option name. Please ensure, that your plugin configuration is valid."
+                )
+                raise
+
+            if old_bad_name_pattern_alias is None:
+                old_bad_name_pattern_alias = bad_name_pattern_alias
+
+            if (
+                bad_name_pattern_alias != old_bad_name_pattern_alias
+                and len(bad_name_pattern_dict) > 0
+            ):
+                old_bad_name_pattern_alias = bad_name_pattern_alias
+                bad_name_patterns_list.append(deepcopy(bad_name_pattern_dict))
+                bad_name_pattern_dict.clear()
+
+            if bade_name_pattern_option != "name_pattern":
+                raise ValueError(
+                    f"Unknown option `{bade_name_pattern_option}` is defined. Please remove it."
+                )
+
+            bad_name_pattern_dict["regex_alias"] = str(bad_name_pattern_alias)
+            bad_name_pattern_dict["regex_object"] = self.compile_regex_pattern(
+                bad_name_pattern
+            )
+
+            if bad_name_pattern_dict["regex_object"] is None:
+                BadNickname.logger.error(
+                    "Could not compile your given regex: `%s`.", str(bad_name_pattern)
+                )
+
+        bad_name_patterns_list.append(deepcopy(bad_name_pattern_dict))
+
+        BadNickname.logger.info(
+            "Active bad name patterns: %s", str(bad_name_patterns_list)
+        )
+
+        return bad_name_patterns_list
 
     def compile_regex_pattern(self, regex_pattern):
         """
@@ -182,8 +236,8 @@ class BadNickname(Thread):
             str(self.client_list),
         )
 
-        if self.regex_object is None:
-            self.logger.error("get_client_list_with_bad_nickname regex is invalid!")
+        if self.bad_name_patterns is None:
+            self.logger.error("get_client_list_with_bad_nickname has no valid regex!")
             return []
 
         client_bad_nickname_list = []
@@ -227,17 +281,26 @@ class BadNickname(Thread):
                 if client_is_in_group:
                     continue
 
-            if not self.regex_object.search(client.get("client_nickname").casefold()):
+            client_has_bad_nickname = False
+            for bad_name_config in self.bad_name_patterns:
+                if bad_name_config["regex_object"].search(
+                    client.get("client_nickname").casefold()
+                ):
+                    client_has_bad_nickname = True
+                    self.logger.debug(
+                        "get_client_list_with_bad_nickname adding client to list as the regex alias `%s` matched: %s!",
+                        str(bad_name_config["regex_alias"]),
+                        str(client),
+                    )
+                    break
+
+            if not client_has_bad_nickname:
                 self.logger.debug(
                     "get_client_list_with_bad_nickname client has no bad nickname: %s!",
                     str(client),
                 )
                 continue
 
-            self.logger.debug(
-                "get_client_list_with_bad_nickname adding client to list: %s!",
-                str(client),
-            )
             client_bad_nickname_list.append(client)
 
         self.logger.debug(
@@ -324,7 +387,7 @@ def start_plugin(_sender=None, _msg=None):
     if PLUGIN_INFO is None:
         if len(KICK_REASON_MESSAGE) > 40:
             BadNickname.logger.error(
-                "The `kick_message` has %s characters, but only 40 are supported! Aborted the plugin start.",
+                "The `kick_reason_message` has %s characters, but only 40 are supported! Aborted the plugin start.",
                 int(len(KICK_REASON_MESSAGE)),
             )
             return
@@ -365,21 +428,21 @@ def setup(
     enable_dry_run=DRY_RUN,
     frequency=CHECK_FREQUENCY_SECONDS,
     exclude_servergroups=SERVERGROUPS_TO_EXCLUDE,
-    name_pattern=BAD_NAME_PATTERN,
-    kick_message=KICK_REASON_MESSAGE,
+    kick_reason_message=KICK_REASON_MESSAGE,
+    **bad_name_patterns,
 ):
     """
     Sets up this plugin.
     """
-    global BOT, AUTO_START, DRY_RUN, CHECK_FREQUENCY_SECONDS, SERVERGROUPS_TO_EXCLUDE, BAD_NAME_PATTERN, KICK_REASON_MESSAGE
+    global BOT, AUTO_START, DRY_RUN, CHECK_FREQUENCY_SECONDS, SERVERGROUPS_TO_EXCLUDE, KICK_REASON_MESSAGE, BAD_NAME_PATTERNS
 
     BOT = ts3bot
     AUTO_START = auto_start
     DRY_RUN = enable_dry_run
     CHECK_FREQUENCY_SECONDS = frequency
     SERVERGROUPS_TO_EXCLUDE = exclude_servergroups
-    BAD_NAME_PATTERN = name_pattern
-    KICK_REASON_MESSAGE = kick_message
+    KICK_REASON_MESSAGE = kick_reason_message
+    BAD_NAME_PATTERNS = bad_name_patterns
 
     if AUTO_START:
         start_plugin()
