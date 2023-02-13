@@ -138,8 +138,16 @@ class Ts3Bot:
                     )
                 else:
                     raise query_exception
+
             try:
                 self.channel = self.get_channel_id(self.default_channel)
+            except TS3QueryException as query_exception:
+                self.logger.error(
+                    f"Failed to find the default channel `{str(self.default_channel)}`."
+                )
+                raise query_exception
+
+            try:
                 self.ts3conn.clientmove(
                     self.channel, int(self.ts3conn.whoami()["client_id"])
                 )
@@ -149,11 +157,17 @@ class Ts3Bot:
                         "The bot is already in the configured default channel"
                     )
                 else:
+                    self.logger.exception(
+                        f"Failed to move the bot to the default channel `{str(self.default_channel)}`."
+                    )
                     raise query_exception
+
         except TS3QueryException:
             self.logger.exception("Error on setting up client")
             self.ts3conn.quit()
+            self.ts3conn = None
             return
+
         self.command_handler = command_handler.CommandHandler(self.ts3conn)
         self.event_handler = event_handler.EventHandler(
             ts3conn=self.ts3conn, command_handler=self.command_handler
