@@ -390,6 +390,16 @@ class ChannelRequester(Thread):
                 continue
 
             if key.startswith("channel_"):
+                if key == "channel_description":
+                    # if the description contains e.g. newline sequences, they are double-escaped due to
+                    # the `deepcopy()` in the channel parser function. This corrects this again.
+                    value = (
+                        value.encode()
+                        .decode("unicode-escape")
+                        .encode("iso-8859-1")
+                        .decode("utf-8")
+                    )
+
                 channel_properties.append(f"{key}={value}")
             else:
                 channel_permissions.append({f"{key}": value})
