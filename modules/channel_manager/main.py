@@ -235,8 +235,10 @@ class ChannelManager(Thread):
                 )
                 continue
 
+            existing_channels_with_prefix = self.find_channels_by_prefix(name_prefix)
+
             channel_minimum_available_count_diff = len(
-                self.find_channels_by_prefix(name_prefix)
+                existing_channels_with_prefix
             ) - int(self.channel_minimums[name_prefix])
 
             amount_of_channels_to_create = 0
@@ -246,6 +248,18 @@ class ChannelManager(Thread):
                     str(name_prefix),
                 )
                 amount_of_channels_to_create = int(self.channel_minimums[name_prefix])
+
+            amount_of_channels_with_clients = 0
+            for channel in existing_channels_with_prefix:
+                if int(channel["total_clients"]) > 0:
+                    amount_of_channels_with_clients += 1
+
+            if amount_of_channels_with_clients == len(existing_channels_with_prefix):
+                ChannelManager.logger.info(
+                    "All existing `%s` channels have clients, but there is no empty one. Creating one.",
+                    str(name_prefix),
+                )
+                amount_of_channels_to_create = 1
 
             if amount_of_channels_to_create == 0:
                 ChannelManager.logger.info(
@@ -277,7 +291,9 @@ class ChannelManager(Thread):
             i = 1
             while i <= amount_of_channels_to_create:
                 if i == 1:
-                    channel_properties.append(f"channel_name={name_prefix} {i}")
+                    channel_properties.append(
+                        f"channel_name={name_prefix} {amount_of_channels_with_clients+1}"
+                    )
                 else:
                     channel_properties = [
                         channel_property.replace(
