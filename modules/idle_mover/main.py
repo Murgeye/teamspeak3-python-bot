@@ -691,7 +691,7 @@ def client_left(event_data):
     """
     # Forget clients that were moved to the afk channel and then left
     if PLUGIN_INFO is not None:
-        if str(event_data.client_id) in PLUGIN_INFO.idling_clients:
+        if int(event_data.client_id) in PLUGIN_INFO.idling_clients:
             del PLUGIN_INFO.idling_clients[int(event_data.client_id)]
 
 
