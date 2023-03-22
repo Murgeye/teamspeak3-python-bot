@@ -33,8 +33,5 @@ jobs:
       - name: install python dependencies
         run: pip install -r requirements.txt
 
-      - name: install pylint
-        run: pip install pylint
-
       - name: run pylint
         run: pylint --rcfile=pylintrc $(find . -type f -name "*.py")
