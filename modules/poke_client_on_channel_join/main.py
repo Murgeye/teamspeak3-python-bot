@@ -84,6 +84,7 @@ class PokeClientOnChannelJoin(Thread):
         """
         old_channel_alias = None
         channel_properties_dict = {}
+        channel_properties_dict["team_client_database_ids"] = []
         channel_configs = []
 
         for key, value in channel_settings.items():
@@ -110,9 +111,9 @@ class PokeClientOnChannelJoin(Thread):
 
             if channel_setting_name == "team_servergroups":
                 for servergroup_name in value.split(","):
-                    channel_properties_dict[
-                        "team_client_database_ids"
-                    ] = self.get_servergroup_client_database_ids(servergroup_name)
+                    channel_properties_dict["team_client_database_ids"].extend(
+                        self.get_servergroup_client_database_ids(servergroup_name)
+                    )
 
         channel_configs.append(deepcopy(channel_properties_dict))
 
