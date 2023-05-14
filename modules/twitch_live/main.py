@@ -228,7 +228,6 @@ class TwitchLive(Thread):
         try:
             with request.urlopen(api_request) as api_response:
                 api_response = json.load(api_response)
-                twitch_streamer_user_id = api_response["data"][0]["id"]
         except error.HTTPError as http_error:
             # HTTP 400: Bad Request
             if int(http_error.code) == 400:
@@ -241,8 +240,19 @@ class TwitchLive(Thread):
             TwitchLive.logger.exception("Failed to get a Twitch streamer user ID.")
             raise
 
+        try:
+            twitch_streamer_user_id = api_response["data"][0]["id"]
+        except IndexError:
+            TwitchLive.logger.error(
+                "Received an unexpected API response for the client description `%s`: %s",
+                str(client_description),
+                str(api_response),
+            )
+            return twitch_streamer_user_id
+
         TwitchLive.logger.debug(
-            "Got a Twitch streamer user ID: %s.", int(twitch_streamer_user_id)
+            "Got the following Twitch streamer user ID: %s.",
+            int(twitch_streamer_user_id),
         )
 
         return twitch_streamer_user_id
