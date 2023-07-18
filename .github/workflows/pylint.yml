@@ -16,6 +16,8 @@ jobs:
           '3.9',
           '3.10',
           '3.11',
+          '3.12',
+          '3.13',
         ]
     name: PyLint (Python ${{ matrix.python_versions }})
     runs-on: ubuntu-latest
