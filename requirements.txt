@@ -6,7 +6,7 @@ openai==0.27.8
 
 # Required for the GitHub workflow "PyLint" and when writing new code.
 # Should be pinned to a specific version as newer versions might have new or changed linting rules.
-pylint==2.16.4
+pylint==2.17.4
 
 # Only for fixing this Pylint error: ModuleNotFoundError: No module named 'typing_extensions'
 # See https://github.com/Sebi94nbg/teamspeak3-python-bot/actions/runs/3864557425/jobs/6587510172
