@@ -2,7 +2,7 @@
 ts3API[ssh]==0.9.4
 
 # https://github.com/openai/openai-python
-openai==0.26.4
+openai==0.27.8
 
 # Required for the GitHub workflow "PyLint" and when writing new code.
 # Should be pinned to a specific version as newer versions might have new or changed linting rules.
