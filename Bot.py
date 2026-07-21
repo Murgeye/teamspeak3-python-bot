@@ -120,7 +120,7 @@ class Ts3Bot:
                 self.ts3conn.clientupdate(["client_nickname=" + self.bot_name])
             except TS3QueryException as e:
                 if e.type == TS3QueryExceptionType.CLIENT_NICKNAME_INUSE:
-                    self.logger.info("The choosen bot nickname is already in use, keeping the default nickname")
+                    self.logger.info("The chosen bot nickname is already in use, keeping the default nickname")
                 else:
                     raise e
             try:
