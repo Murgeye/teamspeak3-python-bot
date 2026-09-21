@@ -304,11 +304,9 @@ class RuntimeBugTests(unittest.TestCase):
         event = SimpleNamespace(data={"event": "test"})
         observer = Mock(side_effect=ValueError("broken observer"))
         handler = event_handler.EventHandler.__new__(event_handler.EventHandler)
-        handler._pending_observers = Mock()
         with patch.object(event_handler.EventHandler.logger, "exception") as logged:
             handler._inform_observer(observer, event)
         logged.assert_called_once()
-        handler._pending_observers.release.assert_called_once_with()
 
     def test_serverquery_events_are_not_dispatched(self):
         handler = event_handler.EventHandler.__new__(event_handler.EventHandler)
@@ -362,71 +360,44 @@ class RuntimeBugTests(unittest.TestCase):
 
         handler.inform_all.assert_called_once_with(event)
 
-    def test_coalesced_observer_has_only_one_pending_job_per_client(self):
+    def test_every_event_is_queued_for_a_coalesced_compatibility_observer(self):
         event = SimpleNamespace(client_id=7, data={})
         observer = Mock()
         observer.event_coalesce_scope = "client"
         handler = event_handler.EventHandler.__new__(event_handler.EventHandler)
         handler.observers = {SimpleNamespace: {observer}}
-        handler._pending_observers = Mock()
-        handler._pending_observers.acquire.return_value = True
-        handler._coalesced_observer_keys = set()
-        handler._coalesced_observer_keys_lock = threading.Lock()
         handler._executor = Mock()
+        handler._command_executor = Mock()
 
         handler.inform_all(event)
         handler.inform_all(event)
 
-        handler._executor.submit.assert_called_once()
-        self.assertEqual(handler._coalesced_observer_keys, {(observer, 7)})
+        self.assertEqual(handler._executor.submit.call_count, 2)
 
-    def test_global_coalescing_collapses_events_for_different_clients(self):
-        observer = Mock()
-        observer.event_coalesce_scope = "global"
-        handler = event_handler.EventHandler.__new__(event_handler.EventHandler)
-        handler.observers = {SimpleNamespace: {observer}}
-        handler._pending_observers = Mock()
-        handler._pending_observers.acquire.return_value = True
-        handler._coalesced_observer_keys = set()
-        handler._coalesced_observer_keys_lock = threading.Lock()
-        handler._executor = Mock()
-
-        handler.inform_all(SimpleNamespace(client_id=7, data={}))
-        handler.inform_all(SimpleNamespace(client_id=8, data={}))
-
-        handler._executor.submit.assert_called_once()
-
-    def test_queue_full_releases_the_coalesced_event_key(self):
-        event = SimpleNamespace(client_id=7, data={})
-        observer = Mock()
-        observer.event_coalesce_scope = "client"
-        handler = event_handler.EventHandler.__new__(event_handler.EventHandler)
-        handler.observers = {SimpleNamespace: {observer}}
-        handler._pending_observers = Mock()
-        handler._pending_observers.acquire.return_value = False
-        handler._coalesced_observer_keys = set()
-        handler._coalesced_observer_keys_lock = threading.Lock()
-        handler._executor = Mock()
-
-        handler.inform_all(event)
-
-        self.assertEqual(handler._coalesced_observer_keys, set())
-        handler._executor.submit.assert_not_called()
-
-    def test_uncoalesced_observer_receives_every_event(self):
+    def test_more_than_one_hundred_events_are_all_queued(self):
         observer = Mock(spec=[])
         handler = event_handler.EventHandler.__new__(event_handler.EventHandler)
         handler.observers = {SimpleNamespace: {observer}}
-        handler._pending_observers = Mock()
-        handler._pending_observers.acquire.return_value = True
-        handler._coalesced_observer_keys = set()
-        handler._coalesced_observer_keys_lock = threading.Lock()
         handler._executor = Mock()
+        handler._command_executor = Mock()
 
-        handler.inform_all(SimpleNamespace(client_id=7, data={}))
-        handler.inform_all(SimpleNamespace(client_id=7, data={}))
+        for client_id in range(700):
+            handler.inform_all(SimpleNamespace(client_id=client_id, data={}))
 
-        self.assertEqual(handler._executor.submit.call_count, 2)
+        self.assertEqual(handler._executor.submit.call_count, 700)
+
+    def test_text_messages_use_the_dedicated_command_executor(self):
+        observer = Mock(spec=[])
+        handler = event_handler.EventHandler.__new__(event_handler.EventHandler)
+        handler.observers = {event_handler.TextMessageEvent: {observer}}
+        handler._executor = Mock()
+        handler._command_executor = Mock()
+        event = event_handler.TextMessageEvent({})
+
+        handler.inform_all(event)
+
+        handler._executor.submit.assert_not_called()
+        handler._command_executor.submit.assert_called_once()
 
     def test_multimove_moves_client_without_casting_client_dictionary(self):
         connection = Mock()

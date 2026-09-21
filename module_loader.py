@@ -126,17 +126,15 @@ def event(*event_types):
 
 
 def coalesce_events(scope="client"):
-    """Mark an event observer to keep at most one pending job per scope.
+    """Compatibility decorator; event observers are no longer coalesced.
 
-    ``client`` coalesces repeated events for one client; ``global`` coalesces all
-    pending events for an observer. This is opt-in because some observers need
-    every event, such as text-message commands.
+    Every TeamSpeak state transition is dispatched so plugins cannot miss work
+    during a busy period. ``scope`` remains validated for third-party plugins.
     """
     if scope not in {"client", "global"}:
         raise ValueError("Event coalescing scope must be 'client' or 'global'.")
 
     def mark_observer(function):
-        function.event_coalesce_scope = scope
         return function
 
     return mark_observer
