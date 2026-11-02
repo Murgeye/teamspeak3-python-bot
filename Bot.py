@@ -1,7 +1,6 @@
 import configparser
 import logging
 import os
-from distutils.util import strtobool
 
 import ts3API.TS3Connection
 from ts3API.TS3Connection import TS3QueryException
@@ -11,6 +10,13 @@ import CommandHandler
 import EventHandler
 import Moduleloader
 
+def _strtobool(val: str) -> bool:
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return True
+    if val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return False
+    raise ValueError(f"Invalid truth value {val!r}")
 
 def stop_conn(ts3conn):
     ts3conn.stop_recv.set()
@@ -174,11 +180,11 @@ class Ts3Bot:
         self.channel = None
         self.logger = logger
         self.ts3conn = None
-        self.is_ssh = bool(strtobool(ssh))
+        self.is_ssh = bool(_strtobool(ssh))
         # Strtobool returns 1/0 ...
-        self.accept_all_keys = bool(strtobool(acceptallsshkeys))
+        self.accept_all_keys = bool(_strtobool(acceptallsshkeys))
         self.host_key_file = sshhostkeyfile
-        self.use_system_hosts = bool(strtobool(sshloadsystemhostkeys))
+        self.use_system_hosts = bool(_strtobool(sshloadsystemhostkeys))
         self.sshtimeout = sshtimeout
         self.sshtimeoutlimit = sshtimeoutlimit
 
